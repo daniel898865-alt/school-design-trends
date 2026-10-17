@@ -16,13 +16,17 @@ function evidenceOf(project, issues) {
     }
     if (!e.source_id) issues.push({ path, code: 'missing_evidence_source', message: '근거 출처(source_id) 누락' });
     if (!e.evidence_note) issues.push({ path, code: 'missing_evidence_note', message: '근거 설명(evidence_note) 누락' });
+    if (e.review_status !== null && e.review_status !== undefined &&
+        (typeof e.review_status !== 'string' || !e.review_status.trim())) {
+      issues.push({ path, code: 'invalid_review_status', message: '검토 상태는 비어 있지 않은 문자열이어야 함 — unknown으로 집계' });
+    }
     valid.push(e);
   });
   return valid;
 }
 
 function tally(projects, issues) {
-  const perTopic = new Map(TOPICS.map((t) => [t.topic_id, { projects: new Set(), evidence: 0, sources: new Set(), review: {} }]));
+  const perTopic = new Map(TOPICS.map((t) => [t.topic_id, { projects: new Set(), evidence: 0, sources: new Set(), review: new Map() }]));
   let unclassified = 0;
   let multiTag = 0;
   for (const p of projects) {
@@ -35,8 +39,8 @@ function tally(projects, issues) {
       t.projects.add(p.project_id);
       t.evidence++;
       if (e.source_id) t.sources.add(e.source_id);
-      const status = e.review_status ?? 'unknown';
-      t.review[status] = (t.review[status] ?? 0) + 1;
+      const status = typeof e.review_status === 'string' && e.review_status.trim() ? e.review_status : 'unknown';
+      t.review.set(status, (t.review.get(status) ?? 0) + 1);
     }
   }
   const denominator = projects.length;
@@ -50,7 +54,7 @@ function tally(projects, issues) {
       share: denominator === 0 ? null : x.projects.size / denominator,
       evidence_count: x.evidence,
       source_ids: [...x.sources],
-      review_status_counts: x.review,
+      review_status_counts: Object.fromEntries(x.review),
     };
   });
   return { denominator, classified: denominator - unclassified, unclassified, multiTagProjects: multiTag, topics };

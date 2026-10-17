@@ -18,12 +18,17 @@ export function safeUrl(value) {
 
 export function sourceLinks(sourceIds = [], snapshot) {
   const list = el('div', { class: 'source-links' });
+  const verificationLabels = new Map([['demo', '가상'], ['checked', '확인'], ['verified', '확인됨으로 기재'], ['reviewed', '검토 완료'], ['draft', '초안'], ['unknown', '미확인']]);
   for (const id of new Set(sourceIds)) {
     const source = snapshot.sources.find(s => s.source_id === id);
-    if (!source) continue;
+    if (!source) { list.append(el('span', { class: 'muted' }, `출처 ${id} · 연결 정보 미확인`)); continue; }
     const url = safeUrl(source.url);
-    list.append(url ? el('a', { href: url, target: '_blank', rel: 'noopener noreferrer', referrerpolicy: 'no-referrer' }, `${source.title} ↗`) : el('span', { class: 'muted' }, `${source.title} · 원문 링크 없음`));
+    const title = source.title || `출처 ${id}`;
+    list.append(url ? el('a', { href: url, target: '_blank', rel: 'noopener noreferrer', referrerpolicy: 'no-referrer' }, `${title} ↗`) : el('span', { class: 'muted' }, `${title} · 원문 링크 없음`));
+    const verification = verificationLabels.get(source.verification_status) ?? source.verification_status ?? '미확인';
+    list.append(el('span', { class: 'muted' }, `${source.publisher || '발행처 미확인'} · 게시일 ${source.published_at || '미확인'} · 확인 상태 ${verification}`));
   }
+  if (!list.childElementCount) list.append(el('span', { class: 'muted' }, '연결된 출처가 없습니다.'));
   return list;
 }
 

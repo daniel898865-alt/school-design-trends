@@ -9,6 +9,7 @@ export const AGE_STATUSES = ['over', 'uncertain', 'under', 'unknown'];
 export function completedYears(from, asOf) {
   const a = parseDate(from);
   const b = parseDate(asOf);
+  if (!a || !b) throw new Error('준공일과 기준일은 유효한 YYYY-MM-DD 날짜여야 함');
   const beforeAnniversary = b.m < a.m || (b.m === a.m && b.d < a.d);
   return b.y - a.y - (beforeAnniversary ? 1 : 0);
 }
@@ -21,6 +22,14 @@ export function classifyBuildingAge(building, asOf, threshold = 40) {
   const year = building.completion_year;
   const precision = building.date_precision;
   const unknown = (reason) => ({ status: 'unknown', minAge: null, maxAge: null, reason, basis: null });
+
+  if (date !== null && date !== undefined && !isValidDate(date)) {
+    return unknown('준공일이 유효한 YYYY-MM-DD 날짜가 아님 — 확인 필요');
+  }
+  if (year !== null && year !== undefined &&
+      (!Number.isInteger(year) || !/^\d{4}$/.test(String(year)) || !isValidDate(`${year}-01-01`))) {
+    return unknown('준공연도가 유효한 네 자리 정수가 아님 — 확인 필요');
+  }
 
   if (date && year !== null && year !== undefined && Number(date.slice(0, 4)) !== year) {
     return unknown(`준공일 ${date}와 준공연도 ${year}가 서로 다름 — 확인 필요`);
@@ -42,6 +51,7 @@ export function classifyBuildingAge(building, asOf, threshold = 40) {
     return unknown('준공일·준공연도 미확인');
   }
 
+  if (!isValidDate(earliest) || !isValidDate(latest)) return unknown('준공연도로 유효한 날짜 범위를 만들 수 없음 — 확인 필요');
   if (earliest > asOf) return unknown(`준공 ${basis === 'completion_date' ? earliest : earliest.slice(0, 4)}이 기준일 ${asOf}보다 늦음 — 확인 필요`);
   const maxAge = completedYears(earliest, asOf);
   // 연도만 아는데 그해가 아직 끝나지 않았으면 가장 늦은 준공일을 기준일로 본다.
@@ -97,7 +107,8 @@ export function summarizeBuildings(snapshot, options = {}) {
     });
   }
 
-  const count = (list) => ({ buildings: list.length, schools: new Set(list.map((r) => r.school_id)).size });
+  // 끊어진 학교 참조는 행에 남기되 존재가 확인된 학교만 학교 수에 포함한다.
+  const count = (list) => ({ buildings: list.length, schools: new Set(list.map((r) => r.school_id).filter((id) => schoolsById.has(id))).size });
   const byAge = Object.fromEntries(AGE_STATUSES.map((s) => [s, count(rows.filter((r) => r.age_status === s))]));
   const overRows = rows.filter((r) => r.age_status === 'over');
   const byStatusAmongOver = Object.fromEntries(
@@ -110,6 +121,8 @@ export function summarizeBuildings(snapshot, options = {}) {
   ];
   if (byAge.uncertain.buildings > 0) notes.push(`준공연도만 확인되어 ${threshold}년 여부 미확정 ${byAge.uncertain.buildings}동`);
   if (byAge.unknown.buildings > 0) notes.push(`준공 정보 미확인 ${byAge.unknown.buildings}동`);
+  const missingSchoolCount = rows.filter((row) => !schoolsById.has(row.school_id)).length;
+  if (missingSchoolCount > 0) notes.push(`학교 자료와 연결되지 않은 건물 ${missingSchoolCount}동 — 건물은 표시하되 학교 수에서 제외`);
   if (snapshot.as_of && asOf !== snapshot.as_of) notes.push(`원자료 기준일 ${snapshot.as_of}와 조회 기준일 ${asOf}가 다름`);
 
   return {

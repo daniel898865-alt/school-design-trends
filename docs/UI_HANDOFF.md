@@ -1,6 +1,6 @@
 # 화면 구현과 자료 모듈 연결
 
-2026-10-17 · 담당: Yunze(화면) / Daniel(자료). B1·B2와 A1의 병합 검토·수정 내역은 [통합 기록](INTEGRATION_REVIEW.md), 남은 연결은 [Yunze #12](https://github.com/yunzecho-eng/school-design-trends/issues/12)를 따른다. 배포는 아직 하지 않았다.
+2026-10-17 · 담당: Yunze(화면) / Daniel(자료). A1/A2와 UI 연결을 구현했다. [연결 검증](UI_CONNECTION_VERIFICATION.md)과 [온라인 화면](https://yunzecho-eng.github.io/school-design-trends/)을 참고한다. 초기 병합 당시 남아 있던 문제는 [당시 기록](INTEGRATION_REVIEW.md)에 보존했다.
 
 ## 참고 화면
 
@@ -21,9 +21,9 @@
 - CSV/Markdown은 현재 필터의 설계사업을 내보낸다. 공모일·당선일·선택 기준 날짜, 자료 기준일·조회 기준일·생성 시각, 출처·가상 자료 표시를 보존한다. 아직 건물 목록 자체의 내보내기는 제공하지 않는다.
 - CSV는 수식으로 해석될 수 있는 문자열을 보호하고 Markdown은 입력 HTML·링크를 텍스트로 처리한다.
 
-## Daniel에게 넘기는 연결 지점
+## 공통 모듈과 화면 연결
 
-`src/ui/app.js`가 생성하는 provider를 이슈 #4 모듈의 어댑터로 교체한다. 데모 공급자를 실제 자료 처리에 사용하지 않는다.
+`src/ui/app.js`는 `createDataProvider`를 사용한다. `src/ui/data-provider.js`가 이슈 #4의 A1/A2 함수를 호출하고 화면에 필요한 필드명을 대응한다. 초기 `demo-provider.js`는 비교 회귀 테스트용이며 앱에서 사용하지 않는다. 새 공급자도 가상 자료 전용이다.
 
 ```text
 provider.snapshot
@@ -32,16 +32,16 @@ provider.select(filters) -> 화면 모델
 provider.exportRows(filters) -> {columns:[{key,label}], rows:[], metadata:{...}}
 ```
 
-필터는 `query, region, schoolLevel, months, dateBasis, asOf, topic`이다. 화면 모델의 계약과 예시는 `src/ui/demo-provider.js`와 `tests/ui/demo-provider.test.js`에서 확인한다. 실제 계산은 기존 DATA_CONTRACT의 공통 함수가 담당하고 화면은 전달된 값만 표시한다.
+필터는 `query, region, schoolLevel, months, dateBasis, asOf, topic`이다. 지역·학교급·주제를 A1의 배열형 필터로 대응하고 검색으로 좁힌 동일 Snapshot을 조회와 A2 내보내기에 전달한다. 화면 모델은 `src/ui/data-provider.js`와 `tests/ui/data-provider.test.js`에서 확인한다. 실제 계산은 공통 함수가 담당한다.
 
-A1의 `parseSnapshot`, `filterProjects`, `summarizeProjects`는 구현되었다. 기존 계약의 `classifyBuildingAge`, `exportRows` 등 A2가 준비되면 화면 모델 어댑터에서 연결한다. 현재 앱의 공급자 교체는 구현하지 않았다. CSV 입력 해석은 A1에 있으며 브라우저 UI에는 아직 연결되지 않았다. 실제 업체 식별, 원자료 수집과 월별 갱신도 미완료다.
+A1의 `parseSnapshot`, `filterProjects`, `summarizeProjects`, A2의 `summarizeFirms`, `summarizeBuildings`, `summarizeTopics`, `exportRows`를 연결했다. 건물 판정은 A2 결과를 UI 상태 이름으로 대응한다. 파서 오류는 교체 전에 차단하고 경고는 화면에 표시한다. 날짜 기준은 당선일·공모일·기사 게시일이다. CSV 입력 해석은 A1에 있지만 브라우저 가져오기는 JSON만 지원한다. 실제 업체 식별, 원자료 수집과 월별 갱신은 미완료다.
 
 ## 전체 기능 완료 전 남은 통합 확인
 
-- [ ] Daniel의 공통 함수와 화면 모델을 연결한다.
+- [x] Daniel의 공통 함수와 화면 모델을 연결했다.
 - [x] 공유하는 데모 2종에서 A1과 UI의 집계를 96개 조건으로 대조했다.
-- [ ] A1의 결측·다지역 예시를 포함해 화면·내보내기까지 연결하고 대조한다.
+- [x] A1의 결측·다지역 및 A2 예시를 화면·내보내기에 연결하고 대조했다.
 - [ ] 실제 공개 자료의 출처·이미지 권리와 스키마를 검증한다.
 - [ ] 상대방이 직접 실행하고 리뷰한다. 사용자 요청에 따른 병합과 별도다.
 
-UI 자동 테스트나 AI 검토는 Daniel의 실제 리뷰를 대체하지 않는다. 이슈 #3은 공통 모듈 연결을 포함한 완료 기준이 확인될 때까지 열린 상태로 둔다.
+UI 자동 테스트나 AI 검토는 Daniel의 실제 리뷰를 대체하지 않는다. 이슈 #3·#12의 가상 자료 화면 연결 범위를 검증했고, 실제 데이터 수집과 자동 갱신 완료를 뜻하지 않는다.
