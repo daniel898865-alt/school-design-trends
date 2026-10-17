@@ -229,6 +229,7 @@ export function createDemoProvider(input) {
     school_level_label: LEVELS[project.school_level],
     firm_names: project.firm_ids.map((id) => firms.get(id).name),
     school_names: project.school_ids.map((id) => schools.get(id).name),
+    topic_evidence: project.topic_evidence.map(evidence => ({ ...evidence, topic_label: TOPICS[evidence.topic_id] })),
   }));
 
   const normalize = (inputFilters = {}) => {
