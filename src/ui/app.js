@@ -1,5 +1,6 @@
 import { createDataProvider } from './data-provider.js';
-import { el, emptyState, projectImage } from './dom.js';
+import { el, emptyState } from './dom.js';
+import { createProjectThumbnail, primaryProjectSource } from './project-media.js';
 import { renderFirms, renderBuildings, renderTopics, openProjectDialog } from './details.js';
 import { serializeCsv, serializeMarkdown, downloadExport } from './export.js';
 
@@ -12,6 +13,7 @@ let lastFilters;
 let loadSequence = 0;
 const form = $('filters');
 const dateLabels = { award_date: '당선일', competition_date: '공모일', published_at: '기사 게시일' };
+const sections = ['overview', 'projects', 'firms', 'buildings', 'topics'];
 
 function filters() { return { ...Object.fromEntries(new FormData(form)), months: Number($('months').value) }; }
 function message(text) { $('notice').textContent = text; }
@@ -101,16 +103,31 @@ function renderProjects() {
   for (const p of view.projects) {
     const chips = [el('span', {}, p.region_name || '지역 미확인'), el('span', {}, p.school_level_label || '학교급 미확인')];
     if (provider.snapshot.is_demo) chips.push(el('span', { class: 'demo-chip' }, '가상 사례'));
-    const card = el('article', { class: 'project-card' }, [projectImage(p), el('div', { class: 'card-content' }, [el('div', { class: 'chips' }, chips), el('h3', {}, projectButton(p, p.title)), el('p', { class: 'card-summary' }, p.summary || '요약 미확인 · 상세 화면에서 출처를 확인하세요.'), el('div', { class: 'card-bottom' }, [el('span', {}, `${dateLabels[lastFilters.dateBasis]} ${p.basis_date || '미확인'}`), projectButton(p, '사례 보기 ↗')])])]);
+    const source = primaryProjectSource(p, provider.snapshot);
+    const original = source ? el('a', { class: 'original-site-link', href: source.url, target: '_blank', rel: 'noopener noreferrer', referrerpolicy: 'no-referrer', 'aria-label': `${p.title || '설계사업'} 원문 사이트 (새 탭)`, title: source.title }, '원문 사이트 ↗') : el('span', { class: 'muted' }, '원문 링크 미등록');
+    const card = el('article', { class: 'project-card' }, [createProjectThumbnail(p, basicDetail), el('div', { class: 'card-content' }, [el('div', { class: 'chips' }, chips), el('h3', {}, projectButton(p, p.title)), el('p', { class: 'card-summary' }, p.summary || '요약 미확인 · 상세 화면에서 출처를 확인하세요.'), el('p', { class: 'card-date small' }, `${dateLabels[lastFilters.dateBasis]} ${p.basis_date || '미확인'}`), el('div', { class: 'card-bottom' }, [projectButton(p, '상세 보기'), original])])]);
     container.append(card);
   }
 }
-function switchSection(next) {
+function switchSection(next, { navigate = false } = {}) {
+  if (!sections.includes(next)) return;
   section = next;
-  document.querySelectorAll('[data-view]').forEach(b => { if (b.dataset.view === section) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  $('overview-view').hidden = section !== 'overview';
-  $('projects-view').hidden = !['overview', 'projects'].includes(section);
-  for (const name of ['firms', 'buildings', 'topics']) $(name + '-view').hidden = section !== name;
+  $('navigation').querySelectorAll('[data-view]').forEach(b => { if (b.dataset.view === section) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  for (const name of sections) {
+    const selected = section === name;
+    const tab = $('tab-' + name);
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+    $(name + '-view').hidden = !selected;
+  }
+  if (navigate) {
+    const tab = $('tab-' + section);
+    tab.focus({ preventScroll: true });
+    // Explicit user navigation goes to the same result origin. Repainting after
+    // a filter change only synchronizes state and does not move focus or scroll.
+    $('results').scrollIntoView({ behavior: 'instant', block: 'start' });
+    tab.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' });
+  }
 }
 function paint() {
     $('error').hidden = true;
@@ -122,6 +139,7 @@ function paint() {
     $('coverage-scope').textContent = `자료 범위: ${provider.snapshot.coverage?.scope || '미확인'}`;
     const firmNote = view.summary.unresolvedFirmReferences === undefined ? '사무소 목록이 연결된 고유 사무소' : `사무소 목록 기준 · 미확인 연결 ${view.summary.unresolvedFirmReferences}건 제외`;
     $('stats').replaceChildren(stat('설계사업', view.summary.projects, '중복 사업을 제외한 고유 사례'), stat('연결된 자료', view.summary.sources, '사업 수와 구분한 출처 수'), stat('관련 학교', view.summary.schools, '동일 학교의 중복을 제외', '곳'), stat('참여 사무소', view.summary.firms, firmNote, '곳'));
+    $('results-summary').textContent = `설계사업 ${view.summary.projects}건 · 같은 조회 조건 유지`;
     bars($('region-chart'), view.byRegion); monthsChart($('month-chart'), view.byMonth);
     const regionNote = view.summary.regionParticipations === undefined ?
       '시도별 수치는 지역 참여 건수이며 지역 미확인은 별도로 표시합니다.' :
@@ -175,7 +193,17 @@ form.addEventListener('submit', event => { event.preventDefault(); render(); });
 form.addEventListener('change', () => render());
 $('reset').addEventListener('click', () => { if (!provider) return; form.reset(); $('asOf').value = provider.snapshot.as_of; $('buildings-view').dataset.ageFilter = 'all'; render(); });
 $('reload-demo').addEventListener('click', loadDemo);
-$('navigation').addEventListener('click', event => { const button = event.target.closest('[data-view]'); if (button) switchSection(button.dataset.view); });
+$('navigation').addEventListener('click', event => { const button = event.target.closest('[data-view]'); if (button) switchSection(button.dataset.view, { navigate: true }); });
+$('result-tabs').addEventListener('click', event => { const button = event.target.closest('[data-result-view]'); if (button) switchSection(button.dataset.resultView, { navigate: true }); });
+$('result-tabs').addEventListener('keydown', event => {
+  const button = event.target.closest('[data-result-view]');
+  if (!button) return;
+  const current = sections.indexOf(button.dataset.resultView);
+  const target = { ArrowRight: (current + 1) % sections.length, ArrowLeft: (current + sections.length - 1) % sections.length, Home: 0, End: sections.length - 1 }[event.key];
+  if (target === undefined) return;
+  event.preventDefault();
+  switchSection(sections[target], { navigate: true });
+});
 for (const name of ['cards', 'table']) $(name + '-mode').addEventListener('click', () => { mode = name; $('cards-mode').setAttribute('aria-pressed', name === 'cards'); $('table-mode').setAttribute('aria-pressed', name === 'table'); if (view) renderProjects(); });
 $('data-help').addEventListener('click', () => $('data-section').scrollIntoView({ behavior: 'smooth' }));
 $('import-file').addEventListener('change', async event => {
