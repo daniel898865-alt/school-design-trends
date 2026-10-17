@@ -9,10 +9,18 @@ git clone https://github.com/yunzecho-eng/school-design-trends.git
 cd school-design-trends
 git switch main
 git pull --ff-only
-git switch -c feature/your-task
+git switch -c your-name/YYYY-MM-DD-topic
 ```
 
-할 일은 작은 이슈로 정의하고 담당 파일과 완료 조건을 먼저 합의한다. 역할 분담 제안은 `docs/PLAN.md`에 있다. 작성자는 변경을 직접 실행해 확인한 뒤 PR을 열고, 상대가 리뷰한다. 실제 이슈 번호가 정해진 뒤 PR 본문에 `Fixes #번호`를 적는다.
+브랜치 형식은 `<name>/YYYY-MM-DD-topic`이다. 위 명령의 `your-name`은 작업자 이름, 날짜는 한국시간의 작업 시작일, `topic`은 기능 이름으로 바꾼다. 한 기능을 같은 브랜치에서 이어서 작업하므로 매일 새 브랜치를 만들 필요는 없다. 윤제의 현재 브랜치는 `yunze/2026-10-17-ui`이며, 이미 있는 브랜치로 이동할 때는 `git switch yunze/2026-10-17-ui`를 사용한다. 협업자의 `daniel/2026-10-17-data`는 이름 예시이며 아직 생성하지 않았다.
+
+윤제(`yunzecho-eng`, B)는 검색·필터·카드·그래프·상세·내보내기 UI를, 협업자(`daniel898865-alt`, A)는 입력·정제·중복 제거·집계·사무소 정보·건물 연령 계산을 맡는다. 데이터 형식 합의·계산 확인·상대방 리뷰는 공동 책임이다.
+
+할 일은 작은 이슈로 정의하고 담당 파일과 완료 조건을 먼저 합의한다. 상세 분담은 `docs/PLAN.md`에 있다. 작성자는 변경을 직접 실행해 확인한 뒤 PR을 열고, 상대가 리뷰한다. 이슈의 완료 조건을 전부 충족하는 PR에는 `Fixes #번호`를 적고, 일부 작업만 다루면 `관련 이슈: #번호`로 연결해 이슈를 열어 둔다.
+
+## Contributors 표시
+
+저장소 협업 권한과 Contributors 그래프는 별개다. Contributors에 사람을 수동 지정할 수는 없다. 실제 작업자가 자신의 GitHub 계정에 연결된 작성자 이메일로 커밋하고, 그 변경이 기본 브랜치 `main`에 반영되면 GitHub가 자동 집계한다. 표시만을 위해 다른 사람 명의로 대신 커밋하지 않는다. 팀 소개는 README에서 별도로 확인할 수 있다. 자세한 집계 조건은 [GitHub 공식 안내](https://docs.github.com/en/repositories/viewing-activity-and-data-for-your-repository/viewing-a-projects-contributors)를 따른다.
 
 ## PR에서 남길 세 가지
 
