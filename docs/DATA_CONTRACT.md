@@ -55,4 +55,6 @@ classifyBuildingAge(building, asOf, threshold=40) -> {status, minAge, maxAge, re
 exportRows(snapshot, filters) -> {rows[], columns[], metadata}
 ```
 
-함수는 아직 구현하지 않았다. 화면은 집계 결과를 다시 계산하지 않고 동일 모듈을 사용한다. CSV 내보내기는 수식으로 해석될 수 있는 문자열을 안전하게 처리하고, 입력 텍스트를 화면에 넣을 때 HTML로 실행하지 않는다. 외부 링크는 http/https만 허용한다.
+A1의 `parseSnapshot`, `filterProjects`, `summarizeProjects`는 구현되었다. `filterProjects`의 반환 배열은 조회 조건·엔티티 맵을 `meta`에 보존하므로 `summarizeProjects`에 배열을 그대로 전달한다. 가공·직렬화로 meta를 잃으면 기준일과 참조 존재 검증 정보를 잃는다. 파서의 errors를 확인한 뒤 사용하고 warnings도 표시한다.
+
+`classifyBuildingAge`와 공통 `exportRows` 등 A2 및 UI 어댑터는 미완료다. [통합 기록](INTEGRATION_REVIEW.md)과 이슈 #12에서 필터 이름·결측·다지역의 대응을 추적한다. 완성된 화면은 공통 집계 결과를 사용해야 하며, 현재의 가상 자료 전용 공급자를 실제 자료 처리에 사용하지 않는다. CSV 내보내기는 수식으로 해석될 수 있는 문자열을 안전하게 처리하고, 입력 텍스트를 화면에 넣을 때 HTML로 실행하지 않는다. 외부 링크는 http/https만 허용한다.
