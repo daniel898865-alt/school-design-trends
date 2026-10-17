@@ -2,6 +2,7 @@ import { createDataProvider } from './data-provider.js';
 import { el, emptyState } from './dom.js';
 import { createProjectThumbnail, primaryProjectSource } from './project-media.js';
 import { renderRegionMap } from './region-map.js';
+import { renderYearTrends } from './year-trends.js';
 import { renderFirms, renderBuildings, renderTopics, openProjectDialog } from './details.js';
 import { serializeCsv, serializeMarkdown, downloadExport } from './export.js';
 
@@ -12,9 +13,10 @@ let mode = 'cards';
 let section = 'overview';
 let lastFilters;
 let loadSequence = 0;
+let yearBasisInitialized = false;
 const form = $('filters');
-const dateLabels = { award_date: '당선일', competition_date: '공모일', published_at: '기사 게시일' };
-const sections = ['overview', 'projects', 'firms', 'buildings', 'topics'];
+const dateLabels = { award_date: '당선일', competition_date: '공모일', published_at: '기사 게시일', completion_date: '사업 준공일' };
+const sections = ['overview', 'projects', 'firms', 'buildings', 'topics', 'years'];
 
 function filters() { return { ...Object.fromEntries(new FormData(form)), months: Number($('months').value) }; }
 function message(text) { $('notice').textContent = text; }
@@ -42,7 +44,7 @@ function restoreFilters(values) {
   }
 }
 function defaultFilters(nextProvider) {
-  return { query: '', region: '', schoolLevel: '', months: 36, asOf: nextProvider.snapshot.as_of, dateBasis: 'award_date', topic: '' };
+  return { query: '', region: '', schoolLevel: '', months: 36, asOf: nextProvider.snapshot.as_of, dateBasis: section === 'years' ? 'completion_date' : 'award_date', topic: '' };
 }
 function renderWarnings() {
   const entries = view.diagnostics ?? provider.warnings ?? [];
@@ -130,6 +132,17 @@ function switchSection(next, { navigate = false } = {}) {
     tab.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' });
   }
 }
+function navigateSection(next) {
+  // The first visit starts from confirmed project completion dates. Later visits
+  // preserve the user's explicitly chosen global date basis.
+  if (next === 'years' && provider && !yearBasisInitialized) {
+    const previous = $('dateBasis').value;
+    $('dateBasis').value = 'completion_date';
+    if (!render()) { $('dateBasis').value = previous; return; }
+    yearBasisInitialized = true;
+  }
+  switchSection(next, { navigate: true });
+}
 function paint() {
     $('error').hidden = true;
     $('loading-help').hidden = true;
@@ -154,6 +167,11 @@ function paint() {
     renderFirms($('firms-view'), view, provider.snapshot, basicDetail);
     renderBuildings($('buildings-view'), view, provider.snapshot);
     renderTopics($('topics-view'), view);
+    renderYearTrends($('years-view'), view, provider.snapshot, {
+      dateBasis: lastFilters.dateBasis, asOf: lastFilters.asOf, months: lastFilters.months,
+      onDateBasisChange: dateBasis => { $('dateBasis').value = dateBasis; render(); },
+      onOpenProject: basicDetail,
+    });
     $('export-count').textContent = view.summary.projects;
     $('export-csv').disabled = $('export-md').disabled = view.empty;
     renderWarnings();
@@ -161,15 +179,17 @@ function paint() {
     message(`${isDemo ? '가상 ' : ''}설계사업 ${view.summary.projects}건을 표시합니다. 날짜 미확인으로 제외된 사례 ${view.summary.excludedUnknownDates}건.`);
 }
 function render() {
-  if (!provider || !form.reportValidity()) return;
+  if (!provider || !form.reportValidity()) return false;
   try {
     const nextFilters = filters();
     const nextView = provider.select(nextFilters);
     view = nextView; lastFilters = nextFilters;
     paint();
+    return true;
   } catch (error) {
     if (lastFilters) restoreFilters(lastFilters);
     failure(error);
+    return false;
   }
 }
 function installProvider(next) {
@@ -180,6 +200,8 @@ function installProvider(next) {
   provider = next; view = nextView; lastFilters = nextFilters;
   form.reset(); options(next); restoreFilters(nextFilters);
   $('buildings-view').dataset.ageFilter = 'all';
+  delete $('years-view').dataset.selectedYear;
+  yearBasisInitialized = section === 'years';
   paint();
 }
 async function loadDemo() {
@@ -194,10 +216,10 @@ async function loadDemo() {
 }
 form.addEventListener('submit', event => { event.preventDefault(); render(); });
 form.addEventListener('change', () => render());
-$('reset').addEventListener('click', () => { if (!provider) return; form.reset(); $('asOf').value = provider.snapshot.as_of; $('buildings-view').dataset.ageFilter = 'all'; render(); });
+$('reset').addEventListener('click', () => { if (!provider) return; form.reset(); restoreFilters(defaultFilters(provider)); $('buildings-view').dataset.ageFilter = 'all'; delete $('years-view').dataset.selectedYear; render(); });
 $('reload-demo').addEventListener('click', loadDemo);
-$('navigation').addEventListener('click', event => { const button = event.target.closest('[data-view]'); if (button) switchSection(button.dataset.view, { navigate: true }); });
-$('result-tabs').addEventListener('click', event => { const button = event.target.closest('[data-result-view]'); if (button) switchSection(button.dataset.resultView, { navigate: true }); });
+$('navigation').addEventListener('click', event => { const button = event.target.closest('[data-view]'); if (button) navigateSection(button.dataset.view); });
+$('result-tabs').addEventListener('click', event => { const button = event.target.closest('[data-result-view]'); if (button) navigateSection(button.dataset.resultView); });
 $('result-tabs').addEventListener('keydown', event => {
   const button = event.target.closest('[data-result-view]');
   if (!button) return;
@@ -205,7 +227,7 @@ $('result-tabs').addEventListener('keydown', event => {
   const target = { ArrowRight: (current + 1) % sections.length, ArrowLeft: (current + sections.length - 1) % sections.length, Home: 0, End: sections.length - 1 }[event.key];
   if (target === undefined) return;
   event.preventDefault();
-  switchSection(sections[target], { navigate: true });
+  navigateSection(sections[target]);
 });
 for (const name of ['cards', 'table']) $(name + '-mode').addEventListener('click', () => { mode = name; $('cards-mode').setAttribute('aria-pressed', name === 'cards'); $('table-mode').setAttribute('aria-pressed', name === 'table'); if (view) renderProjects(); });
 $('data-help').addEventListener('click', () => $('data-section').scrollIntoView({ behavior: 'smooth' }));

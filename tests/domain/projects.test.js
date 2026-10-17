@@ -97,7 +97,7 @@ test('개월 수를 바꾸면 기간도 바뀐다', () => {
 });
 
 test('잘못된 조회 조건은 오류', () => {
-  assert.throws(() => filterProjects(snapshot, { dateBasis: 'completion_date' }));
+  assert.throws(() => filterProjects(snapshot, { dateBasis: 'opening_date' }));
   assert.throws(() => filterProjects(snapshot, { asOf: '2026-02-30' }));
 });
 
