@@ -37,11 +37,14 @@ export function normalizeRegion(rawCode, rawName) {
   if (typeof code === 'number' && Number.isInteger(code)) code = String(code);
   code = cleanText(code);
   const name = cleanText(rawName);
+  if (code !== null && typeof code !== 'string') {
+    return { code: null, name: null, note: '시도 코드 형식은 문자열 또는 정수여야 함 — 지역 미확인으로 둠', conflict: false };
+  }
 
   let fromCode = null;
   let note = null;
   if (code !== null) {
-    const mapped = regionRules.legacy_codes[code] ?? code;
+    const mapped = Object.hasOwn(regionRules.legacy_codes, code) ? regionRules.legacy_codes[code] : code;
     fromCode = regionByCode.get(mapped) ?? null;
     if (!fromCode) note = `알 수 없는 시도 코드 "${code}"`;
     else if (mapped !== code) note = `이전 시도 코드 "${code}"를 "${mapped}"로 변환`;

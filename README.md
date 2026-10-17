@@ -2,7 +2,28 @@
 
 잡지·설계공모·뉴스의 학교 설계 사례를 모아, 최근 3년의 변화와 지역별 분포를 근거와 함께 살펴보는 웹 도구입니다.
 
-**현재 상태: 협업 준비 및 설계 단계입니다. 실행 가능한 사이트, 자동 수집기, 실제 전국 데이터는 아직 구현하지 않았습니다.**
+**현재 상태: 가상 자료 화면(B1·B2)과 입력·정제·집계 모듈(A1)을 구현했습니다. 화면은 아직 데모 전용 공급자를 사용하며, 공통 모듈 연결·A2·실제 전국 자료·자동 수집·월별 갱신은 남아 있습니다.**
+
+## 로컬에서 실행하기
+
+Node.js 22.12 이상에서 별도 패키지 설치 없이 실행합니다. 검증 환경은 Node.js 24.14.0입니다. A1의 JSON 모듈 import attributes를 고려한 버전 기준입니다([Node.js 문서](https://nodejs.org/api/esm.html#import-attributes)).
+
+```bash
+npm start
+# http://127.0.0.1:4173/
+npm test
+```
+
+검색·시도·학교급·기간 필터와 카드/표, 지역·월별 그래프, 사무소·건물·주제 화면, 사례 상세 및 CSV/Markdown 내보내기를 확인할 수 있습니다. 가상 사업 12건 중 기본 기간과 날짜 기준에 해당하는 11건이 표시되며, 날짜 미상 1건은 제외 안내에 표시합니다. 검증용 JSON을 브라우저 안에서 가져올 수 있습니다. 실제 자료로 바꾸는 기능은 아직 제공하지 않습니다.
+
+화면은 독립된 `src/ui/demo-provider.js`를 사용합니다. Daniel의 A1(`src/data/`, `src/domain/projects.js`, `rules/`)은 CLI에서 실행할 수 있으며, 사무소·건물·주제·내보내기 공통 로직(A2)과 UI 어댑터를 연결해야 합니다. [화면 연결 안내](docs/UI_HANDOFF.md)와 [병합 검토·데이터 충돌 기록](docs/INTEGRATION_REVIEW.md)을 참고하세요. GitHub Pages 배포는 아직 하지 않았습니다.
+
+```bash
+node scripts/check-snapshot.js public/demo.snapshot.json
+# 기본 가상 자료: 사업 11건 · 출처 13건 · 학교 11곳
+```
+
+`npm test`는 UI·자료 처리·두 모듈 간 대조 테스트를 모두 실행합니다.
 
 ## 만들려는 기능
 
@@ -15,15 +36,21 @@
 | 설계 트렌드 | 주제별 비율, 대표 사례, 변화에 대한 해석 | 관측된 경향과 향후 전망을 구분; 수집 편향과 표본 수 표시 |
 | 40년 이상 건물 | 학교·건물명, 준공일, 연령, 근거, 월별 변화 | 개교일이 아닌 건물별 준공일; 월별 재확인과 원자료 갱신일 구분 |
 
-## 두 사람의 개발 분담안
+## 함께하는 사람과 개발 분담
 
-| 담당 제안 | 책임 | 주요 파일 |
+| 담당 | 책임 | 주요 파일 |
 |---|---|---|
-| A · `yunzecho-eng` | 자료 형식, CSV/JSON 입력, 정제·중복 제거, 지역 집계, 건물 연령 계산 | `src/data/`, `src/domain/`, `rules/`, `scripts/`, `tests/domain/` |
-| B · `daniel898865-alt` | 검색·필터, 사례 카드, 시도 그래프, 사무소·건물 상세, 내보내기 UI | `src/ui/`, `src/styles/`, `public/`, `tests/ui/` |
+| B · 윤제 [@yunzecho-eng](https://github.com/yunzecho-eng) | 검색·필터, 텍스트·이미지 사례 카드, 시도 그래프, 사무소·건물 상세, 내보내기 UI | `src/ui/`, `src/styles/`, `public/`, `tests/ui/` |
+| A · 협업자 [@daniel898865-alt](https://github.com/daniel898865-alt) | 자료 형식, CSV/JSON 입력, 정제·중복 제거, 시도·학교급 집계, 사무소 정보, 건물 연령 계산 | `src/data/`, `src/domain/`, `rules/`, `scripts/`, `tests/domain/` |
 | 공동 | 한 건의 데이터 형식, 지표 정의, 예시·기대 결과, 상대 PR 검토 | `docs/`, `data/examples/`, `index.html` 등 통합 진입점 |
 
-이는 시작 제안이며 팀 합의로 담당을 바꿀 수 있습니다. 공통 파일은 수정 담당을 먼저 정합니다.
+2026-10-17 역할 변경을 반영했습니다. 문서의 A는 자료 처리, B는 화면 개발을 뜻합니다. 공통 파일은 수정 담당을 먼저 정합니다.
+
+진행 상황은 담당별로 [Yunze 화면 개발 #3](https://github.com/yunzecho-eng/school-design-trends/issues/3), [Daniel 자료 처리 #4](https://github.com/yunzecho-eng/school-design-trends/issues/4)에서 관리합니다. 각 이슈에 두 단계 PR과 완료 기준을 적었습니다. 기존 공동 이슈 #1은 분리 이력을 남기고 종료했습니다.
+
+윤제의 작업 브랜치는 [`yunze/2026-10-17-ui`](https://github.com/yunzecho-eng/school-design-trends/tree/yunze/2026-10-17-ui)입니다. 브랜치는 `이름/YYYY-MM-DD-작업내용`으로 쓰고 날짜는 작업 시작일로 유지합니다. 같은 작업을 이어갈 때 매일 새 브랜치를 만들 필요는 없습니다.
+
+위 표는 함께하는 팀원 명단입니다. GitHub의 [Contributors](https://github.com/yunzecho-eng/school-design-trends/graphs/contributors)는 계정과 연결된 실제 작성자 커밋이 기본 브랜치 `main`에 반영되면 자동으로 집계됩니다. 협업자 권한과 기여 통계는 별도이며 수동으로 이름을 지정하는 목록이 아닙니다. [GitHub 안내](https://docs.github.com/en/repositories/viewing-activity-and-data-for-your-repository/viewing-a-projects-contributors)
 
 ## 개발 순서
 
