@@ -1,5 +1,7 @@
 import { createDemoProvider } from './demo-provider.js';
-import { el, emptyState, projectImage, sourceLinks } from './dom.js';
+import { el, emptyState, projectImage } from './dom.js';
+import { renderFirms, renderBuildings, renderTopics, openProjectDialog } from './details.js';
+import { serializeCsv, serializeMarkdown, downloadExport } from './export.js';
 
 const $ = id => document.getElementById(id);
 let provider;
@@ -49,11 +51,7 @@ function monthsChart(container, data) {
   container.append(svg, details, el('p', { class: 'small' }, '조회 기간 양끝의 월은 일부 기간만 포함할 수 있습니다.'));
 }
 function basicDetail(project) {
-  const dialog = $('project-dialog');
-  const close = el('button', { class: 'dialog-close', type: 'button' }, '닫기 ×');
-  close.addEventListener('click', () => dialog.close());
-  dialog.replaceChildren(close, el('p', { class: 'eyebrow' }, 'DEMO / PROJECT'), el('h2', {}, project.title), projectImage(project), el('p', {}, project.summary), el('p', {}, `${project.region_name} · ${project.school_level_label} · 당선일 ${project.award_date || '미확인'}`), el('h3', {}, '출처'), sourceLinks(project.source_ids, provider.snapshot));
-  dialog.showModal();
+  openProjectDialog($('project-dialog'), project, provider.snapshot);
 }
 function renderProjects() {
   const container = $('projects');
@@ -77,6 +75,7 @@ function switchSection(next) {
   document.querySelectorAll('[data-view]').forEach(b => { if (b.dataset.view === section) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   $('overview-view').hidden = section !== 'overview';
   $('projects-view').hidden = !['overview', 'projects'].includes(section);
+  for (const name of ['firms', 'buildings', 'topics']) $(name + '-view').hidden = section !== name;
 }
 function render() {
   if (!provider || !form.reportValidity()) return;
@@ -89,7 +88,13 @@ function render() {
     $('stats').replaceChildren(stat('설계사업', view.summary.projects, '중복 사업을 제외한 고유 사례'), stat('연결된 자료', view.summary.sources, '사업 수와 구분한 출처 수'), stat('관련 학교', view.summary.schools, '동일 학교의 중복을 제외', '곳'), stat('참여 사무소', view.summary.firms, '공동 당선 포함 · 고유 사무소', '곳'));
     bars($('region-chart'), view.byRegion); monthsChart($('month-chart'), view.byMonth);
     $('level-strip').replaceChildren(el('strong', {}, '학교급별 분포'), ...view.byLevel.map(d => el('span', {}, [d.label, el('b', {}, `${d.count}건`)])));
-    renderProjects(); switchSection(section);
+    renderProjects();
+    renderFirms($('firms-view'), view, provider.snapshot, basicDetail);
+    renderBuildings($('buildings-view'), view, provider.snapshot);
+    renderTopics($('topics-view'), view);
+    $('export-count').textContent = view.summary.projects;
+    $('export-csv').disabled = $('export-md').disabled = view.empty;
+    switchSection(section);
     message(`가상 설계사업 ${view.summary.projects}건을 표시합니다. 날짜 미확인으로 제외된 사례 ${view.summary.excludedUnknownDates}건.`);
   } catch (error) { failure(error); }
 }
@@ -104,7 +109,7 @@ async function loadDemo() {
 }
 form.addEventListener('submit', event => { event.preventDefault(); render(); });
 form.addEventListener('change', () => render());
-$('reset').addEventListener('click', () => { if (!provider) return; form.reset(); $('asOf').value = provider.snapshot.as_of; render(); });
+$('reset').addEventListener('click', () => { if (!provider) return; form.reset(); $('asOf').value = provider.snapshot.as_of; $('buildings-view').dataset.ageFilter = 'all'; render(); });
 $('reload-demo').addEventListener('click', loadDemo);
 $('navigation').addEventListener('click', event => { const button = event.target.closest('[data-view]'); if (button) switchSection(button.dataset.view); });
 for (const name of ['cards', 'table']) $(name + '-mode').addEventListener('click', () => { mode = name; $('cards-mode').setAttribute('aria-pressed', name === 'cards'); $('table-mode').setAttribute('aria-pressed', name === 'table'); if (view) renderProjects(); });
@@ -113,9 +118,22 @@ $('import-file').addEventListener('change', async event => {
   const file = event.target.files[0]; if (!file) return;
   try {
     if (file.size > 1_000_000) throw new Error('파일은 1 MB 이하여야 합니다.');
-    const next = createDemoProvider(JSON.parse(await file.text()));
+    let snapshot;
+    try { snapshot = JSON.parse(await file.text()); }
+    catch { throw new Error('JSON 형식을 읽을 수 없습니다. 중괄호·쉼표·따옴표를 확인하거나 기본 예시 JSON을 사용해 주세요.'); }
+    const next = createDemoProvider(snapshot);
     provider = next; form.reset(); options(); render();
   } catch (error) { failure(error); }
   event.target.value = '';
+});
+for (const type of ['csv', 'md']) $('export-' + type).addEventListener('click', () => {
+  if (!provider || !view || view.empty) return;
+  try {
+    const data = provider.exportRows(lastFilters);
+    if (data.rows.length !== view.summary.projects) throw new Error('화면과 내보내기 건수가 다릅니다. 자료 모듈 연결을 확인해 주세요.');
+    const content = type === 'csv' ? serializeCsv(data) : serializeMarkdown(data);
+    downloadExport(content, `school-design-demo-${lastFilters.asOf}.${type}`, type === 'csv' ? 'text/csv;charset=utf-8' : 'text/markdown;charset=utf-8');
+    message(`가상 설계사업 ${data.rows.length}건의 ${type.toUpperCase()} 다운로드를 시작했습니다. 자료 기준일·조회 조건·출처를 포함합니다.`);
+  } catch (error) { failure(error); }
 });
 loadDemo();
