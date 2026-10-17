@@ -4,7 +4,7 @@ const ageLabels = {
   eligible: '40년 이상',
   under: '40년 미만',
   uncertain: '경계 연도 · 월일 확인 필요',
-  unknown: '준공·사용 상태 미확인',
+  unknown: '연령 판정 미확인',
   inactive: '철거·폐교 등 사용 종료',
 };
 
@@ -12,10 +12,19 @@ function text(value, fallback = '미확인') {
   return value === null || value === undefined || value === '' ? fallback : String(value);
 }
 
+const reviewLabels = new Map([['demo', '가상'], ['checked', '확인'], ['reviewed', '검토 완료'], ['draft', '초안'], ['unknown', '미확인']]);
+const buildingStatusLabels = new Map([['in_use', '사용 중'], ['unknown', '사용 상태 미확인'], ['demolished', '철거'], ['closed', '폐교·사용 종료']]);
+function reviewStatus(value) { return reviewLabels.get(value) ?? text(value); }
+
 function definitionList(entries) {
   return el('dl', { class: 'meta-list' }, entries.flatMap(([label, value]) => [
     el('dt', {}, label), el('dd', {}, value),
   ]));
+}
+
+function appendNotes(container, notes, label) {
+  if (!notes?.length) return;
+  container.append(el('ul', { class: 'domain-notes', 'aria-label': label }, [...new Set(notes)].map(note => el('li', {}, note))));
 }
 
 function externalLink(url, label) {
@@ -37,9 +46,20 @@ export function renderFirms(container, view, snapshot, onOpenProject) {
   container.replaceChildren();
   container.append(el('div', { class: 'section-heading' }, [
     el('div', {}, [el('p', { class: 'eyebrow' }, 'DESIGN OFFICES'), el('h2', {}, '당선 참여 사무소')]),
-    el('span', { class: 'badge' }, `${view.firms?.length ?? 0}개 사무소`),
+    el('span', { class: 'badge' }, `목록이 연결된 사무소 ${view.summary?.firms ?? view.firms?.length ?? 0}곳`),
   ]));
   container.append(el('p', { class: 'notice' }, '현재 조회 사업에 참여한 사무소입니다. 공동 당선은 사무소마다 1건으로 표시하므로 합계가 전체 사업 수보다 클 수 있습니다. 참여 건수는 시장점유율이나 계약 수주액이 아닙니다.'));
+  appendNotes(container, view.firmNotes, '사무소 집계 기준과 확인 사항');
+  if (view.unresolvedFirmRefs?.length) {
+    container.append(el('details', { class: 'notice' }, [
+      el('summary', {}, `집계에서 제외한 미확인 사무소 연결 ${view.unresolvedFirmRefs.length}건`),
+      el('p', {}, '사업에 사무소 식별자는 있지만 대응하는 사무소 자료가 없습니다. 사무소 수와 참여 건수에 포함하지 않으며, 이름·사업자번호를 추정하지 않습니다.'),
+      el('ul', {}, view.unresolvedFirmRefs.map(ref => {
+        const title = (view.projects ?? []).find(project => project.project_id === ref.project_id)?.title || ref.project_id;
+        return el('li', {}, `${title} · 사무소 식별자 ${ref.firm_id}`);
+      })),
+    ]));
+  }
   if (!view.firms?.length) {
     container.append(emptyState('사무소 정보가 없습니다', '조회 조건을 바꾸거나 당선 참여 사무소가 확인된 자료를 연결해 주세요.'));
     return;
@@ -49,10 +69,13 @@ export function renderFirms(container, view, snapshot, onOpenProject) {
     const card = el('article', { class: 'firm-card' });
     card.append(el('span', { class: 'badge' }, firm.project_count === null || firm.project_count === undefined ? '참여 당선 건수 미확인' : `참여 당선 ${firm.project_count}건`));
     card.append(el('h3', {}, text(firm.name, '이름 미확인 사무소')));
+    if (firm.known_firm === false) card.append(el('p', { class: 'notice' }, `사무소 목록에 없는 식별자 ${firm.firm_id}입니다. 이름·번호를 추정하지 않습니다.`));
     if (firm.aliases?.length) card.append(el('p', { class: 'muted' }, `다른 표기: ${firm.aliases.join(', ')}`));
     card.append(definitionList([
       ['사업자등록번호', text(firm.business_registration_number, '미확인 · 추정하지 않음')],
-      ['번호 확인 상태', firm.registration_status === 'verified' ? '근거 확인 기록 있음' : '미확인'],
+      ['등록 상태 기록', text(firm.registration_status === 'unknown' ? null : firm.registration_status)],
+      ['번호 형식 검사', ({ format_ok: '형식·검증번호 통과 · 실재·영업 상태 확인과 다름', invalid_format: '형식 확인 필요', checksum_mismatch: '검증번호 불일치 · 원자료 확인 필요' })[firm.brn_format] ?? '미확인'],
+      ['단독 / 공동 참여', `${text(firm.solo_awards)} / ${text(firm.joint_awards)}건`],
       ['자료 확인일', text(firm.verified_at)],
     ]));
     card.append(externalLink(firm.official_url, '사무소 공식 사이트'));
@@ -83,6 +106,8 @@ export function renderBuildings(container, view, snapshot) {
     el('span', { class: 'badge' }, `기준일 ${text(view.metadata?.as_of ?? snapshot.as_of)}`),
   ]));
   container.append(el('p', { class: 'notice' }, '학교 개교일이 아닌 건물별 준공 정보에 따른 표시입니다. 연령은 안전등급이나 재건축 필요성을 뜻하지 않습니다. 월별 자동 갱신과 이전 달 비교는 아직 연결되지 않았습니다.'));
+  appendNotes(container, view.buildingNotes, '건물 연령 판정 기준과 확인 사항');
+  container.append(el('p', { class: 'muted' }, '준공 정보로 판단한 연령과 사용 상태는 별개입니다. 사용 상태 미확인 건물도 준공일이 확인되면 연령을 표시하며, 철거·폐교 건물은 별도로 구분합니다.'));
   const select = el('select', { id: 'building-age-filter', 'aria-label': '건물 연령 확인 상태' });
   select.append(el('option', { value: 'all' }, '모든 확인 상태'));
   for (const [value, label] of Object.entries(ageLabels)) select.append(el('option', { value }, label));
@@ -114,7 +139,9 @@ export function renderBuildings(container, view, snapshot) {
       const evidence = el('details', {}, [
         el('summary', {}, '출처와 상태 보기'),
         el('p', { class: 'muted' }, `확인일: ${text(building.verified_at)}`),
-        el('p', { class: 'muted' }, `원자료 이용 상태: ${text(building.status)}`),
+        el('p', { class: 'muted' }, `원자료 이용 상태: ${buildingStatusLabels.get(building.status) ?? text(building.status)}`),
+        el('p', { class: 'muted' }, `연령 판정 근거: ${text(building.age_reason)}`),
+        el('p', { class: 'muted' }, `40년 이상 기본 목록: ${building.listed === true ? '포함' : building.listed === false ? '제외' : '미확인'}`),
         sourceLinks(building.source_ids ?? [], snapshot),
       ]);
       body.append(el('tr', {}, [
@@ -122,7 +149,7 @@ export function renderBuildings(container, view, snapshot) {
         el('td', {}, text(building.region_name)),
         el('td', {}, completion),
         el('td', {}, text(building.age_label)),
-        el('td', {}, el('span', { class: `badge age-${Object.hasOwn(ageLabels, building.age_status) ? building.age_status : 'unknown'}` }, ageLabels[building.age_status] ?? ageLabels.unknown)),
+        el('td', {}, [el('span', { class: `badge age-${Object.hasOwn(ageLabels, building.age_status) ? building.age_status : 'unknown'}` }, ageLabels[building.age_status] ?? ageLabels.unknown), el('span', { class: 'cell-subtitle' }, buildingStatusLabels.get(building.status) ?? '사용 상태 미확인')]),
         el('td', {}, evidence),
       ]));
     }
@@ -143,6 +170,7 @@ export function renderTopics(container, view) {
   container.append(el('p', { class: 'muted' }, '주제별로 해당하는 고유 사업 수를 표시합니다. 하나의 사업에 여러 주제가 포함될 수 있으므로 주제별 합계는 조회 사업 수와 다를 수 있습니다.'));
   container.append(el('p', { class: 'muted' }, view.summary?.unclassifiedProjects === undefined ?
     '미분류 사업 건수: 집계 미제공' : `미분류 사업 ${view.summary.unclassifiedProjects}건 · 근거가 없는 사업은 주제를 추정하지 않습니다.`));
+  appendNotes(container, view.topicNotes, '주제 집계 기준과 확인 사항');
   if (!view.topics?.length || denominator === 0) {
     container.append(emptyState('표시할 주제가 없습니다', '조회 조건과 주제 분류 근거를 확인해 주세요.'));
   } else {
@@ -155,8 +183,10 @@ export function renderTopics(container, view) {
       }
       const count = rawCount;
       const meter = el('progress', { class: 'topic-meter', max: Math.max(denominator, count, 1), value: count, 'aria-label': `${text(topic.label)}: ${count}건, 조회 사업 ${denominator}건` });
+      const review = Object.entries(topic.review_status_counts ?? {}).map(([status, amount]) => `${reviewStatus(status)} ${amount}건`).join(' · ');
+      const agreement = topic.agreement_status === 'needs_agreement' ? '분류 기준 합의 전' : `분류 기준: ${text(topic.agreement_status)}`;
       list.append(el('li', { class: 'topic-row' }, [
-        el('span', {}, text(topic.label, topic.id)), meter, el('strong', {}, `${count} / ${denominator}건`),
+        el('span', {}, [text(topic.label, topic.id), el('small', { class: 'topic-review' }, `${agreement}${review ? ` · 근거 상태: ${review}` : ''}`)]), meter, el('strong', {}, `${count} / ${denominator}건`),
       ]));
     }
     container.append(list);
@@ -187,9 +217,10 @@ export function openProjectDialog(dialog, project, snapshot) {
     ['공모일', text(project.competition_date)],
     ['당선일', text(project.award_date)],
     ['준공일', text(project.completion_date)],
+    ['현재 조회에 사용한 날짜', text(project.basis_date)],
     ['당선 참여 사무소', projectNames(project, snapshot, 'firm_names', 'firm_ids', 'firms')],
   ]));
-  content.append(el('p', { class: 'muted' }, '공모일·당선일·준공일은 각각의 사건 날짜이며, 미확인 날짜를 다른 날짜로 대신하지 않습니다. 공동 당선 사무소의 참여는 계약 체결이나 수주액을 뜻하지 않습니다.'));
+  content.append(el('p', { class: 'muted' }, '공모일·당선일·준공일·기사 게시일은 각각의 사건 날짜이며, 미확인 날짜를 다른 날짜로 대신하지 않습니다. 여러 지역에 걸친 사업은 모든 관련 지역을 표시합니다. 공동 당선 사무소의 참여는 계약 체결이나 수주액을 뜻하지 않습니다.'));
   content.append(el('h3', {}, '주제 분류 근거'));
   if (!project.topic_evidence?.length) {
     content.append(el('p', { class: 'muted' }, '미분류 · 확인된 주제 근거가 없습니다.'));
@@ -199,7 +230,7 @@ export function openProjectDialog(dialog, project, snapshot) {
       evidenceList.append(el('li', {}, [
         el('strong', {}, text(evidence.topic_label ?? evidence.topic_id)),
         el('p', {}, text(evidence.evidence_note, '근거 설명 미확인')),
-        el('p', { class: 'muted' }, `검토 상태: ${text(evidence.review_status)}`),
+        el('p', { class: 'muted' }, `검토 상태: ${reviewStatus(evidence.review_status)}`),
         sourceLinks(evidence.source_id ? [evidence.source_id] : [], snapshot),
       ]));
     }

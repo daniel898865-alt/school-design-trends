@@ -2,7 +2,11 @@
 
 잡지·설계공모·뉴스의 학교 설계 사례를 모아, 최근 3년의 변화와 지역별 분포를 근거와 함께 살펴보는 웹 도구입니다.
 
-**현재 상태: 가상 자료 화면(B1·B2)과 입력·정제·집계 모듈(A1)을 구현했습니다. 화면은 아직 데모 전용 공급자를 사용하며, 공통 모듈 연결·A2·실제 전국 자료·자동 수집·월별 갱신은 남아 있습니다.**
+**[웹 화면 바로 열기 →](https://yunzecho-eng.github.io/school-design-trends/)**
+
+현재는 **가상 자료로 작동하는 공개 데모**입니다. 검색·그래프·사무소·건물 연령·주제·내보내기를 A1/A2 공통 데이터 모듈에 연결했습니다. 실제 전국 자료 수집·미래 예측·월별 자동 갱신은 아직 제공하지 않습니다.
+
+위 주소는 다른 PC에서도 열립니다. `127.0.0.1` 주소는 해당 PC에서 미리보기 서버가 실행 중일 때만 사용할 수 있습니다. 저장소의 `index.html`은 웹페이지 소스이므로 파일을 더블클릭하기보다 온라인 주소 또는 아래 로컬 서버를 이용하세요.
 
 ## 로컬에서 실행하기
 
@@ -14,9 +18,9 @@ npm start
 npm test
 ```
 
-검색·시도·학교급·기간 필터와 카드/표, 지역·월별 그래프, 사무소·건물·주제 화면, 사례 상세 및 CSV/Markdown 내보내기를 확인할 수 있습니다. 가상 사업 12건 중 기본 기간과 날짜 기준에 해당하는 11건이 표시되며, 날짜 미상 1건은 제외 안내에 표시합니다. 검증용 JSON을 브라우저 안에서 가져올 수 있습니다. 실제 자료로 바꾸는 기능은 아직 제공하지 않습니다.
+서버 실행 후 [로컬 미리보기](http://127.0.0.1:4173/)를 엽니다. 검색·시도·학교급·기간·당선일/공모일/기사 게시일 조건, 카드/표, 지역·월별 그래프, 사무소·건물·주제 화면, 사례 상세 및 CSV/Markdown 내보내기를 확인할 수 있습니다. 가상 사업 12건 중 기본 기간과 날짜 기준에 해당하는 11건이 표시되며, 날짜 미상 1건은 제외 안내에 표시합니다. 검증용 JSON을 브라우저 안에서 가져올 수 있습니다. 실제 자료로 바꾸는 기능은 아직 제공하지 않습니다.
 
-화면은 독립된 `src/ui/demo-provider.js`를 사용합니다. Daniel의 A1(`src/data/`, `src/domain/projects.js`, `rules/`)은 CLI에서 실행할 수 있으며, 사무소·건물·주제·내보내기 공통 로직(A2)과 UI 어댑터를 연결해야 합니다. [화면 연결 안내](docs/UI_HANDOFF.md)와 [병합 검토·데이터 충돌 기록](docs/INTEGRATION_REVIEW.md)을 참고하세요. GitHub Pages 배포는 아직 하지 않았습니다.
+화면은 `src/ui/data-provider.js`에서 Daniel의 A1/A2를 호출합니다. 조회와 내보내기는 같은 검색·필터를 사용하고, 여러 시도에 걸친 사업·결측·경고를 표시합니다. 잘못된 입력은 이전 자료와 조회 결과를 유지한 채 안내합니다. 이전 `demo-provider.js`는 초기 UI의 비교 테스트용으로 남겨 두었습니다. [연결 안내](docs/UI_HANDOFF.md), [이번 연결 검증](docs/UI_CONNECTION_VERIFICATION.md), [첫 병합 검토](docs/INTEGRATION_REVIEW.md)를 참고하세요.
 
 ```bash
 node scripts/check-snapshot.js public/demo.snapshot.json
@@ -48,7 +52,7 @@ node scripts/check-snapshot.js public/demo.snapshot.json
 
 진행 상황은 담당별로 [Yunze 화면 개발 #3](https://github.com/yunzecho-eng/school-design-trends/issues/3), [Daniel 자료 처리 #4](https://github.com/yunzecho-eng/school-design-trends/issues/4)에서 관리합니다. 각 이슈에 두 단계 PR과 완료 기준을 적었습니다. 기존 공동 이슈 #1은 분리 이력을 남기고 종료했습니다.
 
-윤제의 작업 브랜치는 [`yunze/2026-10-17-ui`](https://github.com/yunzecho-eng/school-design-trends/tree/yunze/2026-10-17-ui)입니다. 브랜치는 `이름/YYYY-MM-DD-작업내용`으로 쓰고 날짜는 작업 시작일로 유지합니다. 같은 작업을 이어갈 때 매일 새 브랜치를 만들 필요는 없습니다.
+이번 연결 작업 브랜치는 [`yunze/2026-10-17-ui-data-connection`](https://github.com/yunzecho-eng/school-design-trends/tree/yunze/2026-10-17-ui-data-connection)입니다. 브랜치는 `이름/YYYY-MM-DD-작업내용`으로 쓰고 날짜는 작업 시작일로 유지합니다. 같은 작업을 이어갈 때 매일 새 브랜치를 만들 필요는 없습니다.
 
 위 표는 함께하는 팀원 명단입니다. GitHub의 [Contributors](https://github.com/yunzecho-eng/school-design-trends/graphs/contributors)는 계정과 연결된 실제 작성자 커밋이 기본 브랜치 `main`에 반영되면 자동으로 집계됩니다. 협업자 권한과 기여 통계는 별도이며 수동으로 이름을 지정하는 목록이 아닙니다. [GitHub 안내](https://docs.github.com/en/repositories/viewing-activity-and-data-for-your-repository/viewing-a-projects-contributors)
 

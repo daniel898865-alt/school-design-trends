@@ -9,6 +9,7 @@ export const AGE_STATUSES = ['over', 'uncertain', 'under', 'unknown'];
 export function completedYears(from, asOf) {
   const a = parseDate(from);
   const b = parseDate(asOf);
+  if (!a || !b) throw new Error('준공일과 기준일은 유효한 YYYY-MM-DD 날짜여야 함');
   const beforeAnniversary = b.m < a.m || (b.m === a.m && b.d < a.d);
   return b.y - a.y - (beforeAnniversary ? 1 : 0);
 }

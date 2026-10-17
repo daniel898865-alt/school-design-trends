@@ -29,7 +29,7 @@ function evidenceOf(project, issues, sourcesById) {
     }
     if (!e.source_id) issues.push({ path, code: 'missing_evidence_source', message: '근거 출처(source_id) 누락' });
     else if (sourcesById instanceof Map && !sourcesById.has(e.source_id)) {
-      issues.push({ path, code: 'unknown_evidence_source', message: `근거 출처 "${e.source_id}"가 sources에 없음 — 출처 수에서 제외` });
+      issues.push({ path, code: 'unknown_evidence_source', message: `근거 출처 ${JSON.stringify(e.source_id)}가 sources에 없음 — 출처 수에서 제외` });
     }
     if (!e.evidence_note) issues.push({ path, code: 'missing_evidence_note', message: '근거 설명(evidence_note) 누락' });
     if (reviewStatusOf(e).invalid) {

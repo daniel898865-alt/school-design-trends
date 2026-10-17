@@ -29,7 +29,7 @@
       <div><p class="eyebrow">SCHOOL ARCHITECTURE OBSERVATORY</p><h1>학교 공간의 변화,<br><span>사례에서 발견하다.</span></h1><p class="intro">지역과 학교급으로 설계 사례를 살펴보고,<br>공간을 만드는 생각과 그 근거를 함께 확인하세요.</p></div>
       <div class="hero-art"><img src="public/illustrations/courtyard.svg" alt="중정과 학습 공간을 표현한 가상 건축 다이어그램"><span>SPACE FOR LEARNING · 개념 일러스트</span></div>
     </div>
-    <aside class="demo-notice"><strong>가상 자료로 보는 예시 화면</strong><span>실제 학교·공모·통계가 아닙니다. 이미지도 직접 만든 개념도입니다.</span><button id="data-help" type="button">자료 안내 ↗</button></aside>
+    <aside class="demo-notice"><strong id="data-mode-title">가상 자료로 보는 예시 화면</strong><span id="data-mode-description">실제 학교·공모·통계가 아닙니다. 기본 예시 이미지는 직접 만든 개념도입니다.</span><button id="data-help" type="button">자료 안내 ↗</button></aside>
     <section class="filter-panel" aria-labelledby="filter-title">
       <div class="filter-top"><h2 id="filter-title">어떤 학교 공간을 찾고 있나요?</h2><button id="reset" class="text-button" type="button">조건 초기화 ↺</button></div>
       <form id="filters">
@@ -40,20 +40,24 @@
           <label>조회 기간<select id="months" name="months"><option value="36">최근 3년</option><option value="24">최근 2년</option><option value="12">최근 1년</option></select></label>
           <button class="primary search-button" type="submit">검색 <span aria-hidden="true">↗</span></button>
         </div>
-        <details class="advanced"><summary>날짜·설계 주제 상세 조건</summary><div class="advanced-fields"><label>조회 기준일<input type="date" id="asOf" name="asOf" value="2026-10-17" required></label><label>날짜 기준<select id="dateBasis" name="dateBasis"><option value="award_date">당선일</option><option value="competition_date">공모일</option></select></label><label>설계 주제<select id="topic" name="topic"><option value="">전체 주제</option></select></label></div></details>
+        <details class="advanced"><summary>날짜·설계 주제 상세 조건</summary><div class="advanced-fields"><label>조회 기준일<input type="date" id="asOf" name="asOf" value="2026-10-17" required></label><label>날짜 기준<select id="dateBasis" name="dateBasis"><option value="award_date">당선일</option><option value="competition_date">공모일</option><option value="published_at">기사 게시일</option></select></label><label>설계 주제<select id="topic" name="topic"><option value="">전체 주제</option></select></label></div></details>
       </form>
     </section>
     <p id="notice" role="status" aria-live="polite">예시 자료를 불러오는 중입니다…</p>
+    <aside id="loading-help" class="loading-help"><strong>화면이 계속 불러오기 상태라면</strong><p>이 도구는 웹 모듈과 JSON 자료를 읽습니다. HTML 파일을 더블클릭한 <code>file://</code> 주소에서는 브라우저가 이를 차단할 수 있습니다. 배포된 웹 주소로 접속하거나, 저장소 폴더에서 <code>npm start</code>를 실행한 뒤 <code>http://127.0.0.1:4173</code>을 여세요.</p><p>웹 주소에서도 계속 표시되면 새로고침 후 JavaScript 사용 설정과 자료 요청 오류를 확인해 주세요. 정상적으로 자료를 표시하면 이 안내는 사라집니다.</p></aside>
     <div id="error" class="error-box" role="alert" hidden></div>
+    <details id="data-warnings" class="data-warnings" hidden><summary>자료 확인 사항</summary></details>
     <div class="results-meta"><p id="scope">자료 확인 중</p><button id="reload-demo" class="text-button" type="button">기본 예시 다시 불러오기</button></div>
+    <p id="coverage-scope" class="small">자료 범위 확인 중</p>
     <section id="stats" class="stats" aria-label="필터 적용 요약"></section>
     <div class="export-toolbar"><span>현재 조건의 설계사업 <strong id="export-count">0</strong>건 내보내기</span><div><button id="export-csv" type="button" disabled>CSV 다운로드 ↓</button><button id="export-md" type="button" disabled>Markdown 다운로드 ↓</button></div></div>
     <div id="overview-view">
       <section class="chart-grid" aria-label="지역 및 월별 집계">
-        <article class="panel"><div class="panel-heading"><div><p class="eyebrow">BY REGION</p><h2>어디에서 변화하고 있나요?</h2></div><span class="unit">설계사업 · 건</span></div><div id="region-chart"></div></article>
+        <article class="panel"><div class="panel-heading"><div><p class="eyebrow">BY REGION</p><h2>어디에서 변화하고 있나요?</h2></div><span class="unit">지역 참여 · 건</span></div><div id="region-chart"></div><p id="region-note" class="small"></p></article>
         <article class="panel"><div class="panel-heading"><div><p class="eyebrow">OVER TIME</p><h2>시간에 따른 설계 사례</h2></div><span class="unit">설계사업 · 건</span></div><div id="month-chart"></div></article>
       </section>
       <section class="level-strip" aria-label="학교급별 사업 수" id="level-strip"></section>
+      <ul id="aggregation-notes" class="aggregation-notes" aria-label="집계 기준과 한계"></ul>
     </div>
     <section id="projects-view" aria-labelledby="projects-title">
       <div class="section-heading"><div><p class="eyebrow">DESIGN ARCHIVE</p><h2 id="projects-title">학교 공간의 다양한 가능성</h2></div><div class="view-toggle" role="group" aria-label="사례 보기 방식"><button type="button" id="cards-mode" aria-pressed="true">카드</button><button type="button" id="table-mode" aria-pressed="false">표</button></div></div>
@@ -62,7 +66,7 @@
     <section id="firms-view" hidden aria-label="설계 사무소"></section>
     <section id="buildings-view" hidden aria-label="건물 연령"></section>
     <section id="topics-view" hidden aria-label="설계 주제"></section>
-    <section class="source-note" id="data-section"><div><p class="eyebrow">ABOUT THIS DATA</p><h2>숫자보다 먼저,<br>출처를 확인합니다.</h2></div><div><p>현재 자료는 UI 검증을 위한 가상 예시입니다. 같은 사업의 기사와 설계사업을 구분하며, 사진의 이용 조건과 건물별 준공일을 확인한 뒤 실제 자료를 연결합니다.</p><p>전국 통계 · 미래 예측 · 월별 자동 갱신은 제공하지 않습니다.</p><label class="file-label">검증용 가상 JSON 불러오기<input type="file" id="import-file" accept=".json,application/json"></label><p class="small">파일은 브라우저 안에서만 읽습니다. 현재는 is_demo: true인 규격 v0.1 예시만 지원합니다. 최대 1 MB.</p><p><a href="public/demo.snapshot.json" download>기본 가상 자료 JSON 받기 ↗</a></p></div></section>
+    <section class="source-note" id="data-section"><div><p class="eyebrow">ABOUT THIS DATA</p><h2>숫자보다 먼저,<br>출처를 확인합니다.</h2></div><div><p>처음 열리는 자료는 화면 검증용 가상 예시입니다. 공통 입력·정제·집계 모듈에 연결되어 같은 사업의 기사와 설계사업을 구분합니다. 실제 자료의 출처 확인과 수집은 별도 단계입니다.</p><p>전국 자료 자동 수집 · 미래 예측 · 월별 자동 갱신은 제공하지 않습니다.</p><label class="file-label">검증용 가상 JSON 불러오기<input type="file" id="import-file" accept=".json,application/json"></label><p class="small">규격 v0.1, is_demo: true인 JSON을 최대 1 MB까지 브라우저 안에서 읽습니다. 입력 오류가 있으면 이전 자료와 조회 조건을 유지하고, 경고는 확인 사항으로 표시합니다.</p><p><a href="public/demo.snapshot.json" download>기본 가상 자료 JSON 받기 ↗</a></p></div></section>
   </main>
   <footer><div class="footer-brand">SCHOOL DESIGN TRENDS<span>더 나은 배움의 공간을 위한 기록</span></div><p>Daniel X Yunze · 2026<br>개발 예시 / 실제 전국 자료 미수집</p></footer>
   <dialog id="project-dialog" aria-label="설계 사례 상세"></dialog>

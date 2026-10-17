@@ -140,12 +140,13 @@ export function exportBuildingRows(snapshot, options = {}) {
 }
 
 // 스프레드시트가 수식으로 해석할 수 있는 문자열 앞에 작은따옴표를 붙인다.
-const FORMULA_START = /^[=+\-@\t\r]/;
+const FORMULA_START = /^[\s\uFEFF]*[=+\-@]/u;
+const CONTROL_START = /^[\s\uFEFF]*[\t\r\n]/u;
 export function safeCell(value) {
   if (value === null || value === undefined) return '';
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   const s = typeof value === 'string' ? value : JSON.stringify(value);
-  return FORMULA_START.test(s) ? `'${s}` : s;
+  return FORMULA_START.test(s) || CONTROL_START.test(s) ? `'${s}` : s;
 }
 
 function quote(s) {
