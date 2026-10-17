@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { REGIONS, UNKNOWN_REGION_LABEL } from '../../src/data/normalize.js';
-import { regionMapEntries } from '../../src/ui/region-map.js';
+import { regionMapEntries, regionPopupPosition } from '../../src/ui/region-map.js';
 
 const entry = (rows, code) => regionMapEntries(rows).find(item => item.code === code);
 
@@ -54,4 +54,30 @@ test('입력 집계값을 변경하지 않고 다지역 참여 건수를 그대�
   assert.equal(result.find(item => item.code === '41').count, 2);
   assert.equal(JSON.stringify(rows), before);
   for (const value of [null, undefined, {}]) assert.ok(regionMapEntries(value).every(item => !item.hasData));
+});
+
+test('지역 팝업은 지도 가장자리와 모서리에서도 잘리지 않는다', () => {
+  const size = {width: 560, height: 650, popupWidth: 216, popupHeight: 160};
+  for (const x of [0, 8, 280, 552, 560]) {
+    for (const y of [0, 8, 325, 642, 650]) {
+      const position = regionPopupPosition({...size, x, y});
+      assert.ok(Number.isFinite(position.left) && Number.isFinite(position.top));
+      assert.ok(position.left >= 8 && position.left + size.popupWidth <= size.width - 8);
+      assert.ok(position.top >= 8 && position.top + size.popupHeight <= size.height - 8);
+    }
+  }
+  const middle = regionPopupPosition({...size, x: 200, y: 200});
+  assert.ok(middle.left > 200 && middle.top > 200, '여유가 있으면 포인터 오른쪽 아래에 표시');
+  const bottomRight = regionPopupPosition({...size, x: 550, y: 640});
+  assert.ok(bottomRight.left + size.popupWidth < 550 && bottomRight.top + size.popupHeight < 640,
+    '오른쪽 아래 여유가 없으면 반대편에 표시');
+});
+
+test('최소 폭 지도에서도 CSS로 제한한 팝업이 좌우 여백 안에 남는다', () => {
+  const size = {width: 200, height: 200 * 650 / 560, popupWidth: 184, popupHeight: 180};
+  for (const [x, y] of [[0, 0], [100, 100], [200, size.height], [-1, -1], [201, size.height + 1]]) {
+    const position = regionPopupPosition({...size, x, y});
+    assert.equal(position.left, 8, '좁은 화면에서는 popup max-width와 양쪽 여백을 함께 보존');
+    assert.ok(position.top >= 8 && position.top + size.popupHeight <= size.height - 8);
+  }
 });

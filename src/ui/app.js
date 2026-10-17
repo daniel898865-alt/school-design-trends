@@ -91,6 +91,31 @@ function monthsChart(container, data) {
 function basicDetail(project) {
   openProjectDialog($('project-dialog'), project, provider.snapshot);
 }
+function renderOverviewSummary() {
+  const regionLabel = lastFilters.region
+    ? provider.options.regions.find(region => region.value === lastFilters.region)?.label || '지역 미확인'
+    : '전체 시도';
+  $('overview-region-title').textContent = `${regionLabel} · 조회 결과`;
+  $('overview-project-count').textContent = view.summary.projects.toLocaleString('ko-KR');
+  $('overview-region-context').textContent = `${dateLabels[lastFilters.dateBasis]} 기준 · ${lastFilters.asOf}까지 최근 ${lastFilters.months}개월 · 날짜 미확인 제외 ${view.summary.excludedUnknownDates}건`;
+  const container = $('overview-projects');
+  container.replaceChildren();
+  if (view.empty) {
+    container.append(emptyState('조건에 맞는 사례가 없습니다', `${regionLabel}의 현재 조회 결과가 0건입니다. 다른 지역을 선택하거나 검색 조건을 넓혀 주세요.`));
+    return;
+  }
+  const list = el('ul', { class: 'overview-project-list' });
+  for (const project of view.projects.slice(0, 3)) {
+    const title = project.title || `사업명 미확인 (${project.project_id})`;
+    const button = el('button', { type: 'button', class: 'text-button', 'aria-haspopup': 'dialog', 'aria-label': `${title} 상세 보기` }, title);
+    button.addEventListener('click', () => basicDetail(project));
+    list.append(el('li', {}, [el('h3', {}, button),
+      el('p', { class: 'overview-case-meta' }, `${project.school_level_label || '학교급 미확인'} · ${project.region_name || '지역 미확인'} · ${dateLabels[lastFilters.dateBasis]} ${project.basis_date || '미확인'}`),
+      el('p', { class: 'overview-case-summary' }, project.summary || '요약 미확인 · 상세 화면에서 출처를 확인하세요.'),
+    ]));
+  }
+  container.append(list);
+}
 function renderProjects() {
   const container = $('projects');
   container.className = mode === 'cards' ? 'project-grid' : 'table-wrap';
@@ -163,6 +188,7 @@ function paint() {
     $('region-note').textContent = regionNote;
     $('aggregation-notes').replaceChildren(...(view.notes ?? []).map(note => el('li', {}, note)));
     $('level-strip').replaceChildren(el('strong', {}, '학교급별 분포'), ...view.byLevel.map(d => el('span', {}, [d.label, el('b', {}, `${d.count}건`)])));
+    renderOverviewSummary();
     renderProjects();
     renderFirms($('firms-view'), view, provider.snapshot, basicDetail);
     renderBuildings($('buildings-view'), view, provider.snapshot);
@@ -218,6 +244,13 @@ form.addEventListener('submit', event => { event.preventDefault(); render(); });
 form.addEventListener('change', () => render());
 $('reset').addEventListener('click', () => { if (!provider) return; form.reset(); restoreFilters(defaultFilters(provider)); $('buildings-view').dataset.ageFilter = 'all'; delete $('years-view').dataset.selectedYear; render(); });
 $('reload-demo').addEventListener('click', loadDemo);
+$('overview-results-link').addEventListener('click', event => {
+  event.preventDefault();
+  const results = $('overview-region-results');
+  results.focus({ preventScroll: true });
+  results.scrollIntoView({ behavior: 'instant', block: 'start' });
+});
+$('overview-all-projects').addEventListener('click', () => navigateSection('projects'));
 $('navigation').addEventListener('click', event => { const button = event.target.closest('[data-view]'); if (button) navigateSection(button.dataset.view); });
 $('result-tabs').addEventListener('click', event => { const button = event.target.closest('[data-result-view]'); if (button) navigateSection(button.dataset.resultView); });
 $('result-tabs').addEventListener('keydown', event => {
