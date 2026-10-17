@@ -24,8 +24,8 @@
 | 썸네일로 내부 상세·이미지 갤러리 열기, 별도 원문 링크, 결과 위치에 고정되는 화면 전환 탭 | [#24](https://github.com/yunzecho-eng/school-design-trends/pull/24) |
 | 17개 시도 선택 개략도와 검색·그래프·사례·내보내기 연동 | [#25](https://github.com/yunzecho-eng/school-design-trends/pull/25) |
 | 준공연도별 키워드·사례·증감 비교, 공통 날짜 필터, 전망 작성·검토 대기 화면 | [#26](https://github.com/yunzecho-eng/school-design-trends/pull/26) |
-| 2026-04-01 기준 시도 행정경계, 지역 정보 팝업·키보드 선택, 작은 구역의 이름 버튼 | [#29](https://github.com/yunzecho-eng/school-design-trends/issues/29) |
-| 왼쪽 지도·오른쪽 선택 지역의 사업 수·학교급·사례·그래프, 모바일 한 열 배치 | [#28](https://github.com/yunzecho-eng/school-design-trends/issues/28) |
+| 2026-04-01 기준 시도 행정경계, 지역 정보 팝업·키보드 선택, 작은 구역의 이름 버튼 | [PR #30](https://github.com/yunzecho-eng/school-design-trends/pull/30), [이슈 #29](https://github.com/yunzecho-eng/school-design-trends/issues/29) |
+| 왼쪽 지도·오른쪽 선택 지역의 사업 수·학교급·사례·그래프, 모바일 한 열 배치 | [PR #30](https://github.com/yunzecho-eng/school-design-trends/pull/30), [이슈 #28](https://github.com/yunzecho-eng/school-design-trends/issues/28) |
 
 기존 개발 이슈 #3·#4·#12와 데이터 수정 #8–#11·#15–#18, Yunze의 화면 개선 이슈 [#20](https://github.com/yunzecho-eng/school-design-trends/issues/20)·[#21](https://github.com/yunzecho-eng/school-design-trends/issues/21)·[#22](https://github.com/yunzecho-eng/school-design-trends/issues/22)·[#23](https://github.com/yunzecho-eng/school-design-trends/issues/23)은 완료하여 닫았습니다. 현재 통합 상태는 **자동 테스트 147개**와 실제 브라우저의 필터·다운로드·상세·키보드·모바일 화면으로 검증했습니다.
 
@@ -56,6 +56,7 @@
 
 | 후속 작업 | 필요한 내용 | 참고 |
 |---|---|---|
+| 학교 설계 사례의 3D 렌더링·모델 뷰어 | 가상 학교 1개부터 회전·확대·시점 초기화, 대표 렌더링 이미지, 모델 출처·이용 조건과 이미지 대안 검증. 현재는 개발 예정 | [Yunze 이슈 #31](https://github.com/yunzecho-eng/school-design-trends/issues/31) |
 | 행정구역 개편 이후 분류 대응 | Daniel과 지역 코드·과거 자료 재분류·비교 기준 합의. 현재 지도와 집계는 2026-04-01의 17개 지역 기준 유지 | [지도 자료 설명](docs/MAP_SOURCE.md) |
 | 잡지·설계공모·뉴스의 실제 사례 수집과 공개 자료 연결 | 원문·이미지 이용 조건, 공개 가능한 필드, 출처 검토, 지역·학교급별 수집 범위 | [출처 후보](docs/SOURCES.md), [개발 계획](docs/PLAN.md) |
 | 실제 학교 이미지 확보 | 공개·재사용 가능한 라이선스 또는 허가, 제작자·출처·이용 조건 기록 | [사례 이미지 검증](docs/UI_NAVIGATION_VERIFICATION.md) |
@@ -63,7 +64,8 @@
 | 실제 경향 해설·검토된 전망 작성 | 관측과 해석 구분, 근거·가정·대안·검토자·검토일 기록. 정량 예측은 자료와 평가 방법을 확보한 뒤 별도 구현 | [연도별 화면의 현재 범위](docs/YEAR_TRENDS_VERIFICATION.md) |
 | 40년 이상 학교 건물의 월별 갱신·변화 비교 | 건물별 준공일 근거, 이전 스냅샷과 비교, 갱신 실패·철거·신규 진입 구분 | [갱신 설계](docs/PLAN.md#매월-노후-건물-갱신-설계) |
 | 건물 전용 다운로드 화면 | 건물 export 함수와 화면 연결. 현재 CSV/Markdown 다운로드는 설계사업 목록용 | [데이터 규격](docs/DATA_CONTRACT.md) |
-| 코드 라이선스·설명영상 | 라이선스 선택에 관한 팀 합의와 이용자용 시연 영상 제작 | [개발 계획](docs/PLAN.md) |
+| 이용자용 설명영상 | 실제 화면 시연, Qwen TTS 영어 내레이션·영문/한국어 자막. 영상은 아직 제작하지 않음 | [개발 계획](docs/PLAN.md) |
+| 코드 라이선스 | 코드 라이선스 선택에 관한 팀 합의. 지도 데이터의 별도 이용 조건은 유지 | [개발 계획](docs/PLAN.md), [지도 자료 설명](docs/MAP_SOURCE.md) |
 
 자동 수집·갱신 예약은 설정하지 않았습니다. 키워드 정의·대표 준공일·전망 근거와 검토 체계는 Daniel과 후속 합의가 필요합니다. Yunze는 해당 자료를 보여 주는 탐색·시각화·해설 화면을 맡습니다.
 
