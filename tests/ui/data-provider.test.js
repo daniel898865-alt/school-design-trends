@@ -145,9 +145,13 @@ test('A2 evidence warnings and missing firm references stay visible without inve
   assert.ok(provider.warnings.some((w) => w.code === 'missing_evidence_note'));
   const view = provider.select();
   assert.equal(view.summary.unclassifiedProjects, 2);
-  assert.equal(view.summary.firms, 4);
+  assert.equal(view.summary.firms, 3);
   assert.equal(view.summary.unknownFirms, 1);
-  assert.equal(view.firms.find((f) => f.firm_id === 'v2-firm-missing').name, null);
+  assert.equal(view.summary.unresolvedFirmReferences, 1);
+  assert.equal(view.summary.projectsWithOnlyUnresolvedFirms, 1);
+  assert.ok(view.firms.every((firm) => firm.known_firm === true));
+  assert.equal(view.firms.find((f) => f.firm_id === 'v2-firm-missing'), undefined);
+  assert.deepEqual(view.unresolvedFirmRefs, [{project_id: 'v2-project-005', firm_id: 'v2-firm-missing'}]);
   assert.equal(view.firms.find((f) => f.firm_id === 'v2-firm-001').project_count, 2);
   assert.deepEqual(provider.select({topic: 'unclassified'}).projects.map((p) => p.project_id), ['v2-project-003', 'v2-project-004']);
   assert.deepEqual(provider.exportRows({topic: 'unclassified'}).rows.map((p) => p.project_id), ['v2-project-003', 'v2-project-004']);
@@ -217,4 +221,41 @@ test('caller and exposed snapshot mutations cannot desynchronize lookup and expo
   assert.throws(() => { provider.snapshot.projects[0]._raw.topic_evidence[0].topic_id = 'external'; }, TypeError);
   assert.equal(provider.select().projects[0].title, originalTitle);
   assert.equal(provider.exportRows().rows[0].title, originalTitle);
+});
+
+test('unresolved firm IDs and per-project references stay separate from confirmed firms and participations', () => {
+  const input = a2();
+  input.projects[0].firm_ids.push('v2-firm-missing');
+  input.projects[4].firm_ids.push('missing-second');
+  const provider = createDataProvider(input);
+  const view = provider.select();
+  assert.equal(view.summary.firms, 3);
+  assert.equal(view.summary.unknownFirms, 2);
+  assert.equal(view.summary.unresolvedFirmReferences, 3);
+  assert.equal(view.summary.projectsWithOnlyUnresolvedFirms, 1);
+  assert.equal(view.firms.reduce((count, firm) => count + firm.project_count, 0), 4);
+  const onlyMissing = provider.select({query: '사무소 정보 없는 당선'});
+  assert.equal(onlyMissing.summary.projects, 1);
+  assert.equal(onlyMissing.summary.firms, 0);
+  assert.equal(onlyMissing.firms.length, 0);
+  assert.equal(onlyMissing.summary.unknownFirms, 2);
+  assert.equal(onlyMissing.summary.unresolvedFirmReferences, 2);
+  assert.equal(provider.exportRows({query: '사무소 정보 없는 당선'}).rows.length, 1);
+  assert.match(onlyMissing.projects[0].firm_names[0], /미확인/);
+});
+
+test('topic source validation receives A1 source metadata and warns even for undated projects', () => {
+  const input = a2();
+  input.projects[0].topic_evidence[0].source_id = 'nonexistent-evidence-source';
+  input.projects[4].award_date = null;
+  input.projects[4].topic_evidence[0].source_id = 'undated-missing-source';
+  const provider = createDataProvider(input);
+  assert.equal(provider.warnings.filter((w) => w.code === 'unknown_evidence_source').length, 2);
+  const view = provider.select();
+  assert.equal(view.summary.projects, 4);
+  const topic = view.topics.find((row) => row.id === 'community_sharing');
+  assert.equal(topic.count, 1);
+  assert.deepEqual(topic.source_ids, []);
+  assert.ok(view.topicSummary.evidenceIssues.some((issue) => issue.code === 'unknown_evidence_source'));
+  assert.equal(view.diagnostics.filter((issue) => issue.code === 'unknown_evidence_source').length, 2);
 });

@@ -56,7 +56,8 @@ test('학교 레코드 없는 건물도 표시하되 모든 학교 수에서 제
   assert.ok(Object.values(summary.byAge).every((count) => count.schools === 0));
   assert.ok(Object.values(summary.byStatusAmongOver).every((count) => count.schools === 0));
   assert.ok(summary.rows.every((row) => row.school_name === null));
-  assert.ok(summary.notes.some((note) => note.includes('학교 수에서 제외')));
+  assert.ok(summary.notes.some((note) => note.includes('학교 수에서는 제외')));
+  assert.deepEqual(summary.unresolvedSchoolBuildingIds, input.buildings.map((row) => row.building_id));
 });
 
 test('검토 상태의 특수 키도 숫자로 세고 잘못된 상태 객체는 unknown으로 보고한다', () => {
@@ -82,6 +83,23 @@ test('검토 상태의 특수 키도 숫자로 세고 잘못된 상태 객체는
   assert.equal(summary.topics[0].projects, 1);
   assert.equal(summary.topics[0].share, 1);
   assert.deepEqual(summary.byYear[0].topics[0].review_status_counts, counts);
+});
+
+test('주제 출처 타입 오류를 진단할 때 객체를 문자열로 강제 변환하지 않는다', () => {
+  const input = rawFixture();
+  input.projects = [input.projects[0]];
+  input.projects[0].topic_evidence = [{
+    topic_id: 'community_sharing', source_id: { toString: null },
+    evidence_note: '가상 근거', review_status: '  draft  ',
+  }];
+  const parsed = parseSnapshot(JSON.stringify(input));
+  assert.deepEqual(parsed.errors, []);
+  const summary = summarizeTopics(filterProjects(parsed.snapshot));
+  assert.deepEqual(summary.topics[0].source_ids, []);
+  assert.equal(summary.topics[0].projects, 1);
+  assert.deepEqual(summary.topics[0].review_status_counts, { draft: 1 });
+  assert.ok(summary.evidenceIssues.some((issue) => issue.code === 'unknown_evidence_source'));
+  assert.deepEqual(summary.byYear[0].topics[0].source_ids, []);
 });
 
 test('공백·BOM·줄바꿈 앞 CSV 수식은 본문·머리글·메타데이터에서 모두 무력화한다', () => {

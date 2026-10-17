@@ -18,20 +18,22 @@ export function completedYears(from, asOf) {
 //   status: over(확정) | under(제외) | uncertain(연도만 알아 경계에 걸침) | unknown(준공 정보 없음·모순)
 export function classifyBuildingAge(building, asOf, threshold = 40) {
   if (!isValidDate(asOf)) throw new Error(`기준일 asOf가 필요함(YYYY-MM-DD): ${asOf}`);
-  const date = building.completion_date;
-  const year = building.completion_year;
-  const precision = building.date_precision;
   const unknown = (reason) => ({ status: 'unknown', minAge: null, maxAge: null, reason, basis: null });
-
-  if (date !== null && date !== undefined && !isValidDate(date)) {
-    return unknown('준공일이 유효한 YYYY-MM-DD 날짜가 아님 — 확인 필요');
+  const rawDate = building?.completion_date ?? null;
+  const rawYear = building?.completion_year ?? null;
+  const precision = building?.date_precision ?? 'unknown';
+  // parseSnapshot을 거치지 않은 값도 들어올 수 있으므로 형식이 틀리면 예외 없이 unknown으로 둔다.
+  // 준공일도 준공연도와 같이 1000~9999년만 받는다(예: 0001-01-01은 거절).
+  if (rawDate !== null && !(isValidDate(rawDate) && Number(rawDate.slice(0, 4)) >= 1000)) {
+    return unknown(`준공일 형식 오류 ${JSON.stringify(rawDate)} — 확인 필요`);
   }
-  if (year !== null && year !== undefined &&
-      (!Number.isInteger(year) || !/^\d{4}$/.test(String(year)) || !isValidDate(`${year}-01-01`))) {
-    return unknown('준공연도가 유효한 네 자리 정수가 아님 — 확인 필요');
+  if (rawYear !== null && !(Number.isInteger(rawYear) && rawYear >= 1000 && rawYear <= 9999)) {
+    return unknown(`준공연도 형식 오류 ${JSON.stringify(rawYear)} — 확인 필요`);
   }
+  const date = rawDate;
+  const year = rawYear;
 
-  if (date && year !== null && year !== undefined && Number(date.slice(0, 4)) !== year) {
+  if (date && year !== null && Number(date.slice(0, 4)) !== year) {
     return unknown(`준공일 ${date}와 준공연도 ${year}가 서로 다름 — 확인 필요`);
   }
 
@@ -51,7 +53,6 @@ export function classifyBuildingAge(building, asOf, threshold = 40) {
     return unknown('준공일·준공연도 미확인');
   }
 
-  if (!isValidDate(earliest) || !isValidDate(latest)) return unknown('준공연도로 유효한 날짜 범위를 만들 수 없음 — 확인 필요');
   if (earliest > asOf) return unknown(`준공 ${basis === 'completion_date' ? earliest : earliest.slice(0, 4)}이 기준일 ${asOf}보다 늦음 — 확인 필요`);
   const maxAge = completedYears(earliest, asOf);
   // 연도만 아는데 그해가 아직 끝나지 않았으면 가장 늦은 준공일을 기준일로 본다.
@@ -107,8 +108,12 @@ export function summarizeBuildings(snapshot, options = {}) {
     });
   }
 
-  // 끊어진 학교 참조는 행에 남기되 존재가 확인된 학교만 학교 수에 포함한다.
-  const count = (list) => ({ buildings: list.length, schools: new Set(list.map((r) => r.school_id).filter((id) => schoolsById.has(id))).size });
+  // 학교 수는 schools에 레코드가 있는 학교만 센다. 연결이 끊긴 건물은 건물 수에는 남기고 따로 알린다.
+  const count = (list) => ({
+    buildings: list.length,
+    schools: new Set(list.filter((r) => schoolsById.has(r.school_id)).map((r) => r.school_id)).size,
+  });
+  const unresolvedSchool = rows.filter((r) => !schoolsById.has(r.school_id)).map((r) => r.building_id);
   const byAge = Object.fromEntries(AGE_STATUSES.map((s) => [s, count(rows.filter((r) => r.age_status === s))]));
   const overRows = rows.filter((r) => r.age_status === 'over');
   const byStatusAmongOver = Object.fromEntries(
@@ -121,8 +126,7 @@ export function summarizeBuildings(snapshot, options = {}) {
   ];
   if (byAge.uncertain.buildings > 0) notes.push(`준공연도만 확인되어 ${threshold}년 여부 미확정 ${byAge.uncertain.buildings}동`);
   if (byAge.unknown.buildings > 0) notes.push(`준공 정보 미확인 ${byAge.unknown.buildings}동`);
-  const missingSchoolCount = rows.filter((row) => !schoolsById.has(row.school_id)).length;
-  if (missingSchoolCount > 0) notes.push(`학교 자료와 연결되지 않은 건물 ${missingSchoolCount}동 — 건물은 표시하되 학교 수에서 제외`);
+  if (unresolvedSchool.length > 0) notes.push(`schools에 없는 학교를 가리키는 건물 ${unresolvedSchool.length}동 — 건물 수에는 포함, 학교 수에서는 제외(소속 학교 확인 필요)`);
   if (snapshot.as_of && asOf !== snapshot.as_of) notes.push(`원자료 기준일 ${snapshot.as_of}와 조회 기준일 ${asOf}가 다름`);
 
   return {
@@ -134,6 +138,7 @@ export function summarizeBuildings(snapshot, options = {}) {
     listed: count(rows.filter((r) => r.listed)),
     byAge,
     byStatusAmongOver,
+    unresolvedSchoolBuildingIds: unresolvedSchool,
     rows,
     notes,
   };

@@ -92,7 +92,12 @@ function readInput(input) {
   if (topicAliasCount) warnings.push({...diagnostic('topic_alias', 'projects.topic_evidence',
     `이전 예시의 주제 표기 ${topicAliasCount}건을 공통 분류표로 맞췄습니다. 원본은 보존합니다.`), level: 'info'});
   // A2 owns evidence validity and the unknown-topic policy.
-  warnings.push(...summarizeTopics(snapshot.projects).evidenceIssues);
+  // Validate the full snapshot, including undated projects, with the same source
+  // lookup carried by A1's filtered arrays. Do not let nonexistent evidence
+  // sources disappear merely because a project is outside the current period.
+  const evidenceProjects = [...snapshot.projects];
+  evidenceProjects.meta = {sources_by_id: new Map(snapshot.sources.map((source) => [source.source_id, source]))};
+  warnings.push(...summarizeTopics(evidenceProjects).evidenceIssues);
   return {snapshot: freezeTree(snapshot), warnings: freezeTree(warnings)};
 }
 
@@ -204,7 +209,9 @@ export function createDataProvider(input) {
       summary: {
         projects: projectSummary.uniqueProjects, sources: projectSummary.uniqueArticles,
         schools: projectSummary.uniqueSchools, firms: firmSummary.firms.length,
-        unknownFirms: firmSummary.firms.filter((firm) => !firm.known_firm).length,
+        unknownFirms: new Set(firmSummary.unresolvedFirmRefs.map((ref) => ref.firm_id)).size,
+        unresolvedFirmReferences: firmSummary.unresolvedFirmRefs.length,
+        projectsWithOnlyUnresolvedFirms: firmSummary.projectsWithOnlyUnresolvedFirms,
         excludedUnknownDates: projectSummary.excludedUnknownDates,
         excludedOutOfRange: projectSummary.excludedOutOfRange,
         unclassifiedProjects: topicSummary.unclassified,
@@ -216,7 +223,9 @@ export function createDataProvider(input) {
         articles: r.articles, partial: r.partial, from: r.from, to: r.to})),
       byLevel: projectSummary.bySchoolLevel.map((r) => ({label: LEVEL_LABELS.get(r.school_level), count: r.projects, articles: r.articles})),
       topics: topicSummary.topics.map((r) => ({...r, id: r.topic_id, count: r.projects})),
-      firms: firmSummary.firms.map((firm) => ({...firm, project_count: firm.participations})),
+      firms: firmSummary.firms.map((firm) => ({...firm, known_firm: true, project_count: firm.participations})),
+      // Unresolved references are diagnostics, not extra firms or participations.
+      unresolvedFirmRefs: firmSummary.unresolvedFirmRefs,
       buildings: buildingSummary.rows.map((row) => ({
         ...buildings.get(row.building_id), ...row,
         name: row.building_name, status: row.building_status,

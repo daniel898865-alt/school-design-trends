@@ -120,7 +120,7 @@ function paint() {
     $('data-mode-description').textContent = isDemo ? '실제 학교·공모·통계가 아닙니다. 기본 예시 이미지는 직접 만든 개념도입니다.' : '입력 검증과 출처의 사실 확인은 별개입니다. 자료 범위·누락·근거를 함께 확인하세요.';
     $('scope').textContent = `${isDemo ? '가상 ' : ''}자료 기준 ${provider.snapshot.as_of} · 조회 기준 ${lastFilters.asOf} · 최근 ${lastFilters.months}개월 · ${dateLabels[lastFilters.dateBasis]} 기준`;
     $('coverage-scope').textContent = `자료 범위: ${provider.snapshot.coverage?.scope || '미확인'}`;
-    const firmNote = view.summary.unknownFirms === undefined ? '공동 당선 포함 · 고유 식별자 기준' : `고유 식별자 기준 · 정보 미확인 ${view.summary.unknownFirms}곳`;
+    const firmNote = view.summary.unresolvedFirmReferences === undefined ? '사무소 목록이 연결된 고유 사무소' : `사무소 목록 기준 · 미확인 연결 ${view.summary.unresolvedFirmReferences}건 제외`;
     $('stats').replaceChildren(stat('설계사업', view.summary.projects, '중복 사업을 제외한 고유 사례'), stat('연결된 자료', view.summary.sources, '사업 수와 구분한 출처 수'), stat('관련 학교', view.summary.schools, '동일 학교의 중복을 제외', '곳'), stat('참여 사무소', view.summary.firms, firmNote, '곳'));
     bars($('region-chart'), view.byRegion); monthsChart($('month-chart'), view.byMonth);
     const regionNote = view.summary.regionParticipations === undefined ?

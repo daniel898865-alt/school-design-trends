@@ -46,10 +46,20 @@ export function renderFirms(container, view, snapshot, onOpenProject) {
   container.replaceChildren();
   container.append(el('div', { class: 'section-heading' }, [
     el('div', {}, [el('p', { class: 'eyebrow' }, 'DESIGN OFFICES'), el('h2', {}, '당선 참여 사무소')]),
-    el('span', { class: 'badge' }, `${view.firms?.length ?? 0}개 사무소`),
+    el('span', { class: 'badge' }, `목록이 연결된 사무소 ${view.summary?.firms ?? view.firms?.length ?? 0}곳`),
   ]));
   container.append(el('p', { class: 'notice' }, '현재 조회 사업에 참여한 사무소입니다. 공동 당선은 사무소마다 1건으로 표시하므로 합계가 전체 사업 수보다 클 수 있습니다. 참여 건수는 시장점유율이나 계약 수주액이 아닙니다.'));
   appendNotes(container, view.firmNotes, '사무소 집계 기준과 확인 사항');
+  if (view.unresolvedFirmRefs?.length) {
+    container.append(el('details', { class: 'notice' }, [
+      el('summary', {}, `집계에서 제외한 미확인 사무소 연결 ${view.unresolvedFirmRefs.length}건`),
+      el('p', {}, '사업에 사무소 식별자는 있지만 대응하는 사무소 자료가 없습니다. 사무소 수와 참여 건수에 포함하지 않으며, 이름·사업자번호를 추정하지 않습니다.'),
+      el('ul', {}, view.unresolvedFirmRefs.map(ref => {
+        const title = (view.projects ?? []).find(project => project.project_id === ref.project_id)?.title || ref.project_id;
+        return el('li', {}, `${title} · 사무소 식별자 ${ref.firm_id}`);
+      })),
+    ]));
+  }
   if (!view.firms?.length) {
     container.append(emptyState('사무소 정보가 없습니다', '조회 조건을 바꾸거나 당선 참여 사무소가 확인된 자료를 연결해 주세요.'));
     return;
