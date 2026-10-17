@@ -1,0 +1,11 @@
+{
+  "name": "school-design-trends",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node tools/preview.mjs",
+    "test": "node --test tests/ui/*.test.js"
+  },
+  "engines": { "node": ">=20" }
+}
