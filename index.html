@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="src/styles/main.css">
   <link rel="stylesheet" href="src/styles/details.css">
   <link rel="stylesheet" href="src/styles/region-map.css">
+  <link rel="stylesheet" href="src/styles/year-trends.css">
   <script type="module" src="src/ui/app.js"></script>
 </head>
 <body>
@@ -22,6 +23,7 @@
       <button type="button" data-view="firms">설계 사무소</button>
       <button type="button" data-view="buildings">건물 연령</button>
       <button type="button" data-view="topics">설계 주제</button>
+      <button type="button" data-view="years">연도별 분석</button>
     </nav>
     <span class="header-note">학교 공간을 읽는 새로운 관점</span>
   </header>
@@ -41,7 +43,7 @@
           <label>조회 기간<select id="months" name="months"><option value="36">최근 3년</option><option value="24">최근 2년</option><option value="12">최근 1년</option></select></label>
           <button class="primary search-button" type="submit">검색 <span aria-hidden="true">↗</span></button>
         </div>
-        <details class="advanced"><summary>날짜·설계 주제 상세 조건</summary><div class="advanced-fields"><label>조회 기준일<input type="date" id="asOf" name="asOf" value="2026-10-17" required></label><label>날짜 기준<select id="dateBasis" name="dateBasis"><option value="award_date">당선일</option><option value="competition_date">공모일</option><option value="published_at">기사 게시일</option></select></label><label>설계 주제<select id="topic" name="topic"><option value="">전체 주제</option></select></label></div></details>
+        <details class="advanced"><summary>날짜·설계 주제 상세 조건</summary><div class="advanced-fields"><label>조회 기준일<input type="date" id="asOf" name="asOf" value="2026-10-17" required></label><label>날짜 기준<select id="dateBasis" name="dateBasis"><option value="award_date">당선일</option><option value="competition_date">공모일</option><option value="published_at">기사 게시일</option><option value="completion_date">사업 준공일</option></select></label><label>설계 주제<select id="topic" name="topic"><option value="">전체 주제</option></select></label></div></details>
       </form>
     </section>
     <p id="notice" role="status" aria-live="polite">예시 자료를 불러오는 중입니다…</p>
@@ -61,6 +63,7 @@
           <button type="button" id="tab-firms" role="tab" data-result-view="firms" aria-controls="firms-view" aria-selected="false" tabindex="-1">설계 사무소</button>
           <button type="button" id="tab-buildings" role="tab" data-result-view="buildings" aria-controls="buildings-view" aria-selected="false" tabindex="-1">건물 연령</button>
           <button type="button" id="tab-topics" role="tab" data-result-view="topics" aria-controls="topics-view" aria-selected="false" tabindex="-1">설계 주제</button>
+          <button type="button" id="tab-years" role="tab" data-result-view="years" aria-controls="years-view" aria-selected="false" tabindex="-1">연도별 분석 <span>키워드·전망</span></button>
         </div>
       </div>
     <div id="overview-view" class="result-panel" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
@@ -83,6 +86,7 @@
     <section id="firms-view" class="result-panel" role="tabpanel" aria-labelledby="tab-firms" tabindex="0" hidden></section>
     <section id="buildings-view" class="result-panel" role="tabpanel" aria-labelledby="tab-buildings" tabindex="0" hidden></section>
     <section id="topics-view" class="result-panel" role="tabpanel" aria-labelledby="tab-topics" tabindex="0" hidden></section>
+    <section id="years-view" class="result-panel" role="tabpanel" aria-labelledby="tab-years" tabindex="0" hidden></section>
     </section>
     <section class="source-note" id="data-section"><div><p class="eyebrow">ABOUT THIS DATA</p><h2>숫자보다 먼저,<br>출처를 확인합니다.</h2></div><div><p>처음 열리는 자료는 화면 검증용 가상 예시입니다. 공통 입력·정제·집계 모듈에 연결되어 같은 사업의 기사와 설계사업을 구분합니다. 실제 자료의 출처 확인과 수집은 별도 단계입니다.</p><p>전국 자료 자동 수집 · 미래 예측 · 월별 자동 갱신은 제공하지 않습니다.</p><label class="file-label">검증용 가상 JSON 불러오기<input type="file" id="import-file" accept=".json,application/json"></label><p class="small">규격 v0.1, is_demo: true인 JSON을 최대 1 MB까지 브라우저 안에서 읽습니다. 입력 오류가 있으면 이전 자료와 조회 조건을 유지하고, 경고는 확인 사항으로 표시합니다.</p><p><a href="public/demo.snapshot.json" download>기본 가상 자료 JSON 받기 ↗</a></p></div></section>
   </main>

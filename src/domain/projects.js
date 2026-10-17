@@ -3,7 +3,7 @@ import { REGIONS, SCHOOL_LEVELS, UNKNOWN_REGION_LABEL } from '../data/normalize.
 import { inWindow, isValidDate, monthKey, recentWindow, toDateOnly, windowMonths } from './dates.js';
 
 // 당선 추세는 award_date, 기사 추세는 출처 published_at. 결측일을 서로 대신 채우지 않는다.
-export const DATE_BASES = ['award_date', 'competition_date', 'published_at'];
+export const DATE_BASES = ['completion_date', 'award_date', 'competition_date', 'published_at'];
 export const UNKNOWN_REGION = 'unknown';
 export const UNCLASSIFIED_TOPIC = 'unclassified';
 
