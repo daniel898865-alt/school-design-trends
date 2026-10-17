@@ -6,27 +6,35 @@ export const TOPICS = topicRules.topics;
 const known = new Set(TOPICS.map((t) => t.topic_id));
 
 // 사업의 주제 근거를 검사한다. 사전에 없는 topic_id는 집계하지 않고 보고한다.
-function evidenceOf(project, issues) {
+// sourcesById가 있으면 sources에 레코드가 있는 근거 출처만 출처 수로 센다.
+function evidenceOf(project, issues, sourcesById) {
   const valid = [];
-  project.topic_evidence.forEach((e, i) => {
+  (project.topic_evidence ?? []).forEach((e, i) => {
     const path = `${project.project_id}.topic_evidence[${i}]`;
-    if (!e.topic_id || !known.has(e.topic_id)) {
+    if (e === null || typeof e !== 'object' || Array.isArray(e)) {
+      issues.push({ path, code: 'invalid_evidence', message: '주제 근거는 객체여야 함 — 집계에서 제외' });
+      return;
+    }
+    if (typeof e.topic_id !== 'string' || !known.has(e.topic_id)) {
       issues.push({ path, code: 'unknown_topic', message: `주제 사전에 없는 topic_id ${JSON.stringify(e.topic_id ?? null)} — 집계에서 제외` });
       return;
     }
     if (!e.source_id) issues.push({ path, code: 'missing_evidence_source', message: '근거 출처(source_id) 누락' });
+    else if (sourcesById instanceof Map && !sourcesById.has(e.source_id)) {
+      issues.push({ path, code: 'unknown_evidence_source', message: `근거 출처 "${e.source_id}"가 sources에 없음 — 출처 수에서 제외` });
+    }
     if (!e.evidence_note) issues.push({ path, code: 'missing_evidence_note', message: '근거 설명(evidence_note) 누락' });
     valid.push(e);
   });
   return valid;
 }
 
-function tally(projects, issues) {
+function tally(projects, issues, sourcesById) {
   const perTopic = new Map(TOPICS.map((t) => [t.topic_id, { projects: new Set(), evidence: 0, sources: new Set(), review: {} }]));
   let unclassified = 0;
   let multiTag = 0;
   for (const p of projects) {
-    const ev = evidenceOf(p, issues);
+    const ev = evidenceOf(p, issues, sourcesById);
     const ids = new Set(ev.map((e) => e.topic_id));
     if (ids.size === 0) unclassified++;
     if (ids.size > 1) multiTag++;
@@ -34,7 +42,7 @@ function tally(projects, issues) {
       const t = perTopic.get(e.topic_id);
       t.projects.add(p.project_id);
       t.evidence++;
-      if (e.source_id) t.sources.add(e.source_id);
+      if (e.source_id && (!(sourcesById instanceof Map) || sourcesById.has(e.source_id))) t.sources.add(e.source_id);
       const status = e.review_status ?? 'unknown';
       t.review[status] = (t.review[status] ?? 0) + 1;
     }
@@ -59,9 +67,10 @@ function tally(projects, issues) {
 // summarizeTopics(projects) — projects는 filterProjects 결과. 연도는 그 결과의 basis_date 기준.
 export function summarizeTopics(projects) {
   const issues = [];
-  const overall = tally(projects, issues);
+  const sourcesById = projects.meta?.sources_by_id;
+  const overall = tally(projects, issues, sourcesById);
   const years = [...new Set(projects.map((p) => p.basis_date?.slice(0, 4)).filter(Boolean))].sort();
-  const byYear = years.map((year) => ({ year, ...tally(projects.filter((p) => p.basis_date?.startsWith(year)), []) }));
+  const byYear = years.map((year) => ({ year, ...tally(projects.filter((p) => p.basis_date?.startsWith(year)), [], sourcesById) }));
 
   const notes = [
     '다중 태그: 한 사업에 여러 주제가 붙을 수 있어 주제별 비율의 합이 100%를 넘을 수 있음',

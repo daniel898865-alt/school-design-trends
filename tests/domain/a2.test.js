@@ -21,21 +21,24 @@ test('공동 당선은 사무소마다 참여 1건, 합계는 고유 사업 수�
   const s = summarizeFirms(filterProjects(snapshot), snapshot);
   const f = (id) => s.firms.find((x) => x.firm_id === id);
   assert.equal(s.uniqueProjects, 5);
-  assert.equal(s.participationTotal, 5);
+  assert.equal(s.participationTotal, 4); // firms에 없는 v2-firm-missing 참조는 제외
   assert.equal(s.jointProjects, 1);
   assert.equal(s.projectsWithoutFirm, 1);
+  assert.equal(s.projectsWithOnlyUnresolvedFirms, 1);
+  assert.equal(s.projectsWithFirm, 3);
   assert.deepEqual([f('v2-firm-001').participations, f('v2-firm-001').solo_awards, f('v2-firm-001').joint_awards], [2, 1, 1]);
   assert.equal(f('v2-firm-002').joint_awards, 1);
   assert.ok(s.notes.some((n) => n.includes('참여 당선 건수')));
 });
 
-test('사무소 정보가 없으면 이름·번호를 채우지 않는다', () => {
-  const s = summarizeFirms(filterProjects(snapshot), snapshot);
-  const missing = s.firms.find((x) => x.firm_id === 'v2-firm-missing');
-  assert.equal(missing.known_firm, false);
-  assert.equal(missing.name, null);
-  assert.equal(missing.business_registration_number, null);
-  assert.equal(missing.registration_status, 'unknown');
+test('firms에 없는 사무소는 참여 건수로 세지 않고 참조를 따로 보고한다', () => {
+  const projects = filterProjects(snapshot);
+  const s = summarizeFirms(projects, snapshot);
+  assert.equal(s.firms.find((x) => x.firm_id === 'v2-firm-missing'), undefined);
+  assert.deepEqual(s.unresolvedFirmRefs, [{ project_id: 'v2-project-005', firm_id: 'v2-firm-missing' }]);
+  assert.ok(s.notes.some((n) => n.includes('참여 건수에서 제외')));
+  // 원래 참조는 사업에 그대로 남는다
+  assert.deepEqual(projects.find((p) => p.project_id === 'v2-project-005').firm_ids, ['v2-firm-missing']);
   const f1 = s.firms.find((x) => x.firm_id === 'v2-firm-001');
   assert.equal(f1.business_registration_number, null); // 이름만으로 번호를 추정하지 않음
 });
@@ -174,4 +177,59 @@ test('건물 내보내기도 판정과 근거를 함께 담는다', () => {
   assert.equal(out.metadata.threshold, 40);
   assert.equal(out.metadata.is_demo, true);
   assert.ok(toCsv(out).includes('40년 판정'));
+});
+
+// ---- #9~#11 기준 회귀: 끊어진 참조·잘못된 타입·형식 오류
+test('공동 당선에 끊어진 사무소 참조가 섞여도 확인된 사무소만 참여로 센다', () => {
+  const projects = [{ project_id: 'x1', firm_ids: ['v2-firm-001', 'gone'] }];
+  const s = summarizeFirms(projects, snapshot);
+  assert.equal(s.participationTotal, 1);
+  assert.equal(s.jointProjects, 1); // 사업 기록상 공동 당선
+  assert.equal(s.firms[0].joint_awards, 1);
+  assert.equal(s.projectsWithFirm, 1);
+  assert.deepEqual(s.unresolvedFirmRefs, [{ project_id: 'x1', firm_id: 'gone' }]);
+});
+
+test('건물 연령: 잘못된 타입·형식은 예외 없이 unknown', () => {
+  const asOf = '2026-10-17';
+  for (const b of [
+    { completion_date: '1986-10-17\n', date_precision: 'day' },
+    { completion_date: '1986/10/17', date_precision: 'day' },
+    { completion_date: { toString: null }, date_precision: 'day' },
+    { completion_year: '1986', date_precision: 'year' },
+    { completion_year: 1986.5, date_precision: 'year' },
+    { completion_year: true },
+    null,
+  ]) {
+    assert.equal(classifyBuildingAge(b, asOf).status, 'unknown', JSON.stringify(b));
+  }
+});
+
+test('건물이 가리키는 학교가 없으면 건물 수에는 남기고 학교 수에서는 뺀다', () => {
+  const s = summarizeBuildings({
+    ...snapshot,
+    buildings: [...snapshot.buildings, { ...snapshot.buildings[1], building_id: 'v2-bld-orphan', school_id: 'no-school' }],
+  }, { regions: null });
+  assert.deepEqual(s.total, { buildings: 9, schools: 3 });
+  assert.deepEqual(s.unresolvedSchoolBuildingIds, ['v2-bld-orphan']);
+  assert.ok(s.notes.some((n) => n.includes('학교 수에서 제외')));
+});
+
+test('주제 근거 출처가 sources에 없으면 출처 수에서 빼고 보고한다', () => {
+  const projects = filterProjects({
+    ...snapshot,
+    projects: [{
+      ...snapshot.projects[1],
+      topic_evidence: [
+        { topic_id: 'flexible_learning', source_id: 'no-source', evidence_note: '가상', review_status: 'draft' },
+        'not-an-object',
+      ],
+    }],
+  });
+  const s = summarizeTopics(projects);
+  const t = s.topics.find((x) => x.topic_id === 'flexible_learning');
+  assert.equal(t.projects, 1);
+  assert.deepEqual(t.source_ids, []);
+  assert.ok(s.evidenceIssues.some((i) => i.code === 'unknown_evidence_source'));
+  assert.ok(s.evidenceIssues.some((i) => i.code === 'invalid_evidence'));
 });

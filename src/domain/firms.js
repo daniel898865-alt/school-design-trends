@@ -43,27 +43,32 @@ export function findSimilarFirms(firms) {
 export function summarizeFirms(projects, snapshot) {
   const firmsById = new Map(snapshot.firms.map((f) => [f.firm_id, f]));
   const rows = new Map();
+  const unresolvedFirmRefs = [];
   let jointProjects = 0;
   let projectsWithoutFirm = 0;
+  let projectsWithOnlyUnresolvedFirms = 0;
 
   for (const p of projects) {
-    const ids = [...new Set(p.firm_ids)];
+    const ids = [...new Set(p.firm_ids ?? [])];
+    // firms에 레코드가 없는 사무소는 참여 건수로 세지 않고 따로 보고한다(원래 참조는 사업에 그대로 남음).
+    const resolved = ids.filter((id) => firmsById.has(id));
+    for (const id of ids) if (!firmsById.has(id)) unresolvedFirmRefs.push({ project_id: p.project_id, firm_id: id });
     if (ids.length === 0) projectsWithoutFirm++;
+    else if (resolved.length === 0) projectsWithOnlyUnresolvedFirms++;
     if (ids.length > 1) jointProjects++;
-    for (const id of ids) {
+    for (const id of resolved) {
       if (!rows.has(id)) {
         const f = firmsById.get(id);
         rows.set(id, {
           firm_id: id,
-          name: f?.name ?? null,
-          aliases: f?.aliases ?? [],
-          business_registration_number: f?.business_registration_number ?? null,
-          registration_status: f?.registration_status ?? 'unknown',
-          brn_format: checkBrnFormat(f?.business_registration_number ?? null),
-          official_url: f?.official_url ?? null,
-          source_ids: f?.source_ids ?? [],
-          verified_at: f?.verified_at ?? null,
-          known_firm: Boolean(f),
+          name: f.name,
+          aliases: f.aliases,
+          business_registration_number: f.business_registration_number,
+          registration_status: f.registration_status ?? 'unknown',
+          brn_format: checkBrnFormat(f.business_registration_number),
+          official_url: f.official_url,
+          source_ids: f.source_ids,
+          verified_at: f.verified_at,
           participations: 0,
           solo_awards: 0,
           joint_awards: 0,
@@ -86,16 +91,20 @@ export function summarizeFirms(projects, snapshot) {
   const notes = ['참여 당선 건수: 공동 당선은 참여한 사무소마다 1건씩 셈 — 사무소별 합계는 전체 사업 수와 다를 수 있음'];
   notes.push('당선 발표 기준이며 계약·낙찰과 다름. 시장점유율·수주액이 아님');
   if (projectsWithoutFirm > 0) notes.push(`당선 사무소 미확인 사업 ${projectsWithoutFirm}건`);
+  if (unresolvedFirmRefs.length > 0) {
+    notes.push(`firms에 없는 사무소 참조 ${unresolvedFirmRefs.length}건은 참여 건수에서 제외 — 이름·번호 미확인`);
+  }
   if (similar.length > 0) notes.push(`이름이 겹치는 사무소 ${similar.length}쌍 — 같은 업체인지 확인 필요(자동 병합하지 않음)`);
-  if (firms.some((f) => !f.known_firm)) notes.push('firms에 없는 사무소 식별자가 있음 — 이름·번호 미확인');
 
   return {
     uniqueProjects: projects.length,
-    projectsWithFirm: projects.length - projectsWithoutFirm,
+    projectsWithFirm: projects.length - projectsWithoutFirm - projectsWithOnlyUnresolvedFirms,
     projectsWithoutFirm,
+    projectsWithOnlyUnresolvedFirms,
     jointProjects,
     participationTotal,
     firms,
+    unresolvedFirmRefs,
     similarFirms: similar,
     notes,
   };
