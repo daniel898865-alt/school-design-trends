@@ -25,7 +25,7 @@
 
 2026-10-17 역할 변경을 반영했습니다. 문서의 A는 자료 처리, B는 화면 개발을 뜻합니다. 공통 파일은 수정 담당을 먼저 정합니다.
 
-진행 상황과 네 개 PR의 담당은 [업무 분담 이슈 #1](https://github.com/yunzecho-eng/school-design-trends/issues/1)에서 함께 확인합니다.
+진행 상황은 담당별로 [Yunze 화면 개발 #3](https://github.com/yunzecho-eng/school-design-trends/issues/3), [Daniel 자료 처리 #4](https://github.com/yunzecho-eng/school-design-trends/issues/4)에서 관리합니다. 각 이슈에 두 단계 PR과 완료 기준을 적었습니다. 기존 공동 이슈 #1은 분리 이력을 남기고 종료했습니다.
 
 윤제의 작업 브랜치는 [`yunze/2026-10-17-ui`](https://github.com/yunzecho-eng/school-design-trends/tree/yunze/2026-10-17-ui)입니다. 브랜치는 `이름/YYYY-MM-DD-작업내용`으로 쓰고 날짜는 작업 시작일로 유지합니다. 같은 작업을 이어갈 때 매일 새 브랜치를 만들 필요는 없습니다.
 

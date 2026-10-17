@@ -39,6 +39,8 @@ CSV/JSON 입력 또는 검토된 공개 자료
 
 ## 최소 4개의 PR로 분담하기
 
+Yunze의 B1·B2는 [화면 개발 이슈 #3](https://github.com/yunzecho-eng/school-design-trends/issues/3), Daniel의 A1·A2는 [자료 처리 이슈 #4](https://github.com/yunzecho-eng/school-design-trends/issues/4)에서 담당별로 관리한다. 첫 PR에는 관련 이슈 번호만 연결하고, 각 이슈의 두 단계가 모두 끝나는 마지막 PR에서 해당 이슈를 닫는다.
+
 | PR | 작성 담당 | 파일 소유권 | 완료 조건 | 리뷰 |
 |---|---|---|---|---|
 | A1: 입력·정제·지역 집계 | daniel898865-alt | `src/data/`, `src/domain/projects.js`, `rules/regions.json`, `tests/domain/` | 같은 사업의 기사 2건은 사업 1건·기사 2건; 날짜·지역 결측 보고; 예상 집계와 일치 | B · yunzecho-eng |
