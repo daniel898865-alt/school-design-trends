@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.1",
+  "is_demo": true,
+  "as_of": "2026-10-17",
+  "generated_at": "2026-10-17T00:00:00+09:00",
+  "schools": [
+    { "school_id": "v2-school-001", "name": "가상 노을초등학교", "official_code": null, "school_level": "elementary", "region_code": "11", "region_name": "서울특별시", "address": null, "source_ids": [] },
+    { "school_id": "v2-school-002", "name": "가상 등대고등학교", "official_code": null, "school_level": "high", "region_code": "26", "region_name": "부산광역시", "address": null, "source_ids": [] },
+    { "school_id": "v2-school-003", "name": "가상 숲길중학교", "official_code": null, "school_level": "middle", "region_code": "41", "region_name": "경기도", "address": null, "source_ids": [] }
+  ],
+  "buildings": [
+    { "building_id": "v2-bld-39", "school_id": "v2-school-003", "name": "가상 39년동", "completion_date": "1987-05-01", "completion_year": 1987, "date_precision": "day", "status": "in_use", "source_ids": ["v2-src-bld"], "verified_at": null },
+    { "building_id": "v2-bld-40", "school_id": "v2-school-001", "name": "가상 40년동", "completion_date": "1986-10-17", "completion_year": 1986, "date_precision": "day", "status": "in_use", "source_ids": ["v2-src-bld"], "verified_at": null },
+    { "building_id": "v2-bld-41", "school_id": "v2-school-002", "name": "가상 41년동", "completion_date": "1985-03-01", "completion_year": 1985, "date_precision": "day", "status": "in_use", "source_ids": ["v2-src-bld"], "verified_at": null },
+    { "building_id": "v2-bld-year-1986", "school_id": "v2-school-003", "name": "가상 연도만 1986동", "completion_date": null, "completion_year": 1986, "date_precision": "year", "status": "in_use", "source_ids": ["v2-src-bld"], "verified_at": null },
+    { "building_id": "v2-bld-year-1985", "school_id": "v2-school-003", "name": "가상 연도만 1985동", "completion_date": null, "completion_year": 1985, "date_precision": "year", "status": "unknown", "source_ids": ["v2-src-bld"], "verified_at": null },
+    { "building_id": "v2-bld-unknown", "school_id": "v2-school-002", "name": "가상 준공 미확인동", "completion_date": null, "completion_year": null, "date_precision": "unknown", "status": "in_use", "source_ids": [], "verified_at": null },
+    { "building_id": "v2-bld-demolished", "school_id": "v2-school-002", "name": "가상 철거동", "completion_date": "1970-01-01", "completion_year": 1970, "date_precision": "day", "status": "demolished", "source_ids": ["v2-src-bld"], "verified_at": null },
+    { "building_id": "v2-bld-second", "school_id": "v2-school-001", "name": "가상 같은 학교 둘째동", "completion_date": "1980-01-01", "completion_year": 1980, "date_precision": "day", "status": "in_use", "source_ids": ["v2-src-bld"], "verified_at": null }
+  ],
+  "projects": [
+    { "project_id": "v2-project-001", "title": "가상 노을초 공동 당선 설계", "school_ids": ["v2-school-001"], "region_code": "11", "school_level": "elementary", "project_type": null, "competition_date": null, "award_date": "2025-04-01", "completion_date": null, "firm_ids": ["v2-firm-001", "v2-firm-002"], "source_ids": ["v2-src-001"], "summary": "가상 자료: 공동 당선, 주제 2개", "topic_evidence": [
+      { "topic_id": "community_sharing", "source_id": "v2-src-001", "evidence_note": "가상 근거", "review_status": "reviewed" },
+      { "topic_id": "outdoor_learning", "source_id": "v2-src-001", "evidence_note": "가상 근거", "review_status": "draft" }
+    ], "images": [] },
+    { "project_id": "v2-project-002", "title": "가상 등대고 단독 당선 설계", "school_ids": ["v2-school-002"], "region_code": "26", "school_level": "high", "project_type": null, "competition_date": null, "award_date": "2026-02-01", "completion_date": null, "firm_ids": ["v2-firm-001"], "source_ids": ["v2-src-002"], "summary": "가상 자료: 단독 당선", "topic_evidence": [
+      { "topic_id": "flexible_learning", "source_id": "v2-src-002", "evidence_note": "가상 근거", "review_status": "reviewed" }
+    ], "images": [] },
+    { "project_id": "v2-project-003", "title": "가상 숲길중 사무소 미확인 설계", "school_ids": ["v2-school-003"], "region_code": "41", "school_level": "middle", "project_type": null, "competition_date": null, "award_date": "2024-06-01", "completion_date": null, "firm_ids": [], "source_ids": ["v2-src-003"], "summary": "가상 자료: 사무소 미확인, 미분류", "topic_evidence": [], "images": [] },
+    { "project_id": "v2-project-004", "title": "=HYPERLINK(\"http://example.invalid\",\"가상\")", "school_ids": ["v2-school-001"], "region_code": "11", "school_level": "elementary", "project_type": null, "competition_date": null, "award_date": "2026-05-05", "completion_date": null, "firm_ids": ["v2-firm-003"], "source_ids": ["v2-src-004"], "summary": "+1 가상 자료: 수식처럼 보이는 문자열", "topic_evidence": [
+      { "topic_id": "not_in_rules", "source_id": "v2-src-004", "evidence_note": "가상 근거", "review_status": "draft" }
+    ], "images": [] },
+    { "project_id": "v2-project-005", "title": "가상 사무소 정보 없는 당선 설계", "school_ids": ["v2-school-002"], "region_code": "26", "school_level": "high", "project_type": null, "competition_date": null, "award_date": "2025-09-09", "completion_date": null, "firm_ids": ["v2-firm-missing"], "source_ids": ["v2-src-005"], "summary": "가상 자료: firms에 없는 사무소", "topic_evidence": [
+      { "topic_id": "community_sharing", "source_id": "v2-src-005", "evidence_note": null, "review_status": "reviewed" }
+    ], "images": [] }
+  ],
+  "sources": [
+    { "source_id": "v2-src-001", "source_type": "competition", "title": "가상 공모 결과", "publisher": "가상 교육청", "url": "https://example.com/v2-001", "published_at": "2025-04-02", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v2-src-002", "source_type": "competition", "title": "가상 공모 결과", "publisher": "가상 교육청", "url": null, "published_at": "2026-02-03", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v2-src-003", "source_type": "news", "title": "가상 뉴스", "publisher": "가상 신문", "url": null, "published_at": "2024-06-05", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v2-src-004", "source_type": "news", "title": "가상 뉴스", "publisher": "가상 신문", "url": null, "published_at": "2026-05-06", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v2-src-005", "source_type": "news", "title": "가상 뉴스", "publisher": "가상 신문", "url": null, "published_at": "2025-09-10", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v2-src-bld", "source_type": "official_building", "title": "가상 건물 현황", "publisher": "가상 교육청", "url": null, "published_at": null, "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" }
+  ],
+  "firms": [
+    { "firm_id": "v2-firm-001", "name": "가상건축 (주)", "aliases": [], "business_registration_number": null, "registration_status": "unknown", "official_url": null, "source_ids": [], "verified_at": null },
+    { "firm_id": "v2-firm-002", "name": "가상디자인건축사사무소", "aliases": [], "business_registration_number": "123-45-67890", "registration_status": "unknown", "official_url": null, "source_ids": [], "verified_at": null },
+    { "firm_id": "v2-firm-003", "name": "㈜가상건축", "aliases": [], "business_registration_number": null, "registration_status": "unknown", "official_url": null, "source_ids": [], "verified_at": null }
+  ],
+  "coverage": {
+    "scope": "A2 테스트용 가상 사업 5건·건물 8동",
+    "source_status": "not_collected",
+    "limitations": ["실제 학교·건물·사무소가 아닌 테스트용 가상 자료"]
+  }
+}
