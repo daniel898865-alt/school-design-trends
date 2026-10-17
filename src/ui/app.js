@@ -1,6 +1,7 @@
 import { createDataProvider } from './data-provider.js';
 import { el, emptyState } from './dom.js';
 import { createProjectThumbnail, primaryProjectSource } from './project-media.js';
+import { renderRegionMap } from './region-map.js';
 import { renderFirms, renderBuildings, renderTopics, openProjectDialog } from './details.js';
 import { serializeCsv, serializeMarkdown, downloadExport } from './export.js';
 
@@ -140,6 +141,8 @@ function paint() {
     const firmNote = view.summary.unresolvedFirmReferences === undefined ? '사무소 목록이 연결된 고유 사무소' : `사무소 목록 기준 · 미확인 연결 ${view.summary.unresolvedFirmReferences}건 제외`;
     $('stats').replaceChildren(stat('설계사업', view.summary.projects, '중복 사업을 제외한 고유 사례'), stat('연결된 자료', view.summary.sources, '사업 수와 구분한 출처 수'), stat('관련 학교', view.summary.schools, '동일 학교의 중복을 제외', '곳'), stat('참여 사무소', view.summary.firms, firmNote, '곳'));
     $('results-summary').textContent = `설계사업 ${view.summary.projects}건 · 같은 조회 조건 유지`;
+    const mapView = lastFilters.region ? provider.select({ ...lastFilters, region: '' }) : view;
+    renderRegionMap($('region-map'), { regions: mapView.byRegion, selectedRegion: lastFilters.region, onSelect: code => { $('region').value = code; render(); } });
     bars($('region-chart'), view.byRegion); monthsChart($('month-chart'), view.byMonth);
     const regionNote = view.summary.regionParticipations === undefined ?
       '시도별 수치는 지역 참여 건수이며 지역 미확인은 별도로 표시합니다.' :

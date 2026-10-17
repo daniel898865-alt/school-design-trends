@@ -9,6 +9,7 @@
   <link rel="icon" href="public/mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="src/styles/main.css">
   <link rel="stylesheet" href="src/styles/details.css">
+  <link rel="stylesheet" href="src/styles/region-map.css">
   <script type="module" src="src/ui/app.js"></script>
 </head>
 <body>
@@ -63,6 +64,10 @@
         </div>
       </div>
     <div id="overview-view" class="result-panel" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+      <section class="region-explorer" aria-label="지도에서 시도 탐색">
+        <div id="region-map"></div>
+        <p class="small map-filter-note">지도 건수는 지역 선택 전 기준입니다. 검색어·학교급·기간·날짜·주제 조건은 반영합니다. 지역을 선택하면 아래 그래프와 사례·표·내보내기가 함께 바뀝니다.</p>
+      </section>
       <section class="chart-grid" aria-label="지역 및 월별 집계">
         <article class="panel"><div class="panel-heading"><div><p class="eyebrow">BY REGION</p><h2>어디에서 변화하고 있나요?</h2></div><span class="unit">지역 참여 · 건</span></div><div id="region-chart"></div><p id="region-note" class="small"></p></article>
         <article class="panel"><div class="panel-heading"><div><p class="eyebrow">OVER TIME</p><h2>시간에 따른 설계 사례</h2></div><span class="unit">설계사업 · 건</span></div><div id="month-chart"></div></article>
