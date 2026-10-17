@@ -10,6 +10,7 @@
       "실제 학교·설계공모·당선 사무소 또는 전국 통계가 아닙니다.",
       "자료 수집·예측·월별 갱신 기능을 검증하는 자료가 아닙니다.",
       "준공일 경계, 공동 참여, 결측, 철거 및 학교급 필터의 화면 동작을 확인하는 예시입니다.",
+      "demo-project-006~011의 설계사업 준공일 6건은 연도별 화면 검증을 위한 가상 정보이며, 실제 준공 기록이나 건물 연령의 근거가 아닙니다.",
       "generated_at은 예시 메타데이터이며 실제 수집 시각이 아닙니다."
     ]
   },
@@ -546,7 +547,7 @@
       "project_type": "new_build",
       "competition_date": "2025-07-01",
       "award_date": "2025-07-21",
-      "completion_date": null,
+      "completion_date": "2026-09-15",
       "firm_ids": [
         "demo-firm-001",
         "demo-firm-004"
@@ -591,7 +592,7 @@
       "project_type": "renovation",
       "competition_date": "2025-03-01",
       "award_date": "2025-03-11",
-      "completion_date": null,
+      "completion_date": "2026-06-30",
       "firm_ids": [
         "demo-firm-002"
       ],
@@ -634,7 +635,7 @@
       "project_type": "extension",
       "competition_date": "2024-11-01",
       "award_date": "2024-11-25",
-      "completion_date": null,
+      "completion_date": "2026-02-20",
       "firm_ids": [
         "demo-firm-003"
       ],
@@ -671,7 +672,7 @@
       "project_type": "new_build",
       "competition_date": "2024-08-01",
       "award_date": "2024-08-04",
-      "completion_date": null,
+      "completion_date": "2025-10-10",
       "firm_ids": [
         "demo-firm-004"
       ],
@@ -714,7 +715,7 @@
       "project_type": "renovation",
       "competition_date": "2024-04-01",
       "award_date": "2024-04-19",
-      "completion_date": null,
+      "completion_date": "2025-05-30",
       "firm_ids": [
         "demo-firm-005"
       ],
@@ -757,7 +758,7 @@
       "project_type": "extension",
       "competition_date": "2024-01-01",
       "award_date": "2024-01-17",
-      "completion_date": null,
+      "completion_date": "2024-12-20",
       "firm_ids": [
         "demo-firm-001",
         "demo-firm-002"

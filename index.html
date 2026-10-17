@@ -9,6 +9,8 @@
   <link rel="icon" href="public/mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="src/styles/main.css">
   <link rel="stylesheet" href="src/styles/details.css">
+  <link rel="stylesheet" href="src/styles/region-map.css">
+  <link rel="stylesheet" href="src/styles/year-trends.css">
   <script type="module" src="src/ui/app.js"></script>
 </head>
 <body>
@@ -21,6 +23,7 @@
       <button type="button" data-view="firms">설계 사무소</button>
       <button type="button" data-view="buildings">건물 연령</button>
       <button type="button" data-view="topics">설계 주제</button>
+      <button type="button" data-view="years">연도별 분석</button>
     </nav>
     <span class="header-note">학교 공간을 읽는 새로운 관점</span>
   </header>
@@ -40,7 +43,7 @@
           <label>조회 기간<select id="months" name="months"><option value="36">최근 3년</option><option value="24">최근 2년</option><option value="12">최근 1년</option></select></label>
           <button class="primary search-button" type="submit">검색 <span aria-hidden="true">↗</span></button>
         </div>
-        <details class="advanced"><summary>날짜·설계 주제 상세 조건</summary><div class="advanced-fields"><label>조회 기준일<input type="date" id="asOf" name="asOf" value="2026-10-17" required></label><label>날짜 기준<select id="dateBasis" name="dateBasis"><option value="award_date">당선일</option><option value="competition_date">공모일</option><option value="published_at">기사 게시일</option></select></label><label>설계 주제<select id="topic" name="topic"><option value="">전체 주제</option></select></label></div></details>
+        <details class="advanced"><summary>날짜·설계 주제 상세 조건</summary><div class="advanced-fields"><label>조회 기준일<input type="date" id="asOf" name="asOf" value="2026-10-17" required></label><label>날짜 기준<select id="dateBasis" name="dateBasis"><option value="award_date">당선일</option><option value="competition_date">공모일</option><option value="published_at">기사 게시일</option><option value="completion_date">사업 준공일</option></select></label><label>설계 주제<select id="topic" name="topic"><option value="">전체 주제</option></select></label></div></details>
       </form>
     </section>
     <p id="notice" role="status" aria-live="polite">예시 자료를 불러오는 중입니다…</p>
@@ -51,7 +54,23 @@
     <p id="coverage-scope" class="small">자료 범위 확인 중</p>
     <section id="stats" class="stats" aria-label="필터 적용 요약"></section>
     <div class="export-toolbar"><span>현재 조건의 설계사업 <strong id="export-count">0</strong>건 내보내기</span><div><button id="export-csv" type="button" disabled>CSV 다운로드 ↓</button><button id="export-md" type="button" disabled>Markdown 다운로드 ↓</button></div></div>
-    <div id="overview-view">
+    <section id="results" class="results-workspace" aria-label="조회 결과">
+      <div class="results-navigation">
+        <div class="results-heading"><h2>조회 결과</h2><span id="results-summary" class="small">같은 조건으로 화면 전환</span></div>
+        <div id="result-tabs" class="result-tabs" role="tablist" aria-label="조회 결과 화면">
+          <button type="button" id="tab-overview" role="tab" data-result-view="overview" aria-controls="overview-view" aria-selected="true" tabindex="0">전체 동향 <span>그래프</span></button>
+          <button type="button" id="tab-projects" role="tab" data-result-view="projects" aria-controls="projects-view" aria-selected="false" tabindex="-1">설계 사례 <span>이미지·표</span></button>
+          <button type="button" id="tab-firms" role="tab" data-result-view="firms" aria-controls="firms-view" aria-selected="false" tabindex="-1">설계 사무소</button>
+          <button type="button" id="tab-buildings" role="tab" data-result-view="buildings" aria-controls="buildings-view" aria-selected="false" tabindex="-1">건물 연령</button>
+          <button type="button" id="tab-topics" role="tab" data-result-view="topics" aria-controls="topics-view" aria-selected="false" tabindex="-1">설계 주제</button>
+          <button type="button" id="tab-years" role="tab" data-result-view="years" aria-controls="years-view" aria-selected="false" tabindex="-1">연도별 분석 <span>키워드·전망</span></button>
+        </div>
+      </div>
+    <div id="overview-view" class="result-panel" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+      <section class="region-explorer" aria-label="지도에서 시도 탐색">
+        <div id="region-map"></div>
+        <p class="small map-filter-note">지도 건수는 지역 선택 전 기준입니다. 검색어·학교급·기간·날짜·주제 조건은 반영합니다. 지역을 선택하면 아래 그래프와 사례·표·내보내기가 함께 바뀝니다.</p>
+      </section>
       <section class="chart-grid" aria-label="지역 및 월별 집계">
         <article class="panel"><div class="panel-heading"><div><p class="eyebrow">BY REGION</p><h2>어디에서 변화하고 있나요?</h2></div><span class="unit">지역 참여 · 건</span></div><div id="region-chart"></div><p id="region-note" class="small"></p></article>
         <article class="panel"><div class="panel-heading"><div><p class="eyebrow">OVER TIME</p><h2>시간에 따른 설계 사례</h2></div><span class="unit">설계사업 · 건</span></div><div id="month-chart"></div></article>
@@ -59,13 +78,16 @@
       <section class="level-strip" aria-label="학교급별 사업 수" id="level-strip"></section>
       <ul id="aggregation-notes" class="aggregation-notes" aria-label="집계 기준과 한계"></ul>
     </div>
-    <section id="projects-view" aria-labelledby="projects-title">
+    <section id="projects-view" class="result-panel" role="tabpanel" aria-labelledby="tab-projects" tabindex="0" hidden>
       <div class="section-heading"><div><p class="eyebrow">DESIGN ARCHIVE</p><h2 id="projects-title">학교 공간의 다양한 가능성</h2></div><div class="view-toggle" role="group" aria-label="사례 보기 방식"><button type="button" id="cards-mode" aria-pressed="true">카드</button><button type="button" id="table-mode" aria-pressed="false">표</button></div></div>
+      <p class="case-help small">썸네일·제목을 누르면 이 페이지에서 상세 내용을 볼 수 있습니다. 원문 사이트는 별도 링크로 새 탭에서 열립니다.</p>
       <div id="projects" class="project-grid"></div>
     </section>
-    <section id="firms-view" hidden aria-label="설계 사무소"></section>
-    <section id="buildings-view" hidden aria-label="건물 연령"></section>
-    <section id="topics-view" hidden aria-label="설계 주제"></section>
+    <section id="firms-view" class="result-panel" role="tabpanel" aria-labelledby="tab-firms" tabindex="0" hidden></section>
+    <section id="buildings-view" class="result-panel" role="tabpanel" aria-labelledby="tab-buildings" tabindex="0" hidden></section>
+    <section id="topics-view" class="result-panel" role="tabpanel" aria-labelledby="tab-topics" tabindex="0" hidden></section>
+    <section id="years-view" class="result-panel" role="tabpanel" aria-labelledby="tab-years" tabindex="0" hidden></section>
+    </section>
     <section class="source-note" id="data-section"><div><p class="eyebrow">ABOUT THIS DATA</p><h2>숫자보다 먼저,<br>출처를 확인합니다.</h2></div><div><p>처음 열리는 자료는 화면 검증용 가상 예시입니다. 공통 입력·정제·집계 모듈에 연결되어 같은 사업의 기사와 설계사업을 구분합니다. 실제 자료의 출처 확인과 수집은 별도 단계입니다.</p><p>전국 자료 자동 수집 · 미래 예측 · 월별 자동 갱신은 제공하지 않습니다.</p><label class="file-label">검증용 가상 JSON 불러오기<input type="file" id="import-file" accept=".json,application/json"></label><p class="small">규격 v0.1, is_demo: true인 JSON을 최대 1 MB까지 브라우저 안에서 읽습니다. 입력 오류가 있으면 이전 자료와 조회 조건을 유지하고, 경고는 확인 사항으로 표시합니다.</p><p><a href="public/demo.snapshot.json" download>기본 가상 자료 JSON 받기 ↗</a></p></div></section>
   </main>
   <footer><div class="footer-brand">SCHOOL DESIGN TRENDS<span>더 나은 배움의 공간을 위한 기록</span></div><p>Daniel X Yunze · 2026<br>개발 예시 / 실제 전국 자료 미수집</p></footer>

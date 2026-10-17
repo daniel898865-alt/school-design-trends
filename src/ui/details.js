@@ -1,4 +1,5 @@
-import { el, safeUrl, sourceLinks, emptyState, projectImage } from './dom.js';
+import { el, safeUrl, sourceLinks, emptyState } from './dom.js';
+import { primaryProjectSource, renderProjectGallery } from './project-media.js';
 
 const ageLabels = {
   eligible: '40년 이상',
@@ -201,6 +202,12 @@ export function renderTopics(container, view) {
 }
 
 export function openProjectDialog(dialog, project, snapshot) {
+  if (!dialog.open) {
+    const opener = document.activeElement;
+    dialog.addEventListener('close', () => {
+      if (opener?.isConnected && typeof opener.focus === 'function') opener.focus();
+    }, { once: true });
+  }
   dialog.replaceChildren();
   dialog.setAttribute('aria-labelledby', 'project-dialog-title');
   const close = el('button', { type: 'button', class: 'dialog-close', 'aria-label': '설계사업 상세 닫기', autofocus: '' }, '닫기 ×');
@@ -209,7 +216,16 @@ export function openProjectDialog(dialog, project, snapshot) {
   content.append(close, el('p', { class: 'eyebrow' }, 'PROJECT DETAILS'),
     el('h2', { id: 'project-dialog-title' }, text(project.title, '설계사업 상세')));
   if (snapshot.is_demo) content.append(el('p', { class: 'notice' }, '가상 설계사업입니다. 실제 학교·공모·사무소와 관계없는 화면 확인용 자료입니다.'));
-  content.append(projectImage(project));
+  const original = primaryProjectSource(project, snapshot);
+  const originalAction = el('div', { class: 'project-original-actions' });
+  if (original) {
+    originalAction.append(el('a', {
+      class: 'project-original-link', href: original.url, target: '_blank',
+      rel: 'noopener noreferrer', referrerpolicy: 'no-referrer',
+    }, '원문 사이트 보기 ↗'));
+    if (original.title) originalAction.append(el('span', { class: 'muted' }, original.title));
+  } else originalAction.append(el('span', { class: 'muted' }, '연결된 원문 사이트가 없습니다. 아래 출처의 확인 상태를 참고하세요.'));
+  content.append(originalAction, renderProjectGallery(project, snapshot));
   content.append(el('p', {}, text(project.summary, '직접 작성한 요약이 아직 없습니다. 연결된 출처를 확인해 주세요.')));
   content.append(definitionList([
     ['학교', projectNames(project, snapshot, 'school_names', 'school_ids', 'schools')],

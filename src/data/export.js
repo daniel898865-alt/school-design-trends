@@ -38,6 +38,7 @@ export function exportRows(snapshot, filters = {}) {
     { key: 'basis_date', label: `기준 날짜(${projects.meta.date_basis})` },
     { key: 'competition_date', label: '공모일' },
     { key: 'award_date', label: '당선일' },
+    { key: 'completion_date', label: '사업 준공일' },
     { key: 'firm_names', label: '당선 사무소' },
     { key: 'topic_ids', label: '설계 주제' },
     { key: 'article_count', label: '기사 수' },
@@ -58,6 +59,7 @@ export function exportRows(snapshot, filters = {}) {
       basis_date: p.basis_date,
       competition_date: p.competition_date,
       award_date: p.award_date,
+      completion_date: p.completion_date,
       firm_names: p.firm_ids.map((id) => firms.get(id)?.name ?? `${id}(사무소 정보 없음)`).join(LIST_SEP),
       // 주제 집계(summarizeTopics)와 같이 사전에 있는 주제만 내보낸다.
       topic_ids: [...new Set(p.topic_evidence.map((e) => e.topic_id).filter((id) => KNOWN_TOPICS.has(id)))].join(LIST_SEP),

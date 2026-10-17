@@ -1,0 +1,43 @@
+.year-trends .year-controls{display:flex;gap:1rem;flex-wrap:wrap;margin:1.4rem 0 .6rem}
+.year-trends .year-controls label{display:grid;gap:.45rem;font-weight:650;min-width:14rem}
+.year-trends .year-controls select{width:100%;min-height:44px;padding:.6rem .8rem;border:1px solid #cfd8d1;border-radius:8px;background:#fff;color:#22382d}
+.year-trends .year-period-note{padding:.9rem 1rem;border-left:3px solid #4b765e;background:#f0f4ef;color:#365341;border-radius:0 8px 8px 0}
+.year-trends .year-body{display:grid;grid-template-columns:minmax(0,1fr);gap:1.4rem;margin-top:1.3rem}
+.year-trends .year-block{min-width:0;padding:1.5rem;border:1px solid #dce3da;border-radius:14px;background:#fff}
+.year-trends .year-block-heading{display:flex;align-items:flex-start;gap:.85rem;margin-bottom:1.25rem}
+.year-trends .year-block-heading h3{margin:0 0 .45rem;font-size:1.2rem}
+.year-trends .year-block-heading p{margin:0;line-height:1.6}
+.year-trends .year-step{flex:none;display:grid;place-items:center;width:2.2rem;height:2.2rem;border-radius:50%;background:#e9efe5;color:#35563f;font-size:.85rem;font-weight:750}
+.year-trends .year-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem;margin-bottom:1.5rem}
+.year-trends .year-facts p{display:grid;gap:.45rem;background:#f4f6f1;padding:1rem;border-radius:9px;margin:0}
+.year-trends .year-facts strong{font-size:1.85rem;line-height:1.1;font-weight:750;color:#31583d}
+.year-trends .year-facts span{font-size:.85rem;color:#5b695e}
+.year-trends .year-keywords{list-style:none;padding:0;margin:1rem 0}
+.year-trends .year-keywords li{display:grid;grid-template-columns:minmax(100px,1fr) 2fr minmax(100px,1fr);align-items:center;gap:1rem;padding:.7rem 0;border-bottom:1px solid #edf0e9}
+.year-trends .year-keywords progress{width:100%;height:12px;accent-color:#628064;border:0}
+.year-trends .year-keywords strong{text-align:right;font-size:.9rem}
+.year-trends .year-comparison{margin-top:1.5rem;padding-top:1rem;border-top:1px solid #dce3da}
+.year-trends .year-comparison h4{margin:.25rem 0 .8rem;font-size:1rem}
+.year-trends .year-change-table{font-size:.9rem}
+.year-trends .year-project-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.year-trends .year-project-card{min-width:0;border:1px solid #e0e5dd;border-radius:11px;overflow:hidden;background:#fafbf8}
+.year-trends .year-project-card figure{margin:0;border-radius:0}
+.year-trends .year-project-content{padding:1rem;overflow-wrap:anywhere;line-height:1.6}
+.year-trends .year-project-content h4{margin:0 0 .6rem;font-size:1.02rem}
+.year-trends .year-project-content h4 button{text-align:left;line-height:1.5}
+.year-trends .year-project-content p{font-size:.9rem}
+.year-trends .year-outlook{background:#f7f6ef;border-color:#dedbc7}
+.year-trends .year-outlook-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-top:1rem}
+.year-trends .year-hypothesis{padding:1.1rem;border:1px solid #dfdfd0;border-radius:11px;background:#fffefa;min-width:0}
+.year-trends .year-hypothesis h4{margin:.8rem 0;font-size:1rem}
+.year-trends .year-hypothesis>p{font-size:.94rem;line-height:1.7}
+.year-trends .year-outlook-fields{display:grid;gap:.4rem;margin:1rem 0;font-size:.86rem;line-height:1.65}
+.year-trends .year-outlook-fields dt{font-weight:700;color:#535b44}
+.year-trends .year-outlook-fields dd{margin:0 0 .45rem;color:#60675d}
+.year-trends .year-evidence-links{display:grid;gap:.5rem}
+.year-trends .year-evidence-links button{text-align:left;font-size:.84rem;line-height:1.55;overflow-wrap:anywhere}
+.year-trends .year-method{margin-top:1.3rem;padding:1rem;background:#f1f4ee;border-radius:10px;font-size:.88rem;line-height:1.7}
+.year-trends .year-method summary{cursor:pointer;font-weight:650}
+.year-trends .year-method li{margin:.35rem 0}
+@media(max-width:1000px){.year-trends .year-outlook-grid{grid-template-columns:1fr}.year-trends .year-project-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.year-trends .year-block{padding:1rem}.year-trends .year-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.year-trends .year-project-grid{grid-template-columns:1fr}.year-trends .year-controls label{width:100%;min-width:0}.year-trends .year-keywords li{grid-template-columns:1fr 1fr;gap:.5rem}.year-trends .year-keywords progress{grid-row:2;grid-column:1/-1}.year-trends .year-keywords strong{font-size:.83rem}}
