@@ -22,7 +22,10 @@ export function classifyBuildingAge(building, asOf, threshold = 40) {
   const rawYear = building?.completion_year ?? null;
   const precision = building?.date_precision ?? 'unknown';
   // parseSnapshot을 거치지 않은 값도 들어올 수 있으므로 형식이 틀리면 예외 없이 unknown으로 둔다.
-  if (rawDate !== null && !isValidDate(rawDate)) return unknown(`준공일 형식 오류 ${JSON.stringify(rawDate)} — 확인 필요`);
+  // 준공일도 준공연도와 같이 1000~9999년만 받는다(예: 0001-01-01은 거절).
+  if (rawDate !== null && !(isValidDate(rawDate) && Number(rawDate.slice(0, 4)) >= 1000)) {
+    return unknown(`준공일 형식 오류 ${JSON.stringify(rawDate)} — 확인 필요`);
+  }
   if (rawYear !== null && !(Number.isInteger(rawYear) && rawYear >= 1000 && rawYear <= 9999)) {
     return unknown(`준공연도 형식 오류 ${JSON.stringify(rawYear)} — 확인 필요`);
   }
@@ -122,7 +125,7 @@ export function summarizeBuildings(snapshot, options = {}) {
   ];
   if (byAge.uncertain.buildings > 0) notes.push(`준공연도만 확인되어 ${threshold}년 여부 미확정 ${byAge.uncertain.buildings}동`);
   if (byAge.unknown.buildings > 0) notes.push(`준공 정보 미확인 ${byAge.unknown.buildings}동`);
-  if (unresolvedSchool.length > 0) notes.push(`schools에 없는 학교를 가리키는 건물 ${unresolvedSchool.length}동 — 학교 수에서 제외`);
+  if (unresolvedSchool.length > 0) notes.push(`schools에 없는 학교를 가리키는 건물 ${unresolvedSchool.length}동 — 건물 수에는 포함, 학교 수에서는 제외(소속 학교 확인 필요)`);
   if (snapshot.as_of && asOf !== snapshot.as_of) notes.push(`원자료 기준일 ${snapshot.as_of}와 조회 기준일 ${asOf}가 다름`);
 
   return {

@@ -5,6 +5,14 @@ import topicRules from '../../rules/topics.json' with { type: 'json' };
 export const TOPICS = topicRules.topics;
 const known = new Set(TOPICS.map((t) => t.topic_id));
 
+// 검토 상태 값. 허용 목록은 규격에 없으므로 문자열이면 그대로 세고, 비문자·빈 값은 unknown으로 둔다.
+function reviewStatusOf(e) {
+  const v = e.review_status;
+  if (v === null || v === undefined) return { status: 'unknown', invalid: false };
+  if (typeof v !== 'string' || v.trim() === '') return { status: 'unknown', invalid: true };
+  return { status: v.trim(), invalid: false };
+}
+
 // 사업의 주제 근거를 검사한다. 사전에 없는 topic_id는 집계하지 않고 보고한다.
 // sourcesById가 있으면 sources에 레코드가 있는 근거 출처만 출처 수로 센다.
 function evidenceOf(project, issues, sourcesById) {
@@ -24,13 +32,16 @@ function evidenceOf(project, issues, sourcesById) {
       issues.push({ path, code: 'unknown_evidence_source', message: `근거 출처 "${e.source_id}"가 sources에 없음 — 출처 수에서 제외` });
     }
     if (!e.evidence_note) issues.push({ path, code: 'missing_evidence_note', message: '근거 설명(evidence_note) 누락' });
+    if (reviewStatusOf(e).invalid) {
+      issues.push({ path, code: 'invalid_review_status', message: `검토 상태 ${JSON.stringify(e.review_status)}는 비어 있지 않은 문자열이어야 함 — unknown으로 셈` });
+    }
     valid.push(e);
   });
   return valid;
 }
 
 function tally(projects, issues, sourcesById) {
-  const perTopic = new Map(TOPICS.map((t) => [t.topic_id, { projects: new Set(), evidence: 0, sources: new Set(), review: {} }]));
+  const perTopic = new Map(TOPICS.map((t) => [t.topic_id, { projects: new Set(), evidence: 0, sources: new Set(), review: new Map() }]));
   let unclassified = 0;
   let multiTag = 0;
   for (const p of projects) {
@@ -43,8 +54,9 @@ function tally(projects, issues, sourcesById) {
       t.projects.add(p.project_id);
       t.evidence++;
       if (e.source_id && (!(sourcesById instanceof Map) || sourcesById.has(e.source_id))) t.sources.add(e.source_id);
-      const status = e.review_status ?? 'unknown';
-      t.review[status] = (t.review[status] ?? 0) + 1;
+      // 일반 객체 대신 Map으로 세어 "__proto__"·"constructor" 같은 상태 이름도 안전하게 센다.
+      const { status } = reviewStatusOf(e);
+      t.review.set(status, (t.review.get(status) ?? 0) + 1);
     }
   }
   const denominator = projects.length;
@@ -58,7 +70,8 @@ function tally(projects, issues, sourcesById) {
       share: denominator === 0 ? null : x.projects.size / denominator,
       evidence_count: x.evidence,
       source_ids: [...x.sources],
-      review_status_counts: x.review,
+      // 자체 속성으로 만드는 Object.fromEntries를 써서 "__proto__"도 일반 키로 남긴다.
+      review_status_counts: Object.fromEntries(x.review),
     };
   });
   return { denominator, classified: denominator - unclassified, unclassified, multiTagProjects: multiTag, topics };

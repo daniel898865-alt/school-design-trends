@@ -212,7 +212,7 @@ test('건물이 가리키는 학교가 없으면 건물 수에는 남기고 학�
   }, { regions: null });
   assert.deepEqual(s.total, { buildings: 9, schools: 3 });
   assert.deepEqual(s.unresolvedSchoolBuildingIds, ['v2-bld-orphan']);
-  assert.ok(s.notes.some((n) => n.includes('학교 수에서 제외')));
+  assert.ok(s.notes.some((n) => n.includes('학교 수에서는 제외')));
 });
 
 test('주제 근거 출처가 sources에 없으면 출처 수에서 빼고 보고한다', () => {
@@ -232,4 +232,51 @@ test('주제 근거 출처가 sources에 없으면 출처 수에서 빼고 보�
   assert.deepEqual(t.source_ids, []);
   assert.ok(s.evidenceIssues.some((i) => i.code === 'unknown_evidence_source'));
   assert.ok(s.evidenceIssues.some((i) => i.code === 'invalid_evidence'));
+});
+
+// ---- #15~#17 회귀
+test('#15 준공연도·준공일이 네 자리 연도가 아니면 예외 없이 unknown, 정상 판정은 유지', () => {
+  const asOf = '2026-10-17';
+  for (const y of [1, 0, -1, 999, 10000]) {
+    const r = classifyBuildingAge(bld({ completion_year: y, date_precision: 'year' }), asOf);
+    assert.equal(r.status, 'unknown', String(y));
+    assert.ok(r.reason.includes('형식 오류'));
+  }
+  assert.equal(classifyBuildingAge(bld({ completion_date: '0001-01-01', date_precision: 'day' }), asOf).status, 'unknown');
+  assert.equal(classifyBuildingAge(bld({ completion_date: '0999-12-31', completion_year: 999, date_precision: 'day' }), asOf).status, 'unknown');
+  assert.equal(classifyBuildingAge(bld({ completion_date: '1986-10-17', date_precision: 'day' }), asOf).minAge, 40);
+  assert.equal(classifyBuildingAge(bld({ completion_year: 1986, date_precision: 'year' }), asOf).status, 'uncertain');
+  assert.equal(completedYears('1984-02-29', '2024-02-28'), 39);
+});
+
+test('#16 연결되지 않은 학교는 전체·연령별·상태별 학교 수에서 모두 제외', () => {
+  const ghost = { building_id: 'b-ghost', school_id: 'ghost', name: null, completion_date: '1970-01-01', completion_year: 1970,
+    date_precision: 'day', status: 'in_use', source_ids: [], verified_at: null };
+  const s = summarizeBuildings({ ...snapshot, schools: [], buildings: [ghost] });
+  assert.deepEqual(s.total, { buildings: 1, schools: 0 });
+  assert.deepEqual(s.byAge.over, { buildings: 1, schools: 0 });
+  assert.deepEqual(s.byStatusAmongOver.in_use, { buildings: 1, schools: 0 });
+  assert.deepEqual(s.listed, { buildings: 1, schools: 0 });
+  assert.equal(s.rows[0].school_id, 'ghost'); // 원래 참조는 보존
+  assert.ok(s.notes.some((n) => n.includes('확인 필요')));
+});
+
+test('#17 특수한 검토 상태 이름도 숫자로 세고, 비문자·빈 상태는 unknown과 진단', () => {
+  const mk = (id, status) => ({ project_id: id, topic_evidence: [{ topic_id: 'carbon_energy', source_id: null, evidence_note: '가상', review_status: status }] });
+  const s = summarizeTopics([
+    mk('a', '__proto__'), mk('b', 'constructor'), mk('c', 'toString'), mk('d', 'reviewed'), mk('e', 'reviewed'),
+    mk('f', ''), mk('g', '  '), mk('h', 5), mk('i', null),
+  ]);
+  const counts = s.topics.find((t) => t.topic_id === 'carbon_energy').review_status_counts;
+  assert.ok(Object.hasOwn(counts, '__proto__'));
+  assert.equal(counts.__proto__, 1); // 자체 속성(프로토타입이 아님)
+  assert.equal(Object.getPrototypeOf(counts), Object.prototype);
+  assert.equal(counts.constructor, 1);
+  assert.equal(counts.toString, 1);
+  assert.equal(counts.reviewed, 2);
+  assert.equal(counts.unknown, 4); // '', '  ', 5, null
+  assert.ok(Object.values(counts).every((v) => typeof v === 'number'));
+  assert.equal(Object.values(counts).reduce((a, b) => a + b, 0), 9);
+  assert.equal(s.evidenceIssues.filter((i) => i.code === 'invalid_review_status').length, 3); // null은 결측이라 진단하지 않음
+  assert.equal(s.topics.find((t) => t.topic_id === 'carbon_energy').projects, 9); // 분류 정책은 그대로
 });
