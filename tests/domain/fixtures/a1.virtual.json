@@ -1,0 +1,44 @@
+{
+  "schema_version": "0.1",
+  "is_demo": true,
+  "as_of": "2026-10-17",
+  "generated_at": "2026-10-17T00:00:00+09:00",
+  "schools": [
+    { "school_id": "v-school-001", "name": "가상 가람초등학교", "official_code": null, "school_level": "elementary", "region_code": "11", "region_name": "서울특별시", "address": null, "source_ids": [] },
+    { "school_id": "v-school-002", "name": "가상 바다초중학교", "official_code": null, "school_level": "초중통합학교", "region_code": null, "region_name": "부산", "address": null, "source_ids": [] },
+    { "school_id": "v-school-003", "name": "가상 들판고등학교", "official_code": null, "school_level": "high", "region_code": "41", "region_name": "경기도", "address": null, "source_ids": [] },
+    { "school_id": "v-school-004", "name": "가상 항구초등학교", "official_code": null, "school_level": "elementary", "region_code": "28", "region_name": "인천광역시", "address": null, "source_ids": [] },
+    { "school_id": "v-school-005", "name": "가상 산마루고등학교", "official_code": null, "school_level": "high", "region_code": "42", "region_name": "강원도", "address": null, "source_ids": [] }
+  ],
+  "buildings": [],
+  "projects": [
+    { "project_id": "v-project-001", "title": "가상 가람초 증축 설계", "school_ids": ["v-school-001"], "region_code": "11", "school_level": "elementary", "project_type": "extension", "competition_date": "2026-01-05", "award_date": "2026-03-10", "completion_date": null, "firm_ids": [], "source_ids": ["v-src-mag-001"], "summary": "가상 자료: 같은 사업을 잡지가 다룬 경우", "topic_evidence": [], "images": [] },
+    { "project_id": "v-project-001", "title": "가상 가람초 증축 설계", "school_ids": ["v-school-001"], "region_code": "11", "school_level": "elementary", "project_type": "extension", "competition_date": null, "award_date": "2026-03-10", "completion_date": null, "firm_ids": [], "source_ids": ["v-src-news-001"], "summary": null, "topic_evidence": [], "images": [] },
+    { "project_id": "v-project-002", "title": "가상 가람초 체육관 신축 설계", "school_ids": ["v-school-001"], "region_code": "11", "school_level": "elementary", "project_type": "new_building", "competition_date": null, "award_date": "2025-06-15", "completion_date": null, "firm_ids": [], "source_ids": ["v-src-comp-002"], "summary": "가상 자료: 같은 학교의 별도 사업", "topic_evidence": [], "images": [] },
+    { "project_id": "v-project-003", "title": "가상 바다초중 리모델링 설계", "school_ids": ["v-school-002"], "region_code": "26", "school_level": "통합학교", "project_type": "renovation", "competition_date": null, "award_date": "2024-01-20", "completion_date": null, "firm_ids": [], "source_ids": ["v-src-comp-003"], "summary": "가상 자료: 초중 통합학교", "topic_evidence": [], "images": [] },
+    { "project_id": "v-project-004", "title": "가상 지역 미확인 중학교 설계", "school_ids": [], "region_code": null, "school_level": "중학교", "project_type": null, "competition_date": null, "award_date": "2025-12-01", "completion_date": null, "firm_ids": [], "source_ids": ["v-src-news-004"], "summary": "가상 자료: 지역 미확인", "topic_evidence": [], "images": [] },
+    { "project_id": "v-project-005", "title": "가상 당선일 미확인 고교 설계", "school_ids": [], "region_code": "11", "school_level": "high", "project_type": null, "competition_date": null, "award_date": null, "completion_date": null, "firm_ids": [], "source_ids": ["v-src-news-005"], "summary": "가상 자료: 당선일 미확인", "topic_evidence": [], "images": [] },
+    { "project_id": "v-project-006", "title": "가상 들판고 경계 제외 설계", "school_ids": ["v-school-003"], "region_code": "41", "school_level": "high", "project_type": null, "competition_date": null, "award_date": "2023-10-17", "completion_date": null, "firm_ids": [], "source_ids": ["v-src-comp-006"], "summary": "가상 자료: 기준일 36개월 전 당일(제외)", "topic_evidence": [], "images": [] },
+    { "project_id": "v-project-007", "title": "가상 산마루고 경계 포함 설계", "school_ids": ["v-school-005"], "region_code": "42", "school_level": "high", "project_type": null, "competition_date": null, "award_date": "2023-10-18", "completion_date": null, "firm_ids": [], "source_ids": ["v-src-comp-007"], "summary": "가상 자료: 36개월 전 다음 날(포함), 이전 강원 코드", "topic_evidence": [], "images": [] },
+    { "project_id": "v-project-008", "title": "가상 들판고 기준일 당선 설계", "school_ids": ["v-school-003"], "region_code": "41", "school_level": "high", "project_type": null, "competition_date": null, "award_date": "2026-10-17", "completion_date": null, "firm_ids": [], "source_ids": ["v-src-comp-008"], "summary": "가상 자료: 기준일 당일 당선(포함), 기사 게시일 미확인", "topic_evidence": [], "images": [] },
+    { "project_id": "v-project-009", "title": "가상 두 지역 공동 설계", "school_ids": ["v-school-003", "v-school-004"], "region_code": "41", "school_level": "elementary", "project_type": null, "competition_date": null, "award_date": "2026-08-01", "completion_date": null, "firm_ids": [], "source_ids": ["v-src-news-009"], "summary": "가상 자료: 두 시도 학교에 걸친 사업", "topic_evidence": [], "images": [] }
+  ],
+  "sources": [
+    { "source_id": "v-src-mag-001", "source_type": "magazine", "title": "가상 잡지 기사", "publisher": "가상 잡지", "url": null, "published_at": "2026-04-01", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v-src-news-001", "source_type": "news", "title": "가상 뉴스 기사", "publisher": "가상 신문", "url": null, "published_at": "2026-05-02T09:00:00+09:00", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v-src-comp-002", "source_type": "competition", "title": "가상 공모 결과", "publisher": "가상 교육청", "url": null, "published_at": "2025-06-20", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v-src-comp-003", "source_type": "competition", "title": "가상 공모 결과", "publisher": "가상 교육청", "url": null, "published_at": "2024-01-25", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v-src-news-004", "source_type": "news", "title": "가상 뉴스 기사", "publisher": "가상 신문", "url": null, "published_at": "2025-12-03", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v-src-news-005", "source_type": "news", "title": "가상 뉴스 기사", "publisher": "가상 신문", "url": null, "published_at": "2026-02-01", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v-src-comp-006", "source_type": "competition", "title": "가상 공모 결과", "publisher": "가상 교육청", "url": null, "published_at": "2023-10-10", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v-src-comp-007", "source_type": "competition", "title": "가상 공모 결과", "publisher": "가상 교육청", "url": null, "published_at": "2023-10-20", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v-src-comp-008", "source_type": "competition", "title": "가상 공모 결과", "publisher": "가상 교육청", "url": null, "published_at": null, "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" },
+    { "source_id": "v-src-news-009", "source_type": "news", "title": "가상 뉴스 기사", "publisher": "가상 신문", "url": null, "published_at": "2026-08-05", "retrieved_at": null, "rights_note": "가상", "verification_status": "demo" }
+  ],
+  "firms": [],
+  "coverage": {
+    "scope": "A1 테스트용 가상 사업 9건",
+    "source_status": "not_collected",
+    "limitations": ["실제 학교·사업·기사가 아닌 테스트용 가상 자료"]
+  }
+}
