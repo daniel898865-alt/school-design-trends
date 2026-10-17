@@ -1,0 +1,15 @@
+{
+  "version": "0.1",
+  "levels": [
+    { "value": "elementary", "label": "초등학교", "aliases": ["초등학교", "초등", "초"] },
+    { "value": "middle", "label": "중학교", "aliases": ["중학교", "중"] },
+    { "value": "high", "label": "고등학교", "aliases": ["고등학교", "고교", "고"] },
+    { "value": "combined", "label": "통합학교", "aliases": ["통합학교", "통합운영학교", "초중통합", "초중통합학교", "중고통합", "중고통합학교"] },
+    { "value": "other", "label": "기타", "aliases": ["기타"] },
+    { "value": "unknown", "label": "미확인", "aliases": ["미확인", "불명"] }
+  ],
+  "notes": [
+    "통합학교는 초등·중등에 나누어 더하지 않고 combined 하나로 센다.",
+    "별칭은 공백과 가운뎃점(·)을 지우고 비교한다. 목록에 없는 값은 unknown으로 두고 원본 값을 경고와 함께 보존한다."
+  ]
+}
