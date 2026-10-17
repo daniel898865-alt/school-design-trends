@@ -1,0 +1,2 @@
+public/maps/*.geojson text eol=lf
+src/ui/region-geometry.js text eol=lf

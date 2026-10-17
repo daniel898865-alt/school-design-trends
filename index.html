@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="src/styles/details.css">
   <link rel="stylesheet" href="src/styles/region-map.css">
   <link rel="stylesheet" href="src/styles/year-trends.css">
+  <link rel="stylesheet" href="src/styles/overview.css">
   <script type="module" src="src/ui/app.js"></script>
 </head>
 <body>
@@ -67,16 +68,29 @@
         </div>
       </div>
     <div id="overview-view" class="result-panel" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
-      <section class="region-explorer" aria-label="지도에서 시도 탐색">
-        <div id="region-map"></div>
-        <p class="small map-filter-note">지도 건수는 지역 선택 전 기준입니다. 검색어·학교급·기간·날짜·주제 조건은 반영합니다. 지역을 선택하면 아래 그래프와 사례·표·내보내기가 함께 바뀝니다.</p>
-      </section>
-      <section class="chart-grid" aria-label="지역 및 월별 집계">
-        <article class="panel"><div class="panel-heading"><div><p class="eyebrow">BY REGION</p><h2>어디에서 변화하고 있나요?</h2></div><span class="unit">지역 참여 · 건</span></div><div id="region-chart"></div><p id="region-note" class="small"></p></article>
-        <article class="panel"><div class="panel-heading"><div><p class="eyebrow">OVER TIME</p><h2>시간에 따른 설계 사례</h2></div><span class="unit">설계사업 · 건</span></div><div id="month-chart"></div></article>
-      </section>
-      <section class="level-strip" aria-label="학교급별 사업 수" id="level-strip"></section>
-      <ul id="aggregation-notes" class="aggregation-notes" aria-label="집계 기준과 한계"></ul>
+      <div class="overview-layout">
+        <section class="region-explorer overview-map" aria-label="지도에서 시도 탐색">
+          <a class="overview-results-link" href="#overview-region-results" id="overview-results-link">선택한 지역 결과 바로가기 →</a>
+          <div id="region-map"></div>
+          <p class="small map-filter-note">지도 건수는 지역 조건만 제외합니다. 검색어·학교급·기간·날짜·주제 조건은 반영하며, 선택 지역 결과와 내보내기에는 지역 조건까지 적용합니다.</p>
+        </section>
+        <section class="overview-data" id="overview-region-results" aria-labelledby="overview-region-title" tabindex="-1">
+          <section class="panel overview-summary" aria-labelledby="overview-region-title">
+            <div class="overview-summary-heading"><div><p class="eyebrow">SELECTED REGION</p><h2 id="overview-region-title">전체 시도 · 조회 결과</h2></div><div class="overview-project-total"><strong id="overview-project-count">0</strong><span>고유 설계사업</span></div></div>
+            <p id="overview-region-context" class="small">조회 조건을 확인하는 중입니다.</p>
+            <section class="level-strip" aria-label="선택 지역의 학교급별 사업 수" id="level-strip"></section>
+            <p class="small overview-scope-note">지역을 포함한 현재 조회 조건의 결과입니다. CSV/Markdown도 같은 조건과 전체 조회 기간을 사용합니다.</p>
+          </section>
+          <section class="panel overview-cases" aria-labelledby="overview-cases-title">
+            <div class="panel-heading"><div><p class="eyebrow">CASES IN VIEW</p><h2 id="overview-cases-title">선택한 조건의 사례</h2></div><button id="overview-all-projects" class="text-button" type="button">사례 전체 보기 →</button></div>
+            <p class="small overview-cases-note">조회 결과에서 최대 3건을 보여줍니다. 제목을 누르면 상세 내용을 볼 수 있습니다.</p>
+            <div id="overview-projects"></div>
+          </section>
+          <article class="panel overview-months"><div class="panel-heading"><div><p class="eyebrow">OVER TIME</p><h2>시간에 따른 설계 사례</h2></div><span class="unit">설계사업 · 건</span></div><div id="month-chart"></div></article>
+          <details class="panel overview-region-counts"><summary>현재 결과의 시도별 참여 건수</summary><div id="region-chart"></div><p id="region-note" class="small"></p></details>
+          <ul id="aggregation-notes" class="aggregation-notes" aria-label="집계 기준과 한계"></ul>
+        </section>
+      </div>
     </div>
     <section id="projects-view" class="result-panel" role="tabpanel" aria-labelledby="tab-projects" tabindex="0" hidden>
       <div class="section-heading"><div><p class="eyebrow">DESIGN ARCHIVE</p><h2 id="projects-title">학교 공간의 다양한 가능성</h2></div><div class="view-toggle" role="group" aria-label="사례 보기 방식"><button type="button" id="cards-mode" aria-pressed="true">카드</button><button type="button" id="table-mode" aria-pressed="false">표</button></div></div>
