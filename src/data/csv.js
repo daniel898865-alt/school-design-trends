@@ -47,6 +47,17 @@ export function recordsFromCsv(text, kind) {
     return { records: [], errors, warnings };
   }
   const header = rows[0].map((h) => h.trim());
+  const seenHeaders = new Set();
+  let duplicateHeader = false;
+  header.forEach((name, index) => {
+    if (seenHeaders.has(name)) {
+      duplicateHeader = true;
+      errors.push({ level: 'error', code: 'csv_duplicate_header', path: `${kind}.csv header ${index + 1}`, id: null,
+        message: `머리글 "${name}"가 중복됨 — 값을 덮어쓰지 않도록 입력 전체를 제외함` });
+    }
+    seenHeaders.add(name);
+  });
+  if (duplicateHeader) return { records: [], errors, warnings };
   if (!header.includes(spec.id)) {
     errors.push({ level: 'error', code: 'missing_id', path: `${kind}.csv`, id: null, message: `${spec.id} 열이 없음` });
     return { records: [], errors, warnings };

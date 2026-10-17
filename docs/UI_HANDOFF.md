@@ -1,6 +1,6 @@
 # 화면 구현과 자료 모듈 연결
 
-2026-10-17 · 담당: Yunze(화면) / Daniel(자료). 아직 병합·배포하지 않은 개발 브랜치다.
+2026-10-17 · 담당: Yunze(화면) / Daniel(자료). B1·B2와 A1의 병합 검토·수정 내역은 [통합 기록](INTEGRATION_REVIEW.md), 남은 연결은 [Yunze #12](https://github.com/yunzecho-eng/school-design-trends/issues/12)를 따른다. 배포는 아직 하지 않았다.
 
 ## 참고 화면
 
@@ -34,13 +34,14 @@ provider.exportRows(filters) -> {columns:[{key,label}], rows:[], metadata:{...}}
 
 필터는 `query, region, schoolLevel, months, dateBasis, asOf, topic`이다. 화면 모델의 계약과 예시는 `src/ui/demo-provider.js`와 `tests/ui/demo-provider.test.js`에서 확인한다. 실제 계산은 기존 DATA_CONTRACT의 공통 함수가 담당하고 화면은 전달된 값만 표시한다.
 
-기존 계약의 `filterProjects`, `summarizeProjects`, `classifyBuildingAge`, `exportRows`를 어댑터에서 연결하면 화면 코드를 바꾸지 않고 테스트할 수 있게 구성했다. 현재는 이 연결을 구현·검증하지 않았다. CSV 입력 해석, 실제 업체 식별, 원자료 수집과 월별 갱신도 이 UI PR의 완료 범위가 아니다.
+A1의 `parseSnapshot`, `filterProjects`, `summarizeProjects`는 구현되었다. 기존 계약의 `classifyBuildingAge`, `exportRows` 등 A2가 준비되면 화면 모델 어댑터에서 연결한다. 현재 앱의 공급자 교체는 구현하지 않았다. CSV 입력 해석은 A1에 있으며 브라우저 UI에는 아직 연결되지 않았다. 실제 업체 식별, 원자료 수집과 월별 갱신도 미완료다.
 
-## 병합 전 남은 통합 확인
+## 전체 기능 완료 전 남은 통합 확인
 
 - [ ] Daniel의 공통 함수와 화면 모델을 연결한다.
-- [ ] 같은 입력·필터로 공통 집계 결과와 카드·표·그래프·내보내기의 일치를 대조한다.
+- [x] 공유하는 데모 2종에서 A1과 UI의 집계를 96개 조건으로 대조했다.
+- [ ] A1의 결측·다지역 예시를 포함해 화면·내보내기까지 연결하고 대조한다.
 - [ ] 실제 공개 자료의 출처·이미지 권리와 스키마를 검증한다.
-- [ ] 상대방이 직접 리뷰하고 병합한다.
+- [ ] 상대방이 직접 실행하고 리뷰한다. 사용자 요청에 따른 병합과 별도다.
 
 UI 자동 테스트나 AI 검토는 Daniel의 실제 리뷰를 대체하지 않는다. 이슈 #3은 공통 모듈 연결을 포함한 완료 기준이 확인될 때까지 열린 상태로 둔다.

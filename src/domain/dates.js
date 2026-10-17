@@ -1,8 +1,9 @@
 // 날짜 계산. 날짜는 YYYY-MM-DD 문자열로 다루고 시간대 변환을 하지 않는다.
 
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
-// ISO 8601 날짜·시각 앞부분의 날짜를 그대로 사용한다(기재된 현지 날짜 기준).
-const DATETIME_RE = /^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}/;
+// 현지 시각, Z 또는 ±HH:MM 오프셋을 지원한다. 초·소수 초는 선택 항목이다.
+// 전체 시각을 검증한 뒤 기재된 현지 날짜를 그대로 사용한다.
+const DATETIME_RE = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-](\d{2}):(\d{2}))?$/;
 
 export function daysInMonth(year, month) {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
@@ -11,7 +12,8 @@ export function daysInMonth(year, month) {
 export function parseDate(value) {
   if (typeof value !== 'string') return null;
   const m = DATE_RE.exec(value);
-  if (!m) return null;
+  // JS의 $는 마지막 줄바꿈 앞에서도 일치하므로 전체 길이도 확인한다.
+  if (!m || m[0].length !== value.length) return null;
   const y = Number(m[1]);
   const mo = Number(m[2]);
   const d = Number(m[3]);
@@ -28,7 +30,14 @@ export function toDateOnly(value) {
   if (typeof value !== 'string') return null;
   if (isValidDate(value)) return value;
   const m = DATETIME_RE.exec(value);
-  return m && isValidDate(m[1]) ? m[1] : null;
+  if (!m || m[0].length !== value.length || !isValidDate(m[1])) return null;
+  const hour = Number(m[2]);
+  const minute = Number(m[3]);
+  const second = Number(m[4] ?? 0);
+  const offsetHour = Number(m[5] ?? 0);
+  const offsetMinute = Number(m[6] ?? 0);
+  if (hour > 23 || minute > 59 || second > 59 || offsetHour > 23 || offsetMinute > 59) return null;
+  return m[1];
 }
 
 export function formatDate({ y, m, d }) {

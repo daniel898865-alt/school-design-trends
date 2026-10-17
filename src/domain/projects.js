@@ -21,7 +21,7 @@ export function projectRegions(project, schoolsById) {
 // filterProjects(snapshot, {asOf, months, dateBasis, regions, schoolLevels, topics}) -> projects[]
 // 반환 배열의 meta에 기준일·기간·제외 건수를 담는다. 각 사업에는 집계용 필드를 덧붙인다.
 //   region_codes: 걸친 시도, basis_date: 기간 판정에 쓴 날짜,
-//   window_source_ids: 기간 안의 기사(published_at 기준일 때) 또는 연결된 전체 기사
+//   window_source_ids: 존재가 확인된 출처 중 기간 안의 기사(published_at 기준) 또는 연결된 전체 기사
 export function filterProjects(snapshot, options = {}) {
   const {
     asOf = snapshot.as_of,
@@ -52,7 +52,8 @@ export function filterProjects(snapshot, options = {}) {
     matchedFilters++;
 
     let basisDate = null;
-    let windowSourceIds = project.source_ids;
+    // 원본 참조와 파서 경고는 보존하되, 없는 레코드를 실제 기사로 세지 않는다.
+    let windowSourceIds = project.source_ids.filter((id) => sourcesById.has(id));
     if (dateBasis === 'published_at') {
       const dated = project.source_ids
         .map((id) => ({ id, date: toDateOnly(sourcesById.get(id)?.published_at ?? null) }))
@@ -91,6 +92,7 @@ export function filterProjects(snapshot, options = {}) {
     months,
     date_basis: dateBasis,
     window,
+    schools_by_id: schoolsById,
     sources_by_id: sourcesById,
     filters: { regions, schoolLevels, topics },
     matched_filters: matchedFilters,
@@ -116,8 +118,9 @@ function matchesTopic(project, wanted) {
 // 사업 수는 고유 project_id, 기사 수는 고유 source_id, 학교 수는 고유 school_id로 따로 센다.
 export function summarizeProjects(projects) {
   const meta = projects.meta ?? null;
-  const all = (key) => new Set(projects.flatMap((p) => p[key] ?? []));
-  const articleIds = (p) => p.window_source_ids ?? p.source_ids;
+  const existing = (ids, table) => table instanceof Map ? ids.filter((id) => table.has(id)) : ids;
+  const articleIds = (p) => existing(p.window_source_ids ?? p.source_ids ?? [], meta?.sources_by_id);
+  const schoolIds = existing(projects.flatMap((p) => p.school_ids ?? []), meta?.schools_by_id);
 
   const regionRows = [...REGIONS.map((r) => ({ code: r.code, name: r.name })), { code: UNKNOWN_REGION, name: UNKNOWN_REGION_LABEL }];
   const byRegion = regionRows.map(({ code, name }) => {
@@ -148,12 +151,12 @@ export function summarizeProjects(projects) {
     window: meta?.window ?? null,
     uniqueProjects: new Set(projects.map((p) => p.project_id)).size,
     uniqueArticles: new Set(projects.flatMap(articleIds)).size,
-    uniqueSchools: all('school_ids').size,
+    uniqueSchools: new Set(schoolIds).size,
     regionParticipations,
     multiRegionProjects: projects.filter((p) => (p.region_codes ?? []).length > 1).length,
     byRegion,
     bySchoolLevel,
-    byMonth: meta ? summarizeByMonth(projects, meta) : [],
+    byMonth: meta ? summarizeByMonth(projects, meta, articleIds) : [],
     excludedUnknownDates: meta?.excluded_unknown_dates ?? null,
     excludedOutOfRange: meta?.excluded_out_of_range ?? null,
     notes: summaryNotes(meta, regionParticipations, projects.length),
@@ -161,7 +164,7 @@ export function summarizeProjects(projects) {
 }
 
 // 표본이 없는 달도 0으로 남긴다. 기간이 달의 일부만 덮으면 partial: true.
-function summarizeByMonth(projects, meta) {
+function summarizeByMonth(projects, meta, articleIds) {
   return windowMonths(meta.window).map(({ month, from, to, partial }) => {
     if (meta.date_basis === 'published_at') {
       const articles = new Set();
@@ -178,7 +181,7 @@ function summarizeByMonth(projects, meta) {
       return { month, from, to, partial, projects: members.size, articles: articles.size };
     }
     const members = projects.filter((p) => monthKey(p.basis_date) === month);
-    return { month, from, to, partial, projects: members.length, articles: new Set(members.flatMap((p) => p.source_ids)).size };
+    return { month, from, to, partial, projects: members.length, articles: new Set(members.flatMap(articleIds)).size };
   });
 }
 

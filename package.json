@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node tools/preview.mjs",
-    "test": "node --test tests/ui/*.test.js"
+    "test": "node --test"
   },
-  "engines": { "node": ">=20" }
+  "engines": { "node": ">=22.12.0" }
 }
