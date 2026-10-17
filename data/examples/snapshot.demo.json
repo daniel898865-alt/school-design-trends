@@ -1,0 +1,69 @@
+{
+  "schema_version": "0.1",
+  "is_demo": true,
+  "as_of": "2026-10-17",
+  "generated_at": "2026-10-17T00:00:00+09:00",
+  "schools": [{
+    "school_id": "demo-school-001",
+    "name": "가상 예시 초등학교",
+    "official_code": null,
+    "school_level": "elementary",
+    "region_code": "11",
+    "region_name": "서울특별시",
+    "address": null,
+    "source_ids": ["demo-source-001"]
+  }],
+  "buildings": [{
+    "building_id": "demo-building-001",
+    "school_id": "demo-school-001",
+    "name": "가상 본관동",
+    "completion_date": "1986-10-17",
+    "completion_year": 1986,
+    "date_precision": "day",
+    "status": "in_use",
+    "source_ids": ["demo-source-001"],
+    "verified_at": null
+  }],
+  "projects": [{
+    "project_id": "demo-project-001",
+    "title": "가상 학교 공간 재구성 설계 예시",
+    "school_ids": ["demo-school-001"],
+    "region_code": "11",
+    "school_level": "elementary",
+    "project_type": "renovation",
+    "competition_date": "2026-01-10",
+    "award_date": "2026-03-10",
+    "completion_date": null,
+    "firm_ids": ["demo-firm-001"],
+    "source_ids": ["demo-source-001"],
+    "summary": "입력 형식 합의를 위한 가상 자료입니다. 실제 학교·공모·사무소를 뜻하지 않습니다.",
+    "topic_evidence": [],
+    "images": []
+  }],
+  "sources": [{
+    "source_id": "demo-source-001",
+    "source_type": "competition",
+    "title": "개발용 가상 예시",
+    "publisher": "프로젝트 예시 데이터",
+    "url": null,
+    "published_at": "2026-03-10",
+    "retrieved_at": null,
+    "rights_note": "직접 작성한 가상 입력 예시. 실제 원문이나 이미지를 포함하지 않습니다.",
+    "verification_status": "demo"
+  }],
+  "firms": [{
+    "firm_id": "demo-firm-001",
+    "name": "가상 예시 설계사무소",
+    "aliases": [],
+    "business_registration_number": null,
+    "registration_status": "unknown",
+    "official_url": null,
+    "source_ids": ["demo-source-001"],
+    "verified_at": null
+  }],
+  "coverage": {
+    "scope": "가상 예시 1건",
+    "source_status": "not_collected",
+    "limitations": ["실제 통계·설계 동향·건물 노후 목록으로 사용하지 않음", "generated_at은 예시 메타데이터이며 실제 수집 시각이 아님"]
+  }
+}
