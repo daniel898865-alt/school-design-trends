@@ -1,0 +1,1020 @@
+{
+  "schema_version": "0.1",
+  "is_demo": true,
+  "as_of": "2026-10-17",
+  "generated_at": "2026-10-17T00:00:00+09:00",
+  "coverage": {
+    "scope": "서울·경기·인천·부산·제주를 배경으로 직접 작성한 가상 설계사업 12건",
+    "source_status": "demo_only",
+    "limitations": [
+      "실제 학교·설계공모·당선 사무소 또는 전국 통계가 아닙니다.",
+      "자료 수집·예측·월별 갱신 기능을 검증하는 자료가 아닙니다.",
+      "준공일 경계, 공동 참여, 결측, 철거 및 학교급 필터의 화면 동작을 확인하는 예시입니다.",
+      "generated_at은 예시 메타데이터이며 실제 수집 시각이 아닙니다."
+    ]
+  },
+  "schools": [
+    {
+      "school_id": "demo-school-001",
+      "name": "가상 중정초등학교",
+      "official_code": null,
+      "school_level": "elementary",
+      "region_code": "11",
+      "region_name": "서울특별시",
+      "address": null,
+      "source_ids": [
+        "demo-source-001"
+      ]
+    },
+    {
+      "school_id": "demo-school-002",
+      "name": "가상 이음중학교",
+      "official_code": null,
+      "school_level": "middle",
+      "region_code": "41",
+      "region_name": "경기도",
+      "address": null,
+      "source_ids": [
+        "demo-source-002"
+      ]
+    },
+    {
+      "school_id": "demo-school-003",
+      "name": "가상 테라스고등학교",
+      "official_code": null,
+      "school_level": "high",
+      "region_code": "28",
+      "region_name": "인천광역시",
+      "address": null,
+      "source_ids": [
+        "demo-source-003"
+      ]
+    },
+    {
+      "school_id": "demo-school-004",
+      "name": "가상 숲길초등학교",
+      "official_code": null,
+      "school_level": "elementary",
+      "region_code": "26",
+      "region_name": "부산광역시",
+      "address": null,
+      "source_ids": [
+        "demo-source-004"
+      ]
+    },
+    {
+      "school_id": "demo-school-005",
+      "name": "가상 마을통합학교",
+      "official_code": null,
+      "school_level": "combined",
+      "region_code": "50",
+      "region_name": "제주특별자치도",
+      "address": null,
+      "source_ids": [
+        "demo-source-005"
+      ]
+    },
+    {
+      "school_id": "demo-school-006",
+      "name": "가상 빛샘고등학교",
+      "official_code": null,
+      "school_level": "high",
+      "region_code": "11",
+      "region_name": "서울특별시",
+      "address": null,
+      "source_ids": [
+        "demo-source-006"
+      ]
+    },
+    {
+      "school_id": "demo-school-007",
+      "name": "가상 열린중학교",
+      "official_code": null,
+      "school_level": "middle",
+      "region_code": "41",
+      "region_name": "경기도",
+      "address": null,
+      "source_ids": [
+        "demo-source-007"
+      ]
+    },
+    {
+      "school_id": "demo-school-008",
+      "name": "가상 작은초등학교",
+      "official_code": null,
+      "school_level": "elementary",
+      "region_code": "28",
+      "region_name": "인천광역시",
+      "address": null,
+      "source_ids": [
+        "demo-source-008"
+      ]
+    },
+    {
+      "school_id": "demo-school-009",
+      "name": "가상 해솔고등학교",
+      "official_code": null,
+      "school_level": "high",
+      "region_code": "26",
+      "region_name": "부산광역시",
+      "address": null,
+      "source_ids": [
+        "demo-source-009"
+      ]
+    },
+    {
+      "school_id": "demo-school-010",
+      "name": "가상 느린통합학교",
+      "official_code": null,
+      "school_level": "combined",
+      "region_code": "50",
+      "region_name": "제주특별자치도",
+      "address": null,
+      "source_ids": [
+        "demo-source-010"
+      ]
+    },
+    {
+      "school_id": "demo-school-011",
+      "name": "가상 책숲초등학교",
+      "official_code": null,
+      "school_level": "elementary",
+      "region_code": "11",
+      "region_name": "서울특별시",
+      "address": null,
+      "source_ids": [
+        "demo-source-011"
+      ]
+    },
+    {
+      "school_id": "demo-school-012",
+      "name": "가상 대기중학교",
+      "official_code": null,
+      "school_level": "middle",
+      "region_code": "41",
+      "region_name": "경기도",
+      "address": null,
+      "source_ids": [
+        "demo-source-012"
+      ]
+    }
+  ],
+  "buildings": [
+    {
+      "building_id": "demo-building-001",
+      "school_id": "demo-school-001",
+      "name": "가상 본관동",
+      "completion_date": "1986-10-17",
+      "completion_year": 1986,
+      "date_precision": "day",
+      "status": "in_use",
+      "source_ids": [
+        "demo-source-001"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-002",
+      "school_id": "demo-school-002",
+      "name": "가상 도서관동",
+      "completion_date": "1986-10-18",
+      "completion_year": 1986,
+      "date_precision": "day",
+      "status": "in_use",
+      "source_ids": [
+        "demo-source-002"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-003",
+      "school_id": "demo-school-003",
+      "name": "가상 학습동",
+      "completion_date": null,
+      "completion_year": 1986,
+      "date_precision": "year",
+      "status": "in_use",
+      "source_ids": [
+        "demo-source-003"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-004",
+      "school_id": "demo-school-004",
+      "name": "가상 본관동",
+      "completion_date": "1985-10-17",
+      "completion_year": 1985,
+      "date_precision": "day",
+      "status": "in_use",
+      "source_ids": [
+        "demo-source-004"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-005",
+      "school_id": "demo-school-005",
+      "name": "가상 도서관동",
+      "completion_date": "1950-03-01",
+      "completion_year": 1950,
+      "date_precision": "day",
+      "status": "demolished",
+      "source_ids": [
+        "demo-source-005"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-006",
+      "school_id": "demo-school-006",
+      "name": "가상 학습동",
+      "completion_date": null,
+      "completion_year": null,
+      "date_precision": "unknown",
+      "status": "in_use",
+      "source_ids": [
+        "demo-source-006"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-007",
+      "school_id": "demo-school-007",
+      "name": "가상 본관동",
+      "completion_date": null,
+      "completion_year": 1985,
+      "date_precision": "year",
+      "status": "in_use",
+      "source_ids": [
+        "demo-source-007"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-008",
+      "school_id": "demo-school-008",
+      "name": "가상 도서관동",
+      "completion_date": "2020-02-15",
+      "completion_year": 2020,
+      "date_precision": "day",
+      "status": "in_use",
+      "source_ids": [
+        "demo-source-008"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-009",
+      "school_id": "demo-school-009",
+      "name": "가상 학습동",
+      "completion_date": "1980-01-01",
+      "completion_year": 1980,
+      "date_precision": "day",
+      "status": "closed",
+      "source_ids": [
+        "demo-source-009"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-010",
+      "school_id": "demo-school-010",
+      "name": "가상 본관동",
+      "completion_date": "1983-12-01",
+      "completion_year": 1983,
+      "date_precision": "day",
+      "status": "unknown",
+      "source_ids": [
+        "demo-source-010"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-011",
+      "school_id": "demo-school-011",
+      "name": "가상 도서관동",
+      "completion_date": "1986-10-16",
+      "completion_year": 1986,
+      "date_precision": "day",
+      "status": "in_use",
+      "source_ids": [
+        "demo-source-011"
+      ],
+      "verified_at": null
+    },
+    {
+      "building_id": "demo-building-012",
+      "school_id": "demo-school-012",
+      "name": "가상 학습동",
+      "completion_date": null,
+      "completion_year": 1986,
+      "date_precision": "year",
+      "status": "in_use",
+      "source_ids": [
+        "demo-source-012"
+      ],
+      "verified_at": null
+    }
+  ],
+  "projects": [
+    {
+      "project_id": "demo-project-001",
+      "title": "가상 · 중정과 배움",
+      "school_ids": [
+        "demo-school-001"
+      ],
+      "region_code": "11",
+      "school_level": "elementary",
+      "project_type": "renovation",
+      "competition_date": "2026-09-01",
+      "award_date": "2026-09-12",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-001"
+      ],
+      "source_ids": [
+        "demo-source-001",
+        "demo-source-013"
+      ],
+      "summary": "중정과 배움을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 외부 학습공간 · 지역 공유 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "outdoor",
+          "source_id": "demo-source-001",
+          "evidence_note": "가상 예시의 외부 학습공간 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        },
+        {
+          "topic_id": "shared",
+          "source_id": "demo-source-001",
+          "evidence_note": "가상 예시의 지역 공유 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": [
+        {
+          "url": "public/illustrations/courtyard.svg",
+          "source_id": "demo-source-001",
+          "creator": "School Design Trends",
+          "permission_status": "owned",
+          "alt_text": "실제 건축물이 아닌 중정과 배움 개념 도식"
+        }
+      ]
+    },
+    {
+      "project_id": "demo-project-002",
+      "title": "가상 · 동네를 잇는 도서관",
+      "school_ids": [
+        "demo-school-002"
+      ],
+      "region_code": "41",
+      "school_level": "middle",
+      "project_type": "extension",
+      "competition_date": "2026-06-01",
+      "award_date": "2026-06-08",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-002",
+        "demo-firm-003"
+      ],
+      "source_ids": [
+        "demo-source-002"
+      ],
+      "summary": "동네를 잇는 도서관을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 지역 공유 · 안전·접근성 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "shared",
+          "source_id": "demo-source-002",
+          "evidence_note": "가상 예시의 지역 공유 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        },
+        {
+          "topic_id": "access",
+          "source_id": "demo-source-002",
+          "evidence_note": "가상 예시의 안전·접근성 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": [
+        {
+          "url": "public/illustrations/pavilion.svg",
+          "source_id": "demo-source-002",
+          "creator": "School Design Trends",
+          "permission_status": "owned",
+          "alt_text": "실제 건축물이 아닌 동네를 잇는 도서관 개념 도식"
+        }
+      ]
+    },
+    {
+      "project_id": "demo-project-003",
+      "title": "가상 · 층층이 열린 교실",
+      "school_ids": [
+        "demo-school-003"
+      ],
+      "region_code": "28",
+      "school_level": "high",
+      "project_type": "new_build",
+      "competition_date": "2026-02-01",
+      "award_date": "2026-02-20",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-003"
+      ],
+      "source_ids": [
+        "demo-source-003"
+      ],
+      "summary": "층층이 열린 교실을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 가변 학습공간 · 외부 학습공간 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "flexible",
+          "source_id": "demo-source-003",
+          "evidence_note": "가상 예시의 가변 학습공간 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        },
+        {
+          "topic_id": "outdoor",
+          "source_id": "demo-source-003",
+          "evidence_note": "가상 예시의 외부 학습공간 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": [
+        {
+          "url": "public/illustrations/terrace.svg",
+          "source_id": "demo-source-003",
+          "creator": "School Design Trends",
+          "permission_status": "owned",
+          "alt_text": "실제 건축물이 아닌 층층이 열린 교실 개념 도식"
+        }
+      ]
+    },
+    {
+      "project_id": "demo-project-004",
+      "title": "가상 · 숲을 품은 학습마당",
+      "school_ids": [
+        "demo-school-004"
+      ],
+      "region_code": "26",
+      "school_level": "elementary",
+      "project_type": "renovation",
+      "competition_date": "2025-12-01",
+      "award_date": "2025-12-15",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-004"
+      ],
+      "source_ids": [
+        "demo-source-004"
+      ],
+      "summary": "숲을 품은 학습마당을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 외부 학습공간 · 탄소·에너지 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "outdoor",
+          "source_id": "demo-source-004",
+          "evidence_note": "가상 예시의 외부 학습공간 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        },
+        {
+          "topic_id": "carbon",
+          "source_id": "demo-source-004",
+          "evidence_note": "가상 예시의 탄소·에너지 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": [
+        {
+          "url": "public/illustrations/courtyard.svg",
+          "source_id": "demo-source-004",
+          "creator": "School Design Trends",
+          "permission_status": "owned",
+          "alt_text": "실제 건축물이 아닌 숲을 품은 학습마당 개념 도식"
+        }
+      ]
+    },
+    {
+      "project_id": "demo-project-005",
+      "title": "가상 · 작은 마을의 공동 캠퍼스",
+      "school_ids": [
+        "demo-school-005"
+      ],
+      "region_code": "50",
+      "school_level": "combined",
+      "project_type": "extension",
+      "competition_date": "2025-10-01",
+      "award_date": "2025-10-09",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-005"
+      ],
+      "source_ids": [
+        "demo-source-005"
+      ],
+      "summary": "작은 마을의 공동 캠퍼스을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 지역 공유 · 가변 학습공간 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "shared",
+          "source_id": "demo-source-005",
+          "evidence_note": "가상 예시의 지역 공유 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        },
+        {
+          "topic_id": "flexible",
+          "source_id": "demo-source-005",
+          "evidence_note": "가상 예시의 가변 학습공간 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": [
+        {
+          "url": "public/illustrations/pavilion.svg",
+          "source_id": "demo-source-005",
+          "creator": "School Design Trends",
+          "permission_status": "owned",
+          "alt_text": "실제 건축물이 아닌 작은 마을의 공동 캠퍼스 개념 도식"
+        }
+      ]
+    },
+    {
+      "project_id": "demo-project-006",
+      "title": "가상 · 바람과 빛의 과학동",
+      "school_ids": [
+        "demo-school-006"
+      ],
+      "region_code": "11",
+      "school_level": "high",
+      "project_type": "new_build",
+      "competition_date": "2025-07-01",
+      "award_date": "2025-07-21",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-001",
+        "demo-firm-004"
+      ],
+      "source_ids": [
+        "demo-source-006",
+        "demo-source-014"
+      ],
+      "summary": "바람과 빛의 과학동을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 탄소·에너지 · 가변 학습공간 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "carbon",
+          "source_id": "demo-source-006",
+          "evidence_note": "가상 예시의 탄소·에너지 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        },
+        {
+          "topic_id": "flexible",
+          "source_id": "demo-source-006",
+          "evidence_note": "가상 예시의 가변 학습공간 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": [
+        {
+          "url": "public/illustrations/terrace.svg",
+          "source_id": "demo-source-006",
+          "creator": "School Design Trends",
+          "permission_status": "owned",
+          "alt_text": "실제 건축물이 아닌 바람과 빛의 과학동 개념 도식"
+        }
+      ]
+    },
+    {
+      "project_id": "demo-project-007",
+      "title": "가상 · 모두에게 열린 운동장",
+      "school_ids": [
+        "demo-school-007"
+      ],
+      "region_code": "41",
+      "school_level": "middle",
+      "project_type": "renovation",
+      "competition_date": "2025-03-01",
+      "award_date": "2025-03-11",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-002"
+      ],
+      "source_ids": [
+        "demo-source-007"
+      ],
+      "summary": "모두에게 열린 운동장을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 안전·접근성 · 지역 공유 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "access",
+          "source_id": "demo-source-007",
+          "evidence_note": "가상 예시의 안전·접근성 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        },
+        {
+          "topic_id": "shared",
+          "source_id": "demo-source-007",
+          "evidence_note": "가상 예시의 지역 공유 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": [
+        {
+          "url": "public/illustrations/courtyard.svg",
+          "source_id": "demo-source-007",
+          "creator": "School Design Trends",
+          "permission_status": "owned",
+          "alt_text": "실제 건축물이 아닌 모두에게 열린 운동장 개념 도식"
+        }
+      ]
+    },
+    {
+      "project_id": "demo-project-008",
+      "title": "가상 · 작은 교실 큰 배움",
+      "school_ids": [
+        "demo-school-008"
+      ],
+      "region_code": "28",
+      "school_level": "elementary",
+      "project_type": "extension",
+      "competition_date": "2024-11-01",
+      "award_date": "2024-11-25",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-003"
+      ],
+      "source_ids": [
+        "demo-source-008"
+      ],
+      "summary": "작은 교실 큰 배움을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 가변 학습공간 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "flexible",
+          "source_id": "demo-source-008",
+          "evidence_note": "가상 예시의 가변 학습공간 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": [
+        {
+          "url": "public/illustrations/pavilion.svg",
+          "source_id": "demo-source-008",
+          "creator": "School Design Trends",
+          "permission_status": "owned",
+          "alt_text": "실제 건축물이 아닌 작은 교실 큰 배움 개념 도식"
+        }
+      ]
+    },
+    {
+      "project_id": "demo-project-009",
+      "title": "가상 · 해안의 배움 연결",
+      "school_ids": [
+        "demo-school-009"
+      ],
+      "region_code": "26",
+      "school_level": "high",
+      "project_type": "new_build",
+      "competition_date": "2024-08-01",
+      "award_date": "2024-08-04",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-004"
+      ],
+      "source_ids": [
+        "demo-source-009"
+      ],
+      "summary": "해안의 배움 연결을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 탄소·에너지 · 외부 학습공간 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "carbon",
+          "source_id": "demo-source-009",
+          "evidence_note": "가상 예시의 탄소·에너지 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        },
+        {
+          "topic_id": "outdoor",
+          "source_id": "demo-source-009",
+          "evidence_note": "가상 예시의 외부 학습공간 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": [
+        {
+          "url": "public/illustrations/terrace.svg",
+          "source_id": "demo-source-009",
+          "creator": "School Design Trends",
+          "permission_status": "owned",
+          "alt_text": "실제 건축물이 아닌 해안의 배움 연결 개념 도식"
+        }
+      ]
+    },
+    {
+      "project_id": "demo-project-010",
+      "title": "가상 · 느린 마당의 통합학교",
+      "school_ids": [
+        "demo-school-010"
+      ],
+      "region_code": "50",
+      "school_level": "combined",
+      "project_type": "renovation",
+      "competition_date": "2024-04-01",
+      "award_date": "2024-04-19",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-005"
+      ],
+      "source_ids": [
+        "demo-source-010"
+      ],
+      "summary": "느린 마당의 통합학교을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 안전·접근성 · 외부 학습공간 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "access",
+          "source_id": "demo-source-010",
+          "evidence_note": "가상 예시의 안전·접근성 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        },
+        {
+          "topic_id": "outdoor",
+          "source_id": "demo-source-010",
+          "evidence_note": "가상 예시의 외부 학습공간 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": [
+        {
+          "url": "public/illustrations/courtyard.svg",
+          "source_id": "demo-source-010",
+          "creator": "School Design Trends",
+          "permission_status": "owned",
+          "alt_text": "실제 건축물이 아닌 느린 마당의 통합학교 개념 도식"
+        }
+      ]
+    },
+    {
+      "project_id": "demo-project-011",
+      "title": "가상 · 책과 쉼이 있는 학교",
+      "school_ids": [
+        "demo-school-011"
+      ],
+      "region_code": "11",
+      "school_level": "elementary",
+      "project_type": "extension",
+      "competition_date": "2024-01-01",
+      "award_date": "2024-01-17",
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-001",
+        "demo-firm-002"
+      ],
+      "source_ids": [
+        "demo-source-011"
+      ],
+      "summary": "책과 쉼이 있는 학교라는 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 미분류 주제와 이미지 결측 처리를 확인하는 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [],
+      "images": []
+    },
+    {
+      "project_id": "demo-project-012",
+      "title": "가상 · 당선일 확인 대기 사례",
+      "school_ids": [
+        "demo-school-012"
+      ],
+      "region_code": "41",
+      "school_level": "middle",
+      "project_type": "new_build",
+      "competition_date": null,
+      "award_date": null,
+      "completion_date": null,
+      "firm_ids": [
+        "demo-firm-002"
+      ],
+      "source_ids": [
+        "demo-source-012"
+      ],
+      "summary": "당선일 확인 대기 사례을 주제로 화면을 시험하기 위해 직접 작성한 가상 설계사업입니다. 지역 공유 구성을 상상한 예시이며 실제 사례·당선 결과·설계 추세를 뜻하지 않습니다.",
+      "topic_evidence": [
+        {
+          "topic_id": "shared",
+          "source_id": "demo-source-012",
+          "evidence_note": "가상 예시의 지역 공유 화면 분류를 위한 직접 작성 메모",
+          "review_status": "demo"
+        }
+      ],
+      "images": []
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "demo-source-001",
+      "source_type": "competition",
+      "title": "가상 출처 01 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2026-09-12",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-002",
+      "source_type": "competition",
+      "title": "가상 출처 02 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2026-06-08",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-003",
+      "source_type": "competition",
+      "title": "가상 출처 03 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2026-02-20",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-004",
+      "source_type": "competition",
+      "title": "가상 출처 04 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2025-12-15",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-005",
+      "source_type": "competition",
+      "title": "가상 출처 05 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2025-10-09",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-006",
+      "source_type": "competition",
+      "title": "가상 출처 06 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2025-07-21",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-007",
+      "source_type": "competition",
+      "title": "가상 출처 07 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2025-03-11",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-008",
+      "source_type": "competition",
+      "title": "가상 출처 08 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2024-11-25",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-009",
+      "source_type": "competition",
+      "title": "가상 출처 09 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2024-08-04",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-010",
+      "source_type": "competition",
+      "title": "가상 출처 10 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2024-04-19",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-011",
+      "source_type": "competition",
+      "title": "가상 출처 11 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2024-01-17",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-012",
+      "source_type": "competition",
+      "title": "가상 출처 12 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": null,
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-013",
+      "source_type": "magazine",
+      "title": "가상 출처 13 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2026-09-12",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    },
+    {
+      "source_id": "demo-source-014",
+      "source_type": "news",
+      "title": "가상 출처 14 · 개발 예시",
+      "publisher": "School Design Trends 가상 데이터",
+      "url": null,
+      "published_at": "2025-07-21",
+      "retrieved_at": null,
+      "rights_note": "프로젝트가 직접 작성한 가상 텍스트와 자체 제작 도식만 포함합니다.",
+      "verification_status": "demo"
+    }
+  ],
+  "firms": [
+    {
+      "firm_id": "demo-firm-001",
+      "name": "가상 온마루 건축사무소",
+      "aliases": [],
+      "business_registration_number": null,
+      "registration_status": "unknown",
+      "official_url": null,
+      "source_ids": [
+        "demo-source-001"
+      ],
+      "verified_at": null
+    },
+    {
+      "firm_id": "demo-firm-002",
+      "name": "가상 이음 건축사무소",
+      "aliases": [],
+      "business_registration_number": null,
+      "registration_status": "unknown",
+      "official_url": null,
+      "source_ids": [
+        "demo-source-002"
+      ],
+      "verified_at": null
+    },
+    {
+      "firm_id": "demo-firm-003",
+      "name": "가상 겹 건축사무소",
+      "aliases": [],
+      "business_registration_number": null,
+      "registration_status": "unknown",
+      "official_url": null,
+      "source_ids": [
+        "demo-source-003"
+      ],
+      "verified_at": null
+    },
+    {
+      "firm_id": "demo-firm-004",
+      "name": "가상 숲 건축사무소",
+      "aliases": [],
+      "business_registration_number": null,
+      "registration_status": "unknown",
+      "official_url": null,
+      "source_ids": [
+        "demo-source-004"
+      ],
+      "verified_at": null
+    },
+    {
+      "firm_id": "demo-firm-005",
+      "name": "가상 바람 건축사무소",
+      "aliases": [],
+      "business_registration_number": null,
+      "registration_status": "unknown",
+      "official_url": null,
+      "source_ids": [
+        "demo-source-005"
+      ],
+      "verified_at": null
+    }
+  ]
+}
