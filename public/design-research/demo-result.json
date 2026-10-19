@@ -1,0 +1,163 @@
+{
+  "schema": "school-design-research-result",
+  "version": "0.1",
+  "generated_at": "2026-10-20",
+  "title": "설계안 비교 시연: 동탄12고 발췌본 ↔ 세교2-2고(2023)·화양2고(2024)",
+  "purpose": "개방 영역(주민 이용)과 학생 영역의 분리 방식, 대지 레벨차의 활용",
+  "status": {
+    "review": "ai_draft_human_review_pending",
+    "demonstration": true,
+    "notices": [
+      "시연 예시입니다. 공개 작품집 2025의 동탄12고(인쇄 066~073쪽 발췌 8쪽)를 새 설계안이라고 가정한 시험 입력으로 만들었습니다.",
+      "AI가 읽고 쓴 분석이며 사람 검수 전입니다. 입력 쪽은 같은 AI가 다시 읽었으므로 독립 검증이 아닙니다.",
+      "설계 의도·도면·심사평은 계획 단계의 설명이며 실제 교육 효과나 운영 성과의 증거가 아닙니다.",
+      "후보 2건만으로 연도별·지역 트렌드를 말하지 않습니다. 점수나 순위는 없습니다."
+    ],
+    "year_basis_notice": "연도는 작품집 수록 기준이며 실제 당선일·준공일이 아닙니다."
+  },
+  "run": {
+    "kind": "demonstration",
+    "input_kind": "public_yearbook_excerpt",
+    "steps": [
+      { "id": "page_map", "status": "done", "basis": "new_reading", "note": "입력 PDF 8쪽(이미지 8개)을 쪽 이미지 모음으로 확인하고 쪽 수와 도판 수를 구분함" },
+      { "id": "extraction", "status": "done", "basis": "new_reading", "note": "입력 PDF의 개념·배치도·단면·평면·범례를 직접 읽음. 기존 분석 견본과 달라진 점(레벨 표고, 연결통로 층수 등)을 기록함" },
+      { "id": "candidate_search", "status": "done", "basis": "tool_run", "note": "검색 도구 실행: 자료 166건 중 구조 조건 통과 135건, 입력 사업 자체 제외, 후보 135건 중 2건 선정(정렬은 일치 항목 수 기준이며 순위 아님)" },
+      { "id": "evidence", "status": "partial", "basis": "reused_analysis", "note": "후보 2건의 근거는 기존 시험 실행에서 읽은 기록을 재사용함(후보 쪽을 다시 읽지 않음). 단면도·입면도는 열람하지 않음" },
+      { "id": "report", "status": "done", "basis": "tool_run", "note": "result.json 작성 후 변환 도구로 Markdown 보고서를 만듦" }
+    ]
+  },
+  "input": {
+    "label": "동탄12고 발췌본(작품집 2025 인쇄 066~073쪽, 시험 입력)",
+    "excluded_project_id": "goe-2025-068",
+    "page_count": 8,
+    "page_map": [
+      { "pdf_page": 1, "printed_page": "066", "kind": "제목·설계자·개념 글·심사평 표", "figures": "투시도 1(일부)" },
+      { "pdf_page": 2, "printed_page": "067", "kind": "투시도, 제원", "figures": "투시도 1" },
+      { "pdf_page": 3, "printed_page": "068", "kind": "배치도(방위 표시), 투시도", "figures": "배치도 1, 투시도 1" },
+      { "pdf_page": 4, "printed_page": "069", "kind": "입면도", "figures": "입면도 4" },
+      { "pdf_page": 5, "printed_page": "070", "kind": "투시도", "figures": "투시도 2" },
+      { "pdf_page": 6, "printed_page": "071", "kind": "투시도 일부, 단면도", "figures": "투시도 1, 단면도 2" },
+      { "pdf_page": 7, "printed_page": "072", "kind": "투시도, 실 범례, 지하1층·1층 평면도", "figures": "투시도 1, 범례 1, 평면도 2" },
+      { "pdf_page": 8, "printed_page": "073", "kind": "옥상정원 투시도, 2~6층 평면도", "figures": "투시도 1, 평면도 5" }
+    ],
+    "conditions": {
+      "학교급": "고등학교",
+      "사업유형": "신축",
+      "시설": "학교",
+      "위치": "화성시",
+      "대지면적": "12,503㎡",
+      "연면적": "12,422㎡",
+      "규모": "지하1층·지상6층",
+      "건폐율·용적률": "31.11% / 97.87%",
+      "요구 프로그램": "고교학점제 대응, 지역 개방, 대지 레벨차(글에 4m로 기재)"
+    },
+    "search_query": {
+      "exclude_ids": ["goe-2025-068"],
+      "required": { "facility_kind": "school" },
+      "preferred": { "school_level": "high", "project_type": "new", "facility_kind": "school", "site_area": 12503, "gross_floor_area": 12422.07, "floors_above": 6 },
+      "keywords": ["주민·개방", "레벨·지형", "별동·독립 접근"]
+    },
+    "strategies": [
+      { "dimension": "site_layout", "summary": "글은 대지의 4m 레벨 차이를 활용해 2층(EL 84.5m)을 운동장·외부 시설과 연계되는 중심 레벨로 삼고 층수 제한을 넘어 6층 규모로 제안했다고 적음.", "evidence_level": "fact", "sources": [{ "page": "입력 PDF 1쪽(인쇄 066)", "readability": "legible" }] },
+      { "dimension": "site_layout", "summary": "배치도: 북쪽 24m 도로, 서쪽 근생시설, 남쪽 송방천공원, 동쪽 운동시설에 접하고 북서쪽에 강당·식당 동, 동쪽에 교사동이 놓임. 표고는 운동장 80.50, 동쪽 출입구 84.50으로 읽혀 글의 '운동장과 연계'와 어긋날 수 있음(확인 필요).", "evidence_level": "fact", "sources": [{ "page": "입력 PDF 3쪽(인쇄 068)", "readability": "uncertain" }], "uncertain": true },
+      { "dimension": "circulation", "summary": "1층 평면에서 강당·식당 동과 교사동은 에듀스퀘어를 사이에 두고 떨어져 있고, 2층 평면에서 해칭 띠(연결통로로 읽힘)로 이어짐. 3~6층 도면에도 같은 위치에 해칭 띠가 있어 연결 층수는 확정하지 않음.", "evidence_level": "fact", "sources": [{ "page": "입력 PDF 7·8쪽(인쇄 072·073)", "readability": "uncertain" }], "uncertain": true },
+      { "dimension": "learning_space", "summary": "3~6층 각 층에 홈베이스와 교과교실 3실이 반복되고, 글은 3·4층을 홈베이스 중심의 가변형 교실·포켓공간으로 설명함.", "evidence_level": "fact", "sources": [{ "page": "입력 PDF 1쪽·8쪽(인쇄 066·073)", "readability": "legible" }] },
+      { "dimension": "common_space", "summary": "1층 진입광장에서 도서실·시청각실·식당으로 이어지는 개방형 공유 영역과 인도어플라자를 둠.", "evidence_level": "fact", "sources": [{ "page": "입력 PDF 1쪽·7쪽(인쇄 066·072)", "readability": "legible" }] },
+      { "dimension": "community_use", "summary": "배치도에 '주민체력마당(주민개방)' 표기. 글·심사평은 강당 별동의 주민 개방과 식당의 휴일 주민 행사 수용을 설계 의도로 적음. 강당·식당 동 평면에는 개방 표시가 읽히지 않음.", "evidence_level": "fact", "sources": [{ "page": "입력 PDF 1쪽·3쪽·7쪽", "readability": "legible" }] },
+      { "dimension": "community_use", "summary": "별도 볼륨의 분리가 개방 영역을 설정할 공간적 출발점이 될 가능성이 있으나, 연결통로 끝의 출입 통제 구획은 읽히지 않아 운영상 분리는 확인되지 않음.", "evidence_level": "ai_interpretation", "sources": [{ "page": "입력 PDF 3·7·8쪽", "readability": "uncertain" }] },
+      { "dimension": "application_conditions", "summary": "레벨차 대지에서 복수 층 진입과 수직 집약을 검토할 때 후보 전략으로 볼 수 있으나, 가용 면적·무장애 동선·피난·개방 운영 조건을 확인해야 함.", "evidence_level": "proposal", "sources": [] }
+    ],
+    "unconfirmed_inputs": ["승강기·경사로 위치", "연결통로의 층별 성격과 출입 통제", "단면도 라벨", "배치도 표고의 정확한 숫자", "교과교실 층수 라벨(5F/6F)과 6층 평면의 충돌"]
+  },
+  "exclusions": [
+    { "project_id": "goe-2025-068", "reason": "입력 사업 자체(동탄12고)" },
+    { "project_id": "goe-2025-124", "reason": "후보에서 제외하지 않고 이상 징후로 표시: 위치가 입력 사업과 같게 적혀 있으나 중학교(왕숙2중)여서 위치 입력 오류 가능성(수정하지 않음). 이번 후보에는 들어가지 않음" }
+  ],
+  "candidates": [
+    {
+      "project_id": "goe-2023-162", "title": "세교2-2고등학교", "award_year": 2023, "yearbook_page": 162,
+      "reason": "고교 신축, 대지·연면적 규모가 비슷하고 요약·심사평에 레벨을 이용한 보차분리, 경사대지 해석, 2층 강당의 독립 접근과 주민개방 관리가 있어 목적과 관련됨. 검색에서 구조 조건 일치 3, 규모 일치 1, 키워드 3개 모두 일치.",
+      "info_missing": ["단면도·입면도(레벨 구조)", "2층 강당의 출입 통제 방식"],
+      "notes": "위치는 오산시. 설계 태그(draft_ai)가 있으나 근거로 쓰지 않음"
+    },
+    {
+      "project_id": "goe-2024-116", "title": "화양2고등학교", "award_year": 2024, "yearbook_page": 116,
+      "reason": "고교 신축, 대지·연면적 규모가 비슷하고 요약·심사평에 주민 접근성을 고려한 커뮤니티 마당, 레벨을 이용한 입체적 접근, 층별 홈베이스가 있음. 2024년 사례는 태그가 없지만 불일치로 보지 않고 요약·심사평으로 검색함.",
+      "info_missing": ["설계 태그(2024년 미부여)", "강당의 주민 개방 의도", "강당 동과 교사동의 접속 여부", "단면도·입면도(레벨 구조)"],
+      "notes": "위치는 평택시. 설계자 표기 일부 판독 불확실 메모가 있음"
+    },
+    {
+      "project_id": "goe-2025-012", "title": "용인반도체고", "award_year": 2025, "yearbook_page": 12,
+      "reason": "검색에서 키워드가 모두 일치했으나 반도체 특수목적 학교·기숙사 동선이 핵심이라 이번 목적에서는 선정하지 않음(목적 기준의 판단이며 우열이 아님).",
+      "info_missing": ["근거 쪽을 이번에 읽지 않음"],
+      "notes": "선정하지 않은 후보"
+    }
+  ],
+  "selected": ["goe-2023-162", "goe-2024-116"],
+  "comparison": {
+    "rows": [
+      { "item": "학교급·사업유형(고교·신축)", "input": "고교 신축", "values": {
+        "goe-2023-162": { "status": "match", "note": "고교 신축", "source": "자료 snapshot" },
+        "goe-2024-116": { "status": "match", "note": "고교 신축", "source": "자료 snapshot" } } },
+      { "item": "대지·연면적", "input": "12,503 / 12,422㎡", "values": {
+        "goe-2023-162": { "status": "numeric_difference", "note": "14,207 / 16,028㎡", "source": "2023 p.162" },
+        "goe-2024-116": { "status": "numeric_difference", "note": "14,855 / 14,536㎡", "source": "2024 p.116" } } },
+      { "item": "지상 층수", "input": "6층", "values": {
+        "goe-2023-162": { "status": "numeric_difference", "note": "5층(필수조건을 정하지 않아 불일치로 판정하지 않음)", "source": "2023 p.162" },
+        "goe-2024-116": { "status": "numeric_difference", "note": "4층(필수조건을 정하지 않아 불일치로 판정하지 않음)", "source": "2024 p.116" } } },
+      { "item": "강당·식당 볼륨과 본동의 관계", "input": "본동에 접속한 별도 볼륨(1층은 분리, 2층 연결통로)", "values": {
+        "goe-2023-162": { "status": "match", "note": "본동에 접속한 별도 볼륨(잠정): 2층 평면에서 강당 영역이 교사동 복도와 이어져 보임", "source": "2023 p.166" },
+        "goe-2024-116": { "status": "no_information", "note": "미확인: 별도 동으로 표기되나 교사동과 접속하는지 기록에 없음. 독립 별동으로 단정하지 않음" } } },
+      { "item": "개방 영역과 학생 영역의 운영 구분(출입 통제)", "input": "정보 없음(통로 끝 통제 구획이 읽히지 않음)", "values": {
+        "goe-2023-162": { "status": "no_information", "note": "요약·심사평에 2층 강당 독립 접근·주민개방 관리가 있으나 평면에서 통제 구획은 읽지 못함" },
+        "goe-2024-116": { "status": "no_information", "note": "커뮤니티 마당의 주민 접근성만 심사평 요지에 있고 강당 개방 의도는 없음" } } },
+      { "item": "주민 개방 표시", "input": "배치도 '주민체력마당(주민개방)', 글·심사평 기재", "values": {
+        "goe-2023-162": { "status": "match", "note": "요약·심사평에 주민개방 관리 언급(도면 표기는 이번에 확인하지 않음)", "source": "2023 p.162" },
+        "goe-2024-116": { "status": "match", "note": "북동측 커뮤니티 마당의 주민 접근성(심사평 요지). 도면 표기는 확인하지 않음", "source": "2024 p.115~116" } } },
+      { "item": "레벨 활용", "input": "글: 2층 중심 레벨(도면 표고 해석은 확인 필요)", "values": {
+        "goe-2023-162": { "status": "match", "note": "잠정 해석: 요약·심사평에 레벨을 이용한 보차분리·경사대지 해석. 단면도 미확인", "source": "2023 p.162" },
+        "goe-2024-116": { "status": "match", "note": "잠정 해석: 심사평 요지에 레벨 이용 입체적 접근. 단면도 미확인", "source": "2024 p.116" } } },
+      { "item": "층별 홈베이스", "input": "3~6층 평면에 표기", "values": {
+        "goe-2023-162": { "status": "match", "note": "3~5층 평면에 홈베이스 표기", "source": "2023 p.166" },
+        "goe-2024-116": { "status": "match", "note": "3·4층 평면에 홈베이스 표기", "source": "2024 p.122" } } },
+      { "item": "설계 태그", "input": "(근거로 쓰지 않음)", "values": {
+        "goe-2023-162": { "status": "no_information", "note": "draft_ai 태그가 있으나 근거로 쓰지 않음" },
+        "goe-2024-116": { "status": "no_information", "note": "2024년 태그 미부여(불일치 아님)" } } }
+    ]
+  },
+  "similarities": [
+    { "text": "개방 시설 볼륨을 교사동과 구분해 두는 구성이 입력과 세교2-2고에서 읽힙니다. 화양2고는 별도 동으로 표기되나 접속 여부가 미확인입니다.", "evidence_level": "fact", "sources": [{ "page": "입력 PDF 3·7·8쪽" }, { "page": "2023 p.166" }, { "page": "2024 p.117" }] },
+    { "text": "구분된 볼륨은 개방 영역을 설정할 공간적 출발점이 될 가능성이 있습니다. 건물의 분리와 운영상 출입 통제는 다르며, 세 사례 모두 통제 방식은 확인하지 못했습니다.", "evidence_level": "ai_interpretation", "sources": [] },
+    { "text": "세 사례의 평면 범례에 홈베이스 표기가 여러 층에 있습니다.", "evidence_level": "fact", "sources": [{ "page": "입력 PDF 8쪽" }, { "page": "2023 p.166" }, { "page": "2024 p.122" }] }
+  ],
+  "differences": [
+    { "text": "입력은 층 하나를 중심 레벨로 삼는 구성(글)이고, 세교2-2고는 보차분리와 강당 접근로, 화양2고는 '입체적 접근'이라는 표현만 확인되었습니다. 두 후보의 레벨 해석은 요약·심사평에 근거한 잠정 해석입니다.", "evidence_level": "ai_interpretation", "sources": [{ "page": "2023 p.162" }, { "page": "2024 p.116" }] },
+    { "text": "주차는 입력과 화양2고가 지상, 세교2-2고는 지하 1층(약 82대로 읽힘)입니다.", "evidence_level": "fact", "sources": [{ "page": "입력 PDF 3쪽" }, { "page": "2023 p.165", "readability": "uncertain" }, { "page": "2024 p.117", "readability": "uncertain" }] }
+  ],
+  "merits_burdens": [
+    { "subject": "세교2-2고", "merit": "강당·식당을 모서리에 두고 외부 접근을 따로 설정하는 구성이 개방 영역을 설정하는 출발점이 될 수 있음. 지하주차가 지상 공간 확보에 기여할 가능성이 있음(효과는 확인되지 않음).", "burden": "2층 강당 접근이 교사동 복도와 이어져 보여 개방 시 출입 통제 방식 확인 필요. 지하주차의 환기·진출입, 외부계단·데크의 접근성·안전." },
+    { "subject": "화양2고", "merit": "광장형 시설 중심의 4층 구성, 층별 홈베이스, 근린공원과 면한 커뮤니티 마당.", "burden": "마당에서 학교 내부로 접근하는 경계, 강당 개방 의도 불명확, 단면·입면 확인 전에는 레벨 이용 방식 판단 보류." },
+    { "subject": "입력(동탄12고)", "merit": "개방 시설 볼륨의 분리와 2층 연결통로.", "burden": "통로를 통한 교사동 접근 통제, 두 레벨 진입, 6층 수직 이동·피난, 글과 도면 표고 해석의 어긋남 가능성." }
+  ],
+  "proposals": [
+    { "text": "개방 시설을 둘 때 건물의 분리와 운영상 출입 통제를 따로 검토합니다.", "conditions": "접속 통로(및 3~6층 해칭 띠)의 통제 지점, 출입 시간, 관리 주체" },
+    { "text": "강당 개방이 주 목적이면 외부에서 직접 오르는 접근로 방식을 후보로 검토할 수 있습니다(요약·심사평에 근거한 잠정 해석).", "conditions": "접근로 폭·계단·무장애 경로·안전, 주차 계획" },
+    { "text": "레벨차 대지에서는 '입체적 접근' 같은 표현만으로 방식을 정하지 않고 단면·입면으로 출입 레벨을 먼저 확인합니다.", "conditions": "후보의 단면도·입면도 열람" },
+    { "text": "입력 설계안의 글과 배치도 표고가 어긋날 수 있으므로 레벨 기준을 설계자 자료로 확인합니다.", "conditions": "1층·2층 기준 높이, 운동장·출입구 높이" },
+    { "text": "사례의 대지면적·규모를 적용 가능 여부의 기준으로 쓰지 않습니다.", "conditions": "요구 면적, 가용 면적, 대지 조건" }
+  ],
+  "evidence": [
+    { "target": "input", "basis": "new_reading", "summary": "입력 PDF 8쪽의 개념·제원·배치도·단면·평면·범례를 직접 읽음. 식당 문장·공원 이름은 읽힘, 레벨 표고·연결통로 층수는 불확실. 같은 AI의 재판독이며 독립 검증 아님.", "sources": [{ "page": "입력 PDF 1~8쪽" }] },
+    { "target": "goe-2023-162", "basis": "reused_analysis", "summary": "기존 시험 실행에서 읽은 배치도·범례·평면도 기록과 데이터 요약·심사평 요지를 재사용. 이번 실행에서 후보 쪽을 다시 읽지 않음.", "sources": [{ "page": "2023 p.162·163·165·166", "readability": "uncertain" }] },
+    { "target": "goe-2024-116", "basis": "reused_analysis", "summary": "기존 시험 실행에서 읽은 배치도·평면도 기록과 데이터 요약·심사평 요지를 재사용. 이번 실행에서 후보 쪽을 다시 읽지 않음.", "sources": [{ "page": "2024 p.115~117·122", "readability": "uncertain" }] }
+  ],
+  "unconfirmed": [
+    "입력 설계안: 승강기·경사로 위치, 연결통로의 층별 성격과 출입 통제, 단면도 라벨, 배치도 표고의 정확한 숫자, 교과교실 층수 라벨(5F/6F)과 6층 평면의 충돌",
+    "후보 2건의 단면도·입면도(레벨 구조)는 열람하지 않았습니다.",
+    "후보 2건의 개념 글 원문 대조는 하지 않았습니다(데이터의 요약·심사평을 신뢰, 사람 검수 전).",
+    "세교2-2고 2층 강당의 접속·출입 통제 방식, 화양2고 강당의 접속 여부와 주민 개방 의도는 확인하지 못했습니다.",
+    "쪽 번호가 인쇄되지 않은 쪽은 머리글로 추정했습니다(세교 p.163·p.165, 화양 p.117).",
+    "후보를 이 두 건으로 정한 것은 이번 목적 기준의 판단이며 다른 후보를 선택할지는 사람이 정해야 합니다.",
+    "자료 이상 징후: goe-2025-124(왕숙2중)의 위치가 입력 사업과 같게 입력되어 있음(위치 입력 오류 가능성, 수정하지 않음)."
+  ]
+}

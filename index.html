@@ -14,23 +14,54 @@
   <link rel="stylesheet" href="src/styles/overview.css">
   <link rel="stylesheet" href="src/styles/spatial-model.css">
   <link rel="stylesheet" href="src/styles/refinement.css">
+  <link rel="stylesheet" href="src/styles/research.css">
   <script type="module" src="src/ui/app.js"></script>
 </head>
 <body>
   <a class="skip" href="#main">본문 바로가기</a>
   <header class="site-header">
     <a class="brand" href="./"><img src="public/mark.svg" alt="" width="36" height="36"><span>학교 설계 동향<small>SCHOOL DESIGN TRENDS</small></span></a>
-    <nav aria-label="주요 화면" id="navigation">
-      <button type="button" data-view="overview" aria-current="page">전체 동향</button>
-      <button type="button" data-view="projects">설계 사례</button>
-      <button type="button" data-view="firms">설계 사무소</button>
-      <button type="button" data-view="buildings">건물 연령</button>
-      <button type="button" data-view="topics">설계 주제</button>
-      <button type="button" data-view="years">연도별 분석</button>
+    <nav aria-label="주요 기능" id="navigation">
+      <button type="button" data-feature="trends" aria-current="page">① 연도별 동향</button>
+      <button type="button" data-feature="directions">② 향후 설계 방향</button>
+      <button type="button" data-feature="compare">③ 설계안 PDF 비교</button>
+      <button type="button" data-feature="explore">자료 조회</button>
     </nav>
-    <span class="header-note">학교 공간을 읽는 새로운 관점</span>
+    <span class="header-note">경기 공모집 수록 자료 · 사람 검수 전</span>
   </header>
   <main id="main" tabindex="-1">
+    <section class="rs-intro" data-feature-shell aria-label="이 도구의 세 가지 기능">
+      <p class="eyebrow">SCHOOL DESIGN RESEARCH</p>
+      <h1>경기 학교 설계공모,<br><span>숫자와 근거로 읽습니다.</span></h1>
+      <p class="intro">2023~2025년 경기도교육청 공모집 당선작 166건의 변화를 보고, 근거가 있는 설계 방향을 검토하고, 내 설계안 PDF를 Claude로 비교한 결과를 확인합니다. 모든 분석은 AI가 읽은 사람 검수 전 자료이며, 연도는 작품집 수록 기준입니다.</p>
+    </section>
+    <section id="feature-trends" class="rs-panel" data-feature-panel="trends" data-feature-shell aria-labelledby="trends-title">
+      <div class="rs-heading"><p class="eyebrow">FEATURE 1</p><h2 id="trends-title">연도별 동향</h2><p class="small">전체 자료로 계산할 수 있는 변화만 보여 줍니다. 공간 전략은 분석한 사례의 근거와 연결합니다.</p></div>
+      <div id="trends-content"><p class="small">불러오는 중입니다…</p></div>
+    </section>
+    <section id="feature-directions" class="rs-panel" data-feature-panel="directions" data-feature-shell aria-labelledby="directions-title" hidden>
+      <div class="rs-heading"><p class="eyebrow">FEATURE 2</p><h2 id="directions-title">향후 설계 방향</h2><p class="small">기존 분석에서 근거가 있는 방향을 관찰·해석·적용 조건·반대 근거와 함께 정리했습니다. 예측이 아니라 검토할 방향입니다.</p></div>
+      <div id="directions-content"><p class="small">불러오는 중입니다…</p></div>
+    </section>
+    <section id="feature-compare" class="rs-panel" data-feature-panel="compare" data-feature-shell aria-labelledby="compare-title" hidden>
+      <div class="rs-heading"><p class="eyebrow">FEATURE 3</p><h2 id="compare-title">설계안 PDF 비교 결과</h2></div>
+      <aside class="rs-howto" aria-label="사용 순서">
+        <h3>사용 순서</h3>
+        <p class="rs-key">이 홈페이지는 PDF를 분석하지 않고 AI를 호출하지도 않습니다. 분석은 Claude Code에서 하고, 홈페이지는 그 결과 파일을 불러와 보여 줍니다. PDF는 브라우저에 올리지 않습니다.</p>
+        <ol>
+          <li><strong>Claude Code에서 분석합니다.</strong> 이 저장소를 열고 설계안 PDF를 <code>data/private/design-research/&lt;작업명&gt;/input/</code>에 둔 뒤, <code>school-design-research</code> 스킬로 PDF 비교를 요청합니다(분석 목적을 함께 적습니다).</li>
+          <li><strong>스킬이 결과 파일을 만듭니다.</strong> PDF를 읽고 후보 검색 도구를 실행해 <code>report/result.json</code>과 Markdown 보고서를 Git 제외 폴더에 저장합니다.</li>
+          <li><strong>여기서 불러옵니다.</strong> 아래에서 <code>result.json</code>을 선택하면 입력 조건·후보 선정 이유·공통점·차이·장단점·조건부 제안·근거·미확인 사항을 확인하고 저장할 수 있습니다.</li>
+        </ol>
+      </aside>
+      <div class="rs-load">
+        <button type="button" class="primary" id="load-demo-result">시연 예시 보기</button>
+        <label class="file-label">내 result.json 불러오기<input type="file" id="result-file" accept=".json,application/json"></label>
+      </div>
+      <p class="small">시연 예시는 공개 작품집 2025의 동탄12고(인쇄 066~073쪽 발췌)를 새 설계안이라고 가정한 <strong>시험 입력</strong>으로 만든 결과이며, 사람 검수 전입니다. 선택한 파일은 이 브라우저 안에서만 읽고 외부로 전송하지 않습니다.</p>
+      <div id="compare-status" role="alert" hidden></div>
+      <div id="compare-result"></div>
+    </section>
     <div class="hero">
       <div><p class="eyebrow">SCHOOL ARCHITECTURE OBSERVATORY</p><h1>학교 공간의 변화,<br><span>사례에서 발견하다.</span></h1><p class="intro">지역과 학교급으로 설계 사례를 살펴보고,<br>공간을 만드는 생각과 그 근거를 함께 확인하세요.</p></div>
       <div class="hero-art"><img src="public/illustrations/courtyard.svg" alt="중정과 학습 공간을 표현한 가상 건축 다이어그램"><span>SPACE FOR LEARNING · 개념 일러스트</span></div>

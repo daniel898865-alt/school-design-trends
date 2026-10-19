@@ -6,6 +6,7 @@ import { renderYearTrends } from './year-trends.js';
 import { renderFirms, renderBuildings, renderTopics, openProjectDialog } from './details.js';
 import { serializeCsv, serializeMarkdown, downloadExport } from './export.js';
 import {GYEONGGI_CITIES} from '../domain/gyeonggi.js';
+import { initResearch } from './research.js';
 
 const $ = id => document.getElementById(id);
 let provider;
@@ -325,3 +326,4 @@ for (const type of ['csv', 'md']) $('export-' + type).addEventListener('click', 
   } catch (error) { failure(error); }
 });
 loadDataset();
+initResearch();

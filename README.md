@@ -10,6 +10,10 @@
 
 위 주소는 다른 PC에서도 열립니다. `127.0.0.1` 주소는 해당 PC에서 미리보기 서버가 실행 중일 때만 사용할 수 있습니다. 저장소의 `index.html`은 웹페이지 소스이므로 파일을 더블클릭하기보다 온라인 주소 또는 아래 로컬 서버를 이용하세요.
 
+## 설계 리서치 세 가지 기능 (개인 과제 1차 완성본)
+
+웹 화면은 ① 연도별 동향(전체 166건 정량 집계와 분석 사례 연결), ② 향후 설계 방향(검토할 방향, 예측 아님), ③ 설계안 PDF 비교 결과 보기로 시작하고, 기존 조회 화면은 "자료 조회"에서 그대로 사용합니다. ③은 **Claude Code의 `school-design-research` 스킬이 PDF를 분석해 만든 `result.json`을 홈페이지에서 불러와 보여 주고 저장하는 방식**이며, 홈페이지가 PDF를 분석하거나 AI를 호출하지 않습니다. 사용 순서·도구·결과 형식·한계는 [docs/DESIGN_RESEARCH.md](docs/DESIGN_RESEARCH.md)를 보세요. 모든 분석은 AI가 읽은 사람 검수 전 자료입니다.
+
 ## 공개 배포 상태 · 2026-10-19
 
 **[PR #42](https://github.com/yunzecho-eng/school-design-trends/pull/42)의 경기도 지도·사례 화면·3D 개선을 `main`에 통합해 [GitHub Pages](https://yunzecho-eng.github.io/school-design-trends/)로 공개합니다.** 저장소와 웹 화면은 로그인 없이 볼 수 있습니다. 기능 공개와 자료 확보·검수 완료는 구분합니다.
