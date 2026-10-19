@@ -1,6 +1,7 @@
 import {el, emptyState} from './dom.js';
 import {createProjectThumbnail, primaryProjectSource} from './project-media.js';
 import {summarizeYearTrends, YEAR_DATE_LABELS} from '../domain/year-trends.js';
+import {renderSpatialModel} from './spatial-model.js';
 
 const percent = (value) => value === null ? '—' : `${(value * 100).toLocaleString('ko-KR', {maximumFractionDigits: 1})}%`;
 const signed = (value, suffix = '') => `${value > 0 ? '+' : ''}${value.toLocaleString('ko-KR', {maximumFractionDigits: 1})}${suffix}`;
@@ -12,9 +13,9 @@ function blockHeading(step, title, text) {
   ]);
 }
 
-function observationBlock(year, result) {
+function observationBlock(year, result, onSelectTopic) {
   const section = el('section', {class: 'year-block year-observations'}, [
-    blockHeading('01', '관측한 내용', `${year.year}년 · ${year.from} ~ ${year.to}${year.partial ? ' · 일부 기간' : ' · 연간 전체 기간'}`),
+    blockHeading('01', '관측한 내용', year.precision === 'yearbook' ? `${year.year}년 공모집에 수록된 당선작 · 실제 사건 날짜 미확인` : `${year.year}년 · ${year.from} ~ ${year.to}${year.partial ? ' · 일부 기간' : ' · 연간 전체 기간'}`),
   ]);
   section.append(el('div', {class: 'year-facts', 'aria-label': '선택 연도 자료 건수'}, [
     el('p', {}, [el('strong', {}, String(year.project_count)), el('span', {}, '고유 사업')]),
@@ -30,12 +31,16 @@ function observationBlock(year, result) {
     return section;
   }
   const active = year.topics.filter((topic) => topic.projects > 0);
-  if (!active.length) section.append(el('p', {class: 'notice'}, '등록된 키워드가 없습니다. 자료가 있다고 주제를 추정하지 않습니다.'));
+  if (!active.length) section.append(el('p', {class: 'notice'}, '주제 정보 미수록 · 등록된 키워드가 없습니다. 0건을 실제 해당 공간이 없다는 뜻으로 해석하지 않습니다.'));
   else {
     const list = el('ul', {class: 'year-keywords', 'aria-label': `${year.year}년 설계 키워드`});
     for (const topic of active) {
+      const title = ['outdoor_learning','community_sharing','flexible_learning'].includes(topic.topic_id)
+        ? el('button', {type:'button',class:'text-button','aria-label':`${topic.label} 공간 해석 보기`}, `${topic.label} · 공간 보기`)
+        : el('span', {}, topic.label);
+      if (title.tagName === 'BUTTON') title.addEventListener('click', () => onSelectTopic?.(topic.topic_id));
       list.append(el('li', {}, [
-        el('span', {}, topic.label),
+        title,
         el('progress', {max: year.project_count, value: topic.projects,
           'aria-label': `${topic.label}: ${topic.projects}/${year.project_count}건`}),
         el('strong', {}, `${topic.projects}건 · ${percent(topic.share)}`),
@@ -47,7 +52,7 @@ function observationBlock(year, result) {
   const compare = el('div', {class: 'year-comparison'});
   if (comparison.status === 'available') {
     compare.append(el('h4', {}, `${comparison.previous_year}년과 비교`),
-      el('p', {}, `동일하게 전체 연도를 포함한 조회에서 사업 수 ${signed(comparison.project_delta, '건')}.`));
+      el('p', {}, year.precision === 'yearbook' ? `공모집 수록 당선작 수 ${signed(comparison.project_delta, '건')}. 발주 전체의 증감이 아닙니다.` : `동일하게 전체 연도를 포함한 조회에서 사업 수 ${signed(comparison.project_delta, '건')}.`));
     const changes = comparison.topic_changes.filter((item) => item.current_share > 0 || item.previous_share > 0);
     const table = el('table', {class: 'data-table year-change-table'}, [
       el('caption', {class: 'sr-only'}, '전년도 대비 키워드 구성비 변화'),
@@ -58,6 +63,7 @@ function observationBlock(year, result) {
       ]))),
     ]);
     if (changes.length) compare.append(el('div', {class: 'table-wrap'}, table));
+    if (comparison.topic_status && comparison.topic_status !== 'available') compare.append(el('p', {class:'notice'}, '키워드 비교 보류 · 한쪽 연도에 주제 분류가 없거나 일부 자료만 분류되어 있습니다. 미수록을 감소로 계산하지 않습니다.'));
   } else {
     compare.append(el('h4', {}, '전년도 비교 보류'), el('p', {class: 'muted'},
       comparison.status === 'partial_period'
@@ -71,7 +77,7 @@ function observationBlock(year, result) {
 
 function examplesBlock(year, projects, snapshot, onOpenProject) {
   const section = el('section', {class: 'year-block'}, [
-    blockHeading('02', '사례와 이미지로 확인', '선택 연도의 기준 날짜 최신순으로 최대 3건을 표시합니다. 통계적 대표성을 평가한 표본은 아닙니다.'),
+    blockHeading('02', '사례와 이미지로 확인', year.precision === 'yearbook' ? '같은 수록연도에서 식별자 순으로 최대 3건을 표시합니다. 통계적 대표성을 평가한 표본은 아닙니다.' : '선택 연도의 기준 날짜 최신순으로 최대 3건을 표시합니다. 통계적 대표성을 평가한 표본은 아닙니다.'),
   ]);
   const cards = el('div', {class: 'year-project-grid'});
   for (const id of year.representative_ids) {
@@ -83,7 +89,7 @@ function examplesBlock(year, projects, snapshot, onOpenProject) {
     const card = el('article', {class: 'year-project-card'}, [
       createProjectThumbnail(project, onOpenProject),
       el('div', {class: 'year-project-content'}, [el('h4', {}, button),
-        el('p', {class: 'muted'}, `${project.basis_date} · ${project.region_name || '지역 미확인'}`),
+        el('p', {class: 'muted'}, `${year.precision === 'yearbook' ? `${year.year}년 수록` : project.basis_date} · ${project.region_name || '지역 미확인'}`),
         el('p', {}, project.summary || '직접 작성한 요약이 아직 없습니다.')]),
     ]);
     const source = primaryProjectSource(project, snapshot);
@@ -148,7 +154,7 @@ export function renderYearTrends(container, view, snapshot, {
   onOpenProject = () => {},
 } = {}) {
   const result = summarizeYearTrends(view.projects, snapshot, {
-    dateBasis, asOf, months, excludedUnknownDates: view.summary.excludedUnknownDates,
+    dateBasis, asOf, months, year: view.metadata.selected_year ?? '', excludedUnknownDates: view.summary.excludedUnknownDates,
   });
   const projectMap = new Map(view.projects.map((project) => [project.project_id, project]));
   container.classList.add('year-trends');
@@ -170,23 +176,33 @@ export function renderYearTrends(container, view, snapshot, {
   const preferred = container.dataset.selectedYear;
   const selected = result.years.find((year) => year.year === preferred)
     ?? [...result.years].reverse().find((year) => year.project_count > 0) ?? result.years.at(-1);
+  if (!selected) { container.append(emptyState('연도 정보가 없습니다', '수록연도 또는 선택한 기준 날짜가 있는 자료가 필요합니다.')); return result; }
   yearSelect.value = selected.year;
   container.append(el('div', {class: 'year-controls'}, [
     el('label', {for: 'year-date-basis'}, ['날짜 기준', basis]),
     el('label', {for: 'year-selection'}, ['살펴볼 연도', yearSelect]),
   ]), el('p', {class: 'muted'}, '날짜 기준은 전체 화면과 내보내기에 함께 적용됩니다. 연도 선택은 이 패널만 바꾸며 전체 내보내기 기간은 유지합니다.'));
-  const period = el('p', {class: 'year-period-note'}, `${result.date_basis_label} 기준 · 자료 기준일 ${result.data_as_of || '미확인'} · 조회 기준일 ${result.query_as_of} · 날짜 미확인으로 제외 ${result.excluded_unknown_dates}건`);
+  const period = el('p', {class: 'year-period-note'}, dateBasis === 'award_year' ? `${result.date_basis_label} 기준 · 자료 기준일 ${result.data_as_of || '미확인'} · 실제 당선일·준공일 아님 · 수록연도 미확인 제외 ${view.summary.excludedUnknownYears ?? 0}건` : `${result.date_basis_label} 기준 · 자료 기준일 ${result.data_as_of || '미확인'} · 조회 기준일 ${result.query_as_of} · 날짜 미확인으로 제외 ${result.excluded_unknown_dates}건`);
   container.append(period);
   if (result.date_basis === 'published_at') container.append(el('p', {class: 'notice'}, '이 연도는 조회 기간 안의 최초 연결 기사에 따라 배정합니다. 실제 준공연도·최초 보도연도와 다르며 월별 기사 노출 집계와 합산 방식도 다릅니다.'));
   if (result.mismatched_basis_ids.length) container.append(el('p', {class: 'notice'}, `선택한 날짜 기준과 맞지 않는 사업 ${result.mismatched_basis_ids.length}건을 제외했습니다. 자료 연결을 확인해 주세요.`));
   const body = el('div', {class: 'year-body'});
+  const spatial = el('div');
   const status = el('p', {class: 'sr-only', role: 'status', 'aria-live': 'polite'});
   container.append(status, body);
   function drawYear() {
     const year = result.years.find((item) => item.year === yearSelect.value);
     container.dataset.selectedYear = year.year;
     status.textContent = `${year.year}년 ${year.project_count}건 표시`;
-    body.replaceChildren(observationBlock(year, result), examplesBlock(year, projectMap, snapshot, onOpenProject),
+    const spatialApi = renderSpatialModel(spatial, {projects:year.project_ids.map(id => projectMap.get(id)).filter(Boolean),snapshot,onOpenProject,
+      scopeLabel:`${year.year}년 · ${result.date_basis_label} · 현재 조회 조건`});
+    body.replaceChildren(observationBlock(year, result, topic => {
+      spatialApi.setTopic(topic);
+      const panel = spatial.querySelector('details');
+      if (panel) panel.open = true;
+      spatial.querySelector('summary')?.focus();
+      spatial.scrollIntoView({block:'nearest',behavior:'instant'});
+    }), examplesBlock(year, projectMap, snapshot, onOpenProject), spatial,
       outlookBlock(year, result, projectMap, onOpenProject));
   }
   yearSelect.addEventListener('change', drawYear);

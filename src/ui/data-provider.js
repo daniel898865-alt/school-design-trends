@@ -4,10 +4,12 @@ import {REGIONS, regionName, UNKNOWN_REGION_LABEL} from '../data/normalize.js';
 import levelRules from '../../rules/school_levels.json' with {type: 'json'};
 import {filterProjects, summarizeProjects, projectRegions, DATE_BASES} from '../domain/projects.js';
 import {isValidDate} from '../domain/dates.js';
+import {SUPPORTED_SCHEMA_VERSIONS} from '../data/schema.js';
+import {filterProjectsByYearbookYear, summarizeByYearbookYear, yearbookYear} from '../domain/yearbook.js';
 import {summarizeFirms} from '../domain/firms.js';
 import {summarizeBuildings} from '../domain/buildings.js';
 import {summarizeTopics, TOPICS} from '../domain/topics.js';
-import {exportRows as sharedExportRows} from '../data/export.js';
+import {exportSelectedProjectRows} from '../data/export.js';
 
 // Legacy UI fixtures used these five names before the team topic dictionary existed.
 // Record-level _raw from parseSnapshot is retained, including the original evidence.
@@ -55,6 +57,16 @@ function screenSafety(snapshot) {
     }
   }
   for (const [index, project] of snapshot.projects.entries()) {
+    for (const key of ['metrics', 'designers', 'jury_notes', 'data_issues', 'design_tags', 'special_flags']) {
+      const check = (value, path) => {
+        if (typeof value === 'string') field(value, path);
+        else if (Array.isArray(value)) {
+          if (value.length > 100) errors.push(diagnostic('too_many_values', path, '배열 항목은 100개 이하여야 합니다.'));
+          value.forEach((item, n) => check(item, `${path}[${n}]`));
+        } else if (object(value)) for (const [name, item] of Object.entries(value)) check(item, `${path}.${name}`);
+      };
+      check(project[key], `projects[${index}].${key}`);
+    }
     for (const [n, evidence] of project.topic_evidence.entries()) {
       for (const key of ['topic_id', 'source_id', 'evidence_note', 'review_status'])
         field(evidence[key], `projects[${index}].topic_evidence[${n}].${key}`);
@@ -69,14 +81,13 @@ function screenSafety(snapshot) {
 
 function readInput(input) {
   if (typeof input === 'string' && input.length > 5_000_000)
-    reject([diagnostic('input_too_large', '$', '입력은 5MB 이하의 가상 JSON 자료여야 합니다.')]);
+    reject([diagnostic('input_too_large', '$', '입력은 5MB 이하의 Snapshot JSON 자료여야 합니다.')]);
   // Clone object inputs: normalization and alias conversion must not mutate callers.
   const parsed = parseSnapshot(typeof input === 'string' ? input : structuredClone(input));
   if (parsed.errors.length || !parsed.snapshot) reject(parsed.errors);
   const snapshot = parsed.snapshot;
   const errors = [];
-  if (snapshot.is_demo !== true) errors.push(diagnostic('demo_only', 'is_demo', '현재 화면은 is_demo: true 가상 자료만 지원합니다.'));
-  if (snapshot.schema_version !== '0.1') errors.push(diagnostic('unsupported_schema', 'schema_version', 'schema_version 0.1 자료만 지원합니다.'));
+  if (!SUPPORTED_SCHEMA_VERSIONS.includes(snapshot.schema_version)) errors.push(diagnostic('unsupported_schema', 'schema_version', 'schema_version 0.1 또는 0.2 자료만 지원합니다.'));
   if (errors.length) reject(errors);
   screenSafety(snapshot);
   const warnings = parsed.warnings.map(({code, path, message}) => ({code, path, message}));
@@ -115,6 +126,9 @@ export function createDataProvider(input) {
     regions: [...REGIONS.map(({code, name}) => ({value: code, label: name})), {value: 'unknown', label: UNKNOWN_REGION_LABEL}],
     schoolLevels: levelRules.levels.map(({value, label}) => ({value, label})),
     topics: [...TOPICS.map(({topic_id, label}) => ({value: topic_id, label})), {value: 'unclassified', label: '미분류'}],
+    years: [...new Set(snapshot.projects.map(yearbookYear).filter((year) => year !== null))].sort((a, b) => a - b)
+      .map((year) => ({value: String(year), label: `${year}년`})),
+    defaultDateBasis: snapshot.is_demo === false && snapshot.projects.some((project) => yearbookYear(project) !== null) ? 'award_year' : 'award_date',
   });
   const unclassified = new Set(snapshot.projects.filter((p) => summarizeTopics([p]).unclassified === 1).map((p) => p.project_id));
 
@@ -134,18 +148,20 @@ export function createDataProvider(input) {
   const searchable = new Map(snapshot.projects.map((p) => {
     const item = enrich(p);
     return [p.project_id, [item.title, item.summary, item.region_name, item.school_level_label,
-      ...item.school_names, ...item.firm_names, ...item.topic_evidence.map((e) => e.topic_label)]
+      item.concept_title, item.metrics?.location,
+      ...item.school_names, ...item.firm_names, ...(item.designers ?? []).flatMap(d => [d.person,d.firm]), ...item.topic_evidence.map((e) => e.topic_label)]
       .filter((v) => v !== null && v !== undefined).join(' ').toLocaleLowerCase('ko')];
   }));
 
   function normalizeFilters(inputFilters = {}) {
     if (!object(inputFilters)) throw new Error('조회 조건은 객체여야 합니다.');
     const filters = {query: '', region: '', schoolLevel: '', months: 36,
-      dateBasis: 'award_date', asOf: snapshot.as_of, topic: '', ...inputFilters};
+      dateBasis: options.defaultDateBasis, asOf: snapshot.as_of, topic: '', year: '', ...inputFilters};
     if (typeof filters.query !== 'string' || filters.query.length > 200) throw new Error('검색어는 200자 이내여야 합니다.');
     if (!isValidDate(filters.asOf)) throw new Error('올바른 조회 기준일이 필요합니다.');
     if (!Number.isInteger(filters.months) || filters.months < 1 || filters.months > 120) throw new Error('기간은 1~120개월이어야 합니다.');
-    if (!DATE_BASES.includes(filters.dateBasis)) throw new Error('지원하지 않는 날짜 기준입니다.');
+    if (![...DATE_BASES, 'award_year'].includes(filters.dateBasis)) throw new Error('지원하지 않는 날짜 기준입니다.');
+    if (filters.year !== '' && !options.years.some(({value}) => value === filters.year)) throw new Error('지원하지 않는 작품집 수록연도입니다.');
     for (const [key, values] of [['region', options.regions], ['schoolLevel', options.schoolLevels], ['topic', options.topics]]) {
       if (filters[key] !== '' && !values.some(({value}) => value === filters[key])) throw new Error(`지원하지 않는 조회 조건: ${key}`);
     }
@@ -165,8 +181,15 @@ export function createDataProvider(input) {
       regions: filters.region ? [filters.region] : null,
       schoolLevels: filters.schoolLevel ? [filters.schoolLevel] : null,
       topics: filters.topic && filters.topic !== 'unclassified' ? [filters.topic] : null,
+      ...(filters.dateBasis === 'award_year' ? {years: filters.year ? [Number(filters.year)] : null} : {}),
     };
-    const projects = filterProjects(searchSnapshot, domainFilters);
+    const projects = filters.dateBasis === 'award_year' ? filterProjectsByYearbookYear(searchSnapshot, domainFilters) : filterProjects(searchSnapshot, domainFilters);
+    if (filters.dateBasis === 'award_year') {
+      // UI uses the field name award_year; Daniel's independent domain function
+      // labels this as yearbook_year. Both mean the publication volume, never a date.
+      projects.meta.date_basis = 'award_year';
+      projects.meta.query_as_of = filters.asOf;
+    }
     return {filters, searchSnapshot, domainFilters, projects};
   }
 
@@ -174,11 +197,14 @@ export function createDataProvider(input) {
     const sourceIds = [...new Set(ctx.projects.flatMap((p) => p.window_source_ids))];
     return {
       ...shared,
-      is_demo: true,
+      is_demo: snapshot.is_demo,
       as_of: ctx.filters.asOf,
       snapshot_as_of: snapshot.as_of,
       snapshot_generated_at: snapshot.generated_at,
-      months: ctx.filters.months,
+      months: ctx.filters.dateBasis === 'award_year' ? null : ctx.filters.months,
+      selected_year: ctx.filters.dateBasis === 'award_year' ? ctx.filters.year || null : null,
+      selected_years: ctx.filters.dateBasis === 'award_year' ? ctx.domainFilters.years : null,
+      date_precision: ctx.filters.dateBasis === 'award_year' ? 'yearbook' : 'day',
       scope: snapshot.coverage.scope,
       // Keep A1's array-form filters as well as the form's single-value filters.
       data_filters: shared.filters,
@@ -203,7 +229,8 @@ export function createDataProvider(input) {
     const schoolIds = new Set(ctx.projects.flatMap((project) => project.school_ids));
     const buildingSnapshot = {...snapshot, buildings: snapshot.buildings.filter((b) => schoolIds.has(b.school_id))};
     const buildingSummary = summarizeBuildings(buildingSnapshot, {asOf: ctx.filters.asOf});
-    const exported = sharedExportRows(ctx.searchSnapshot, ctx.domainFilters);
+    const exported = exportSelectedProjectRows(snapshot, ctx.projects);
+    const yearbookSummary = ctx.filters.dateBasis === 'award_year' ? summarizeByYearbookYear(ctx.projects) : null;
     return {
       projects: ctx.projects.map(enrich),
       summary: {
@@ -212,15 +239,20 @@ export function createDataProvider(input) {
         unknownFirms: new Set(firmSummary.unresolvedFirmRefs.map((ref) => ref.firm_id)).size,
         unresolvedFirmReferences: firmSummary.unresolvedFirmRefs.length,
         projectsWithOnlyUnresolvedFirms: firmSummary.projectsWithOnlyUnresolvedFirms,
-        excludedUnknownDates: projectSummary.excludedUnknownDates,
+        excludedUnknownDates: projectSummary.excludedUnknownDates ?? 0,
+        excludedUnknownYears: ctx.filters.dateBasis === 'award_year' ? ctx.projects.meta.excluded_unknown_years ?? 0 : undefined,
         excludedOutOfRange: projectSummary.excludedOutOfRange,
         unclassifiedProjects: topicSummary.unclassified,
         regionParticipations: projectSummary.regionParticipations,
         multiRegionProjects: projectSummary.multiRegionProjects,
+        dataIssueProjects: exported.metadata.data_issue_projects,
+        dataIssueCount: exported.metadata.data_issue_count,
+        draftTopicProjects: exported.metadata.draft_topic_projects,
       },
       byRegion: projectSummary.byRegion.map((r) => ({label: r.region_name, count: r.projects, code: r.region_code, articles: r.articles})),
       byMonth: projectSummary.byMonth.map((r) => ({label: r.month, count: r.projects,
         articles: r.articles, partial: r.partial, from: r.from, to: r.to})),
+      byYear: yearbookSummary?.byYear.map((r) => ({label: String(r.year), year: String(r.year), count: r.projects, articles: r.articles})) ?? [],
       byLevel: projectSummary.bySchoolLevel.map((r) => ({label: LEVEL_LABELS.get(r.school_level), count: r.projects, articles: r.articles})),
       topics: topicSummary.topics.map((r) => ({...r, id: r.topic_id, count: r.projects})),
       firms: firmSummary.firms.map((firm) => ({...firm, known_firm: true, project_count: firm.participations})),
@@ -238,7 +270,7 @@ export function createDataProvider(input) {
           : `${row.min_age === row.max_age ? row.min_age : `${row.min_age}–${row.max_age}`}년${row.date_precision === 'day' ? '' : ' · 월일 미확인'}`,
       })),
       metadata: metadataFor(ctx, exported.metadata),
-      notes: projectSummary.notes,
+      notes: [...projectSummary.notes, ...(yearbookSummary?.notes ?? []), ...snapshot.coverage.limitations],
       firmNotes: firmSummary.notes,
       buildingNotes: buildingSummary.notes,
       topicNotes: topicSummary.notes,
@@ -251,10 +283,10 @@ export function createDataProvider(input) {
 
   function exportRows(inputFilters = {}) {
     const ctx = context(inputFilters);
-    const exported = sharedExportRows(ctx.searchSnapshot, ctx.domainFilters);
+    const exported = exportSelectedProjectRows(snapshot, ctx.projects);
     // Rows and columns come from A2 unchanged; UI only adds its contextual metadata.
     return {...exported, metadata: metadataFor(ctx, exported.metadata)};
   }
 
-  return {snapshot, options, warnings, select, exportRows};
+  return {snapshot, options, defaultDateBasis: options.defaultDateBasis, warnings, select, exportRows};
 }

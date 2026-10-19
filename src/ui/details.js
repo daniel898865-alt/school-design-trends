@@ -1,5 +1,6 @@
 import { el, safeUrl, sourceLinks, emptyState } from './dom.js';
 import { primaryProjectSource, renderProjectGallery } from './project-media.js';
+import { renderSpatialModel } from './spatial-model.js';
 
 const ageLabels = {
   eligible: '40년 이상',
@@ -13,7 +14,7 @@ function text(value, fallback = '미확인') {
   return value === null || value === undefined || value === '' ? fallback : String(value);
 }
 
-const reviewLabels = new Map([['demo', '가상'], ['checked', '확인'], ['reviewed', '검토 완료'], ['draft', '초안'], ['unknown', '미확인']]);
+const reviewLabels = new Map([['demo', '가상'], ['checked', '확인'], ['reviewed', '검토 완료'], ['draft', '초안'], ['draft_ai', 'AI 분류 초안 · 사람 검토 전'], ['unknown', '미확인']]);
 const buildingStatusLabels = new Map([['in_use', '사용 중'], ['unknown', '사용 상태 미확인'], ['demolished', '철거'], ['closed', '폐교·사용 종료']]);
 function reviewStatus(value) { return reviewLabels.get(value) ?? text(value); }
 
@@ -51,6 +52,7 @@ export function renderFirms(container, view, snapshot, onOpenProject) {
   ]));
   container.append(el('p', { class: 'notice' }, '현재 조회 사업에 참여한 사무소입니다. 공동 당선은 사무소마다 1건으로 표시하므로 합계가 전체 사업 수보다 클 수 있습니다. 참여 건수는 시장점유율이나 계약 수주액이 아닙니다.'));
   appendNotes(container, view.firmNotes, '사무소 집계 기준과 확인 사항');
+  if (!snapshot.is_demo && view.projects.some(p => Number(p.award_year) === 2024 && !p.firm_ids?.length)) container.append(el('p', {class: 'notice'}, '2024년 사례의 설계자 표기는 상세에서 볼 수 있지만 사무소 식별자 연결은 미완료입니다. 참여 건수 0을 실제 당선 없음으로 해석하지 않습니다.'));
   if (view.unresolvedFirmRefs?.length) {
     container.append(el('details', { class: 'notice' }, [
       el('summary', {}, `집계에서 제외한 미확인 사무소 연결 ${view.unresolvedFirmRefs.length}건`),
@@ -172,6 +174,10 @@ export function renderTopics(container, view) {
   container.append(el('p', { class: 'muted' }, view.summary?.unclassifiedProjects === undefined ?
     '미분류 사업 건수: 집계 미제공' : `미분류 사업 ${view.summary.unclassifiedProjects}건 · 근거가 없는 사업은 주제를 추정하지 않습니다.`));
   appendNotes(container, view.topicNotes, '주제 집계 기준과 확인 사항');
+  if (denominator > 0 && view.summary.unclassifiedProjects === denominator) {
+    container.append(emptyState('주제 정보 미수록', `${denominator}건 모두 주제 분류 근거가 없습니다. 주제별 0건을 실제 해당 공간이 없다는 뜻으로 해석하지 않습니다.`));
+    return;
+  }
   if (!view.topics?.length || denominator === 0) {
     container.append(emptyState('표시할 주제가 없습니다', '조회 조건과 주제 분류 근거를 확인해 주세요.'));
   } else {
@@ -233,10 +239,29 @@ export function openProjectDialog(dialog, project, snapshot) {
     ['공모일', text(project.competition_date)],
     ['당선일', text(project.award_date)],
     ['준공일', text(project.completion_date)],
-    ['현재 조회에 사용한 날짜', text(project.basis_date)],
+    ['공모집 수록연도', project.award_year ? `${project.award_year}년 · 실제 당선일·준공일 아님` : '미확인'],
+    ['현재 조회의 날짜', text(project.basis_date, '미확인 · 수록연도로 대체하지 않음')],
     ['당선 참여 사무소', projectNames(project, snapshot, 'firm_names', 'firm_ids', 'firms')],
   ]));
   content.append(el('p', { class: 'muted' }, '공모일·당선일·준공일·기사 게시일은 각각의 사건 날짜이며, 미확인 날짜를 다른 날짜로 대신하지 않습니다. 여러 지역에 걸친 사업은 모든 관련 지역을 표시합니다. 공동 당선 사무소의 참여는 계약 체결이나 수주액을 뜻하지 않습니다.'));
+  if (!snapshot.is_demo) content.append(el('p', {class: 'notice'}, '수작업·AI 보조 입력 자료입니다. 원문 대조와 사람의 검수를 거친 확정 정보로 간주하지 않습니다.'));
+  if (project.metrics) {
+    const m = project.metrics;
+    const amount = (value, unit) => typeof value === 'number' && Number.isFinite(value) ? `${value.toLocaleString('ko-KR')} ${unit}` : '미확인';
+    content.append(el('h3', {}, '작품집에 기재된 설계 개요'), definitionList([
+      ['개념 제목', text(project.concept_title)], ['시설 종류', text(({school:'학교',housing:'사택·관사',kindergarten:'유치원',education_facility:'교육시설',special_school:'특수학교'})[project.facility_kind], project.facility_kind || '미확인')],
+      ['발주처', text(m.client)], ['위치', text(m.location)], ['원문 용도', text(m.program)],
+      ['대지 / 건축 / 연면적', [m.site_area,m.building_area,m.gross_floor_area].map(v => amount(v,'㎡')).join(' / ')],
+      ['건폐율 / 용적률', [m.building_coverage,m.floor_area_ratio].map(v => amount(v,'%')).join(' / ')],
+      ['지상 / 지하', [m.floors_above,m.floors_below].map(v => amount(v,'층')).join(' / ')],
+      ['구조', text(m.structure)], ['외장', text(m.exterior)], ['수치 범위 메모', text(m.scope_note)],
+      ['작품집 쪽수', `${text(project.yearbook_page)} · PDF/인쇄/목차 번호가 다를 수 있으므로 아래 확인 사항 참조`],
+    ]));
+  }
+  if (project.designers?.length) content.append(el('h3', {}, '작품집 설계자 표기'), el('ul', {}, project.designers.map(d => el('li', {}, `${text(d.person)} · ${text(d.firm)}`))), el('p', {class:'muted'}, '이 표기는 사무소 식별자 연결·사업자번호 검증과 별개입니다.'));
+  if (project.jury_notes?.length) content.append(el('h3', {}, '심사평 요지 · 입력·요약본'), el('ul', {}, project.jury_notes.map(n => el('li', {}, text(n.note)))), el('p', {class:'muted'}, '원문 인용이나 검토된 평가 점수가 아닙니다.'));
+  else if (!snapshot.is_demo) content.append(el('p', {class:'muted'}, '심사평 요지 미수록 · 귀속과 입력 상태는 확인 사항을 참고하세요.'));
+  if (project.data_issues?.length) content.append(el('h3', {}, '자료 확인 사항'), el('ul', {class:'domain-notes'}, project.data_issues.map(note => el('li', {}, note))));
   content.append(el('h3', {}, '주제 분류 근거'));
   if (!project.topic_evidence?.length) {
     content.append(el('p', { class: 'muted' }, '미분류 · 확인된 주제 근거가 없습니다.'));
@@ -253,6 +278,9 @@ export function openProjectDialog(dialog, project, snapshot) {
     content.append(evidenceList);
   }
   content.append(el('h3', {}, '자료 출처'), sourceLinks(project.source_ids ?? [], snapshot));
+  const spatial = el('div');
+  renderSpatialModel(spatial, {projects:[project],snapshot,scopeLabel:project.title || project.project_id});
+  content.append(spatial);
   dialog.append(content);
   if (!dialog.open) dialog.showModal();
 }

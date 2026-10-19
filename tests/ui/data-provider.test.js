@@ -13,6 +13,15 @@ const read = (path) => JSON.parse(readFileSync(new URL(path, import.meta.url), '
 const legacy = () => read('../../public/demo.snapshot.json');
 const a1 = () => read('../domain/fixtures/a1.virtual.json');
 const a2 = () => read('../domain/fixtures/a2.virtual.json');
+test('작품집 설계자 표기는 사무소 ID가 없어도 검색과 내보내기에 함께 반영한다', () => {
+  const provider = createDataProvider(read('../../data/goe-annual.snapshot.json'));
+  const filters = {dateBasis:'award_year',year:'2024',query:'누아건축사사무소'};
+  const view = provider.select(filters);
+  assert.ok(view.projects.some(p => p.project_id === 'goe-2024-482'));
+  assert.ok(view.projects.every(p => p.designers.some(d => d.firm.includes('누아건축사사무소'))));
+  assert.deepEqual(provider.exportRows(filters).rows.map(p => p.project_id), view.projects.map(p => p.project_id));
+  assert.equal(view.summary.firms, 0, '표기를 검색해도 사무소 식별자 연결을 만들지 않는다');
+});
 const fixtures = [
   ['UI', legacy, 11, 13, 11],
   ['A1', a1, 7, 8, 5],
@@ -171,15 +180,25 @@ test('parser errors are blocked before normalized nulls could become a smaller s
   assert.throws(() => createDataProvider(duplicate), (e) => e.errors.some((d) => d.code === 'duplicate_conflict'));
 });
 
-test('non-demo, unsupported versions, invalid screen fields and invalid filters are rejected', () => {
+test('unsupported versions, invalid screen fields and invalid filters are rejected', () => {
   for (const mutate of [
-    (s) => { s.is_demo = false; }, (s) => { s.schema_version = '2'; },
+    (s) => { s.schema_version = '2'; },
     (s) => { s.projects[0].images[0].alt_text = {html: 'bad type'}; },
   ]) { const input = legacy(); mutate(input); assert.throws(() => createDataProvider(input)); }
   const provider = createDataProvider(a1());
   for (const filters of [{region: 'XX'}, {schoolLevel: '__proto__'}, {topic: '__proto__'},
     {dateBasis: 'not_a_date'}, {asOf: '2026-02-31'}, {months: 0}, {months: 121}, {query: null}])
     assert.throws(() => provider.select(filters));
+});
+
+test('real Snapshot input keeps its actual provenance instead of being relabeled demo', () => {
+  const input = a1();
+  input.is_demo = false;
+  const provider = createDataProvider(input);
+  assert.equal(provider.snapshot.is_demo, false);
+  assert.equal(provider.select().metadata.is_demo, false);
+  assert.equal(provider.exportRows().metadata.demo_label, null);
+  assert.ok(provider.exportRows().rows.every((row) => row.is_demo === 'false'));
 });
 
 test('empty export retains provenance and separates query date from snapshot freshness', () => {
