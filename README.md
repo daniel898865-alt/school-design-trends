@@ -10,18 +10,20 @@
 
 위 주소는 다른 PC에서도 열립니다. `127.0.0.1` 주소는 해당 PC에서 미리보기 서버가 실행 중일 때만 사용할 수 있습니다. 저장소의 `index.html`은 웹페이지 소스이므로 파일을 더블클릭하기보다 온라인 주소 또는 아래 로컬 서버를 이용하세요.
 
-## 현재 개발 상태 · 2026-10-19
+## 공개 배포 상태 · 2026-10-19
 
-**아래 개선은 [PR #42](https://github.com/yunzecho-eng/school-design-trends/pull/42)의 `yunze/2026-10-19-gyeonggi-visual-data` 작업 브랜치에 구현했으며, 아직 `main` 병합·공개 배포 전입니다.** 공개 화면에 먼저 반영된 내용은 [PR #37](https://github.com/yunzecho-eng/school-design-trends/pull/37)까지입니다.
+**[PR #42](https://github.com/yunzecho-eng/school-design-trends/pull/42)의 경기도 지도·사례 화면·3D 개선을 `main`에 통합해 [GitHub Pages](https://yunzecho-eng.github.io/school-design-trends/)로 공개합니다.** 저장소와 웹 화면은 로그인 없이 볼 수 있습니다. 기능 공개와 자료 확보·검수 완료는 구분합니다.
 
-| 이번 브랜치의 변경 | 현재 범위 | 담당 이슈 |
+| 공개 화면의 기능 | 현재 범위 | 담당 이슈 |
 |---|---|---|
 | 경기도 지도 탐색 | 31개 시·군과 24개 일반구, 마우스·키보드 팝업, 지도와 결과의 나란한 배치, 공통 필터·내보내기 연동 | [Yunze #38](https://github.com/yunzecho-eng/school-design-trends/issues/38) |
 | 사례와 연도별 화면 정리 | 긴 설명은 상세로 이동하고 카드 요약을 줄임. 학교·시설 9건의 확인된 도판 페이지를 공식 작품집 뷰어로 표시 | [Yunze #39](https://github.com/yunzecho-eng/school-design-trends/issues/39) |
 | 공식 사무소·건물 자료 연결 준비 | 경기도 사무소 API 표본 5건 조회, 전체 조회·건축물대장 수집 도구와 인증키 발급 안내. 실제 연결·검수는 남아 있음 | [Yunze #40](https://github.com/yunzecho-eng/school-design-trends/issues/40) |
 | 3D 전체 외관과 내부 보기 | 불투명 외관을 기본으로 표시하고 별도 투과 슬라이더·전체 외관 복귀 버튼 제공. 면이 잘못 가려지던 깊이 계산 수정 | [Yunze #41](https://github.com/yunzecho-eng/school-design-trends/issues/41) |
 
-현재 브랜치의 **자동 테스트 193개가 통과**했습니다. 공식 뷰어 9건도 확인했습니다. 이미지 파일을 복사해 배포하거나 개별 도판의 재사용 권한을 확인한 것은 아닙니다. API 인증키·전체 조회·자료 동일성 검수, 실제 이미지 이용 허가는 후속 작업입니다.
+배포 대상의 **자동 테스트 193개가 통과**했습니다. 공식 뷰어 9건도 확인했습니다. 이미지 파일을 복사해 배포하거나 개별 도판의 재사용 권한을 확인한 것은 아닙니다. API 인증키·전체 조회·자료 동일성 검수, 실제 이미지 이용 허가는 후속 작업입니다. [구현 검증 기록](docs/VISUAL_REFINEMENT_2026-10-19.md)
+
+지도 **#38**과 3D 외관·투과 **#41**은 구현 완료입니다. 추가 이미지 연결 **#39**와 공식 자료의 전체 수집·검수 **#40**은 진행 중으로 유지합니다. 인증키는 공개 사이트에 입력하지 않고 [로컬 설정 안내](docs/OFFICIAL_DATA.md)에 따라 보관합니다.
 
 <details>
 <summary>main에 반영된 이전 개발 이력</summary>
@@ -87,7 +89,7 @@
 
 ## 앞으로 개발할 내용
 
-개발 범위는 경기도에 집중합니다. 이번 브랜치의 구현과 별개로 아래 자료 확보·검수 작업이 남아 있습니다.
+개발 범위는 경기도에 집중합니다. 공개한 기능과 별개로 아래 자료 확보·검수 작업이 남아 있습니다.
 
 | 후속 작업 | 필요한 내용 | 참고 |
 |---|---|---|
@@ -151,7 +153,7 @@ node scripts/check-snapshot.js public/demo.snapshot.json
 
 초기 개발은 [Yunze 화면 개발 #3](https://github.com/yunzecho-eng/school-design-trends/issues/3), [Daniel 자료 처리 #4](https://github.com/yunzecho-eng/school-design-trends/issues/4)에서 완료했습니다. 추가 화면 개선 #20–#23, 지도 #28·#29에 이어 Daniel의 PR #35·#36과 Yunze의 실제 자료 연결 #34·공간 비교 #31을 통합했습니다. 자료 검수와 확장은 위 계획 표를 기준으로 별도 작업을 이어갑니다. 기존 공동 이슈 #1은 분리 이력을 남기고 종료했습니다.
 
-현재 작업 브랜치는 `yunze/2026-10-19-gyeonggi-visual-data`입니다. 브랜치는 `이름/YYYY-MM-DD-작업내용`으로 쓰고 날짜는 작업 시작일로 유지합니다. 같은 작업을 이어갈 때 매일 새 브랜치를 만들 필요는 없습니다.
+이번 배포는 `yunze/2026-10-19-gyeonggi-visual-data`에서 작업해 PR #42로 통합했습니다. 다음 작업은 최신 `main`에서 새 브랜치를 만듭니다. 브랜치는 `이름/YYYY-MM-DD-작업내용`으로 쓰고 날짜는 작업 시작일로 유지합니다. 같은 작업을 이어갈 때 매일 새 브랜치를 만들 필요는 없습니다.
 
 위 표는 함께하는 팀원 명단입니다. GitHub의 [Contributors](https://github.com/yunzecho-eng/school-design-trends/graphs/contributors)는 계정과 연결된 실제 작성자 커밋이 기본 브랜치 `main`에 반영되면 자동으로 집계됩니다. 협업자 권한과 기여 통계는 별도이며 수동으로 이름을 지정하는 목록이 아닙니다. [GitHub 안내](https://docs.github.com/en/repositories/viewing-activity-and-data-for-your-repository/viewing-a-projects-contributors)
 

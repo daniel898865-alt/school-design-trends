@@ -16,7 +16,7 @@ export function officialStatus(kind, enrichment) {
   const details = el('details',{class:'external-data-details'},[el('summary',{},'연결 방법과 제공 범위'),
     el('p',{},kind === 'firms' ? '사무소명·주소·신고 구분을 조회합니다. 사업자번호·홈페이지·영업 상태는 이 API가 제공하지 않습니다. 같은 이름도 확인 전에는 연결 후보로만 표시합니다.' : '학교 개교일과 건물 사용승인일을 구분합니다. 학교에 건물이 여러 동 있으면 각 동의 날짜와 식별자를 확인합니다.'),
     el('p',{},'인증키는 공개 웹페이지에 넣지 않고 로컬 수집 도구에서 사용합니다. 조회한 후보를 검토한 뒤 공개용 결과를 갱신합니다.'),
-    el('a',{href:'https://github.com/yunzecho-eng/school-design-trends/blob/yunze/2026-10-19-gyeonggi-visual-data/docs/OFFICIAL_DATA.md',target:'_blank',rel:'noopener noreferrer'},'설정 안내와 연결 현황 ↗')]);
+    el('a',{href:'https://github.com/yunzecho-eng/school-design-trends/blob/main/docs/OFFICIAL_DATA.md',target:'_blank',rel:'noopener noreferrer'},'설정 안내와 연결 현황 ↗')]);
   if (service?.checked_at) details.append(el('p',{class:'small'},`접속 확인: ${service.checked_at} · 원자료 기준일: ${service.source_date || '미제공'}`));
   return el('div',{},[panel,details]);
 }
