@@ -1,5 +1,5 @@
 import {el, emptyState} from './dom.js';
-import {createProjectThumbnail, primaryProjectSource} from './project-media.js';
+import {createProjectThumbnail, primaryProjectSource, createOfficialPreviewPanel} from './project-media.js';
 import {summarizeYearTrends, YEAR_DATE_LABELS} from '../domain/year-trends.js';
 import {renderSpatialModel} from './spatial-model.js';
 
@@ -49,7 +49,7 @@ function observationBlock(year, result, onSelectTopic) {
     section.append(list, el('p', {class: 'muted'}, '분모는 이 연도의 고유 사업 수입니다. 복수 키워드이므로 비율 합계가 100%를 넘을 수 있습니다.'));
   }
   const comparison = year.comparison;
-  const compare = el('div', {class: 'year-comparison'});
+  const compare = el('details', {class: 'year-comparison'}, el('summary', {}, '전년도와 비교 · 해석 기준'));
   if (comparison.status === 'available') {
     compare.append(el('h4', {}, `${comparison.previous_year}년과 비교`),
       el('p', {}, year.precision === 'yearbook' ? `공모집 수록 당선작 수 ${signed(comparison.project_delta, '건')}. 발주 전체의 증감이 아닙니다.` : `동일하게 전체 연도를 포함한 조회에서 사업 수 ${signed(comparison.project_delta, '건')}.`));
@@ -77,9 +77,11 @@ function observationBlock(year, result, onSelectTopic) {
 
 function examplesBlock(year, projects, snapshot, onOpenProject) {
   const section = el('section', {class: 'year-block'}, [
-    blockHeading('02', '사례와 이미지로 확인', year.precision === 'yearbook' ? '같은 수록연도에서 식별자 순으로 최대 3건을 표시합니다. 통계적 대표성을 평가한 표본은 아닙니다.' : '선택 연도의 기준 날짜 최신순으로 최대 3건을 표시합니다. 통계적 대표성을 평가한 표본은 아닙니다.'),
+    blockHeading('02', '같은 해의 설계 사례', '사례를 눌러 설계 개요와 원문 이미지를 확인하세요.'),
   ]);
   const cards = el('div', {class: 'year-project-grid'});
+  const preview = !snapshot.is_demo && createOfficialPreviewPanel(year.project_ids.map(id => projects.get(id)).filter(Boolean), onOpenProject);
+  if (preview) section.append(preview);
   for (const id of year.representative_ids) {
     const project = projects.get(id);
     if (!project) continue;
@@ -89,13 +91,13 @@ function examplesBlock(year, projects, snapshot, onOpenProject) {
     const card = el('article', {class: 'year-project-card'}, [
       createProjectThumbnail(project, onOpenProject),
       el('div', {class: 'year-project-content'}, [el('h4', {}, button),
-        el('p', {class: 'muted'}, `${year.precision === 'yearbook' ? `${year.year}년 수록` : project.basis_date} · ${project.region_name || '지역 미확인'}`),
-        el('p', {}, project.summary || '직접 작성한 요약이 아직 없습니다.')]),
+        el('p', {class: 'muted'}, `${year.precision === 'yearbook' ? `${year.year}년 수록` : project.basis_date} · ${project.locality?.cityName || project.region_name || '지역 미확인'}`),
+        el('p', {class:'card-summary'}, project.concept_title || project.summary || '상세에서 설계 개요 확인')]),
     ]);
     const source = primaryProjectSource(project, snapshot);
     if (source) card.lastElementChild.append(el('a', {href: source.url, target: '_blank', rel: 'noopener noreferrer',
       referrerpolicy: 'no-referrer'}, '연결된 원문 확인 ↗'));
-    else card.lastElementChild.append(el('p', {class: 'muted'}, '원문 링크 미확인 · 상세에서 출처 기록을 확인하세요.'));
+    else card.lastElementChild.append(el('p', {class: 'muted'}, '원문 연결 준비 중'));
     cards.append(card);
   }
   section.append(cards.childElementCount ? cards : emptyState('살펴볼 사례를 기다리고 있습니다', '준공일과 이용 조건을 확인한 사례가 연결되면 이미지와 상세 내용을 함께 표시합니다.'));
@@ -196,6 +198,7 @@ export function renderYearTrends(container, view, snapshot, {
     status.textContent = `${year.year}년 ${year.project_count}건 표시`;
     const spatialApi = renderSpatialModel(spatial, {projects:year.project_ids.map(id => projectMap.get(id)).filter(Boolean),snapshot,onOpenProject,
       scopeLabel:`${year.year}년 · ${result.date_basis_label} · 현재 조회 조건`});
+    const outlook = el('details', {class:'year-outlook-disclosure'}, [el('summary', {}, '향후 전망 · 검토할 질문 펼치기'), outlookBlock(year, result, projectMap, onOpenProject)]);
     body.replaceChildren(observationBlock(year, result, topic => {
       spatialApi.setTopic(topic);
       const panel = spatial.querySelector('details');
@@ -203,7 +206,7 @@ export function renderYearTrends(container, view, snapshot, {
       spatial.querySelector('summary')?.focus();
       spatial.scrollIntoView({block:'nearest',behavior:'instant'});
     }), examplesBlock(year, projectMap, snapshot, onOpenProject), spatial,
-      outlookBlock(year, result, projectMap, onOpenProject));
+      outlook);
   }
   yearSelect.addEventListener('change', drawYear);
   drawYear();

@@ -1,0 +1,264 @@
+{
+  "boundary_as_of": "2026-10-01",
+  "cities": [
+    {
+      "code": "41110",
+      "name": "수원시",
+      "districts": [
+        {
+          "code": "41111",
+          "name": "장안구"
+        },
+        {
+          "code": "41113",
+          "name": "권선구"
+        },
+        {
+          "code": "41115",
+          "name": "팔달구"
+        },
+        {
+          "code": "41117",
+          "name": "영통구"
+        }
+      ]
+    },
+    {
+      "code": "41130",
+      "name": "성남시",
+      "districts": [
+        {
+          "code": "41131",
+          "name": "수정구"
+        },
+        {
+          "code": "41133",
+          "name": "중원구"
+        },
+        {
+          "code": "41135",
+          "name": "분당구"
+        }
+      ]
+    },
+    {
+      "code": "41150",
+      "name": "의정부시",
+      "districts": []
+    },
+    {
+      "code": "41170",
+      "name": "안양시",
+      "districts": [
+        {
+          "code": "41171",
+          "name": "만안구"
+        },
+        {
+          "code": "41173",
+          "name": "동안구"
+        }
+      ]
+    },
+    {
+      "code": "41190",
+      "name": "부천시",
+      "districts": [
+        {
+          "code": "41192",
+          "name": "원미구"
+        },
+        {
+          "code": "41194",
+          "name": "소사구"
+        },
+        {
+          "code": "41196",
+          "name": "오정구"
+        }
+      ]
+    },
+    {
+      "code": "41210",
+      "name": "광명시",
+      "districts": []
+    },
+    {
+      "code": "41220",
+      "name": "평택시",
+      "districts": []
+    },
+    {
+      "code": "41250",
+      "name": "동두천시",
+      "districts": []
+    },
+    {
+      "code": "41270",
+      "name": "안산시",
+      "districts": [
+        {
+          "code": "41271",
+          "name": "상록구"
+        },
+        {
+          "code": "41273",
+          "name": "단원구"
+        }
+      ]
+    },
+    {
+      "code": "41280",
+      "name": "고양시",
+      "districts": [
+        {
+          "code": "41281",
+          "name": "덕양구"
+        },
+        {
+          "code": "41285",
+          "name": "일산동구"
+        },
+        {
+          "code": "41287",
+          "name": "일산서구"
+        }
+      ]
+    },
+    {
+      "code": "41290",
+      "name": "과천시",
+      "districts": []
+    },
+    {
+      "code": "41310",
+      "name": "구리시",
+      "districts": []
+    },
+    {
+      "code": "41360",
+      "name": "남양주시",
+      "districts": []
+    },
+    {
+      "code": "41370",
+      "name": "오산시",
+      "districts": []
+    },
+    {
+      "code": "41390",
+      "name": "시흥시",
+      "districts": []
+    },
+    {
+      "code": "41410",
+      "name": "군포시",
+      "districts": []
+    },
+    {
+      "code": "41430",
+      "name": "의왕시",
+      "districts": []
+    },
+    {
+      "code": "41450",
+      "name": "하남시",
+      "districts": []
+    },
+    {
+      "code": "41460",
+      "name": "용인시",
+      "districts": [
+        {
+          "code": "41461",
+          "name": "처인구"
+        },
+        {
+          "code": "41463",
+          "name": "기흥구"
+        },
+        {
+          "code": "41465",
+          "name": "수지구"
+        }
+      ]
+    },
+    {
+      "code": "41480",
+      "name": "파주시",
+      "districts": []
+    },
+    {
+      "code": "41500",
+      "name": "이천시",
+      "districts": []
+    },
+    {
+      "code": "41550",
+      "name": "안성시",
+      "districts": []
+    },
+    {
+      "code": "41570",
+      "name": "김포시",
+      "districts": []
+    },
+    {
+      "code": "41590",
+      "name": "화성시",
+      "districts": [
+        {
+          "code": "41591",
+          "name": "만세구"
+        },
+        {
+          "code": "41593",
+          "name": "효행구"
+        },
+        {
+          "code": "41595",
+          "name": "병점구"
+        },
+        {
+          "code": "41597",
+          "name": "동탄구"
+        }
+      ]
+    },
+    {
+      "code": "41610",
+      "name": "광주시",
+      "districts": []
+    },
+    {
+      "code": "41630",
+      "name": "양주시",
+      "districts": []
+    },
+    {
+      "code": "41650",
+      "name": "포천시",
+      "districts": []
+    },
+    {
+      "code": "41670",
+      "name": "여주시",
+      "districts": []
+    },
+    {
+      "code": "41800",
+      "name": "연천군",
+      "districts": []
+    },
+    {
+      "code": "41820",
+      "name": "가평군",
+      "districts": []
+    },
+    {
+      "code": "41830",
+      "name": "양평군",
+      "districts": []
+    }
+  ]
+}

@@ -23,13 +23,18 @@ export const SPATIAL_MODEL = Object.freeze({
 const escapeXml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;'}[char]));
 const clamp = (value, low, high, fallback) => Number.isFinite(Number(value)) ? Math.max(low, Math.min(high, Number(value))) : fallback;
 export function normalizeSpatialView(state = {}) {
-  return {angle: clamp(state.angle, -180, 180, 32), zoom: clamp(state.zoom, 80, 130, 100), cutaway: state.cutaway === true};
+  return {angle: clamp(state.angle, -180, 180, 32), zoom: clamp(state.zoom, 80, 130, 100),
+    transparency: clamp(state.transparency ?? (state.cutaway === true ? 100 : 0), 0, 100, 0)};
 }
 
 /** Returns faces from real 3D vertices, with stable geometry for all topics. */
-export function createSpatialGeometry({cutaway = false} = {}) {
+export function createSpatialGeometry(view = {}) {
+  const {transparency}=normalizeSpatialView(view);
   const faces = [];
-  function face(points, color, topic = null) { faces.push({points, color, topic}); }
+  let layer='site',enclosure=false;
+  function face(points, color, topic = null) {
+    faces.push({points, color, topic, layer, enclosure, opacity: enclosure ? 1-transparency/100 : 1});
+  }
   function box(x, y, z, w, h, d, color, topic = null, topColor = null) {
     const a = [x,y,z], b = [x+w,y,z], c = [x+w,y,z+d], e = [x,y,z+d];
     const f = [x,y+h,z], g = [x+w,y+h,z], j = [x+w,y+h,z+d], k = [x,y+h,z+d];
@@ -45,6 +50,7 @@ export function createSpatialGeometry({cutaway = false} = {}) {
   for (let i=0;i<26;i++) box(-6+i*0.46,0.275,-4.8,0.025,0.012,9.8,'#8f704b',outdoor);
   box(-2.8,0.3,-2.7,5.6,0.14,4.4,PALETTE.green,outdoor);
   for(let step=0;step<3;step++) box(-4,0.3+step*0.3,3.2+step*0.6,8,0.3,0.6,'#c7a274',outdoor);
+  layer='building';
 
   function schoolBlock(x,z,w,d) {
     box(x,0.1,z,w,6.5,d,PALETTE.wall,null,PALETTE.roof);
@@ -72,13 +78,15 @@ export function createSpatialGeometry({cutaway = false} = {}) {
     box(x,0.1,z,w,0.24,d,PALETTE.wall,topic);
     box(x,0.34,z+d-0.14,w,3.2,0.14,PALETTE.wall,topic);
     for(let px=x+0.2;px<x+w;px+=1.5) box(px,0.34,z+d-0.3,0.13,3.18,0.15,PALETTE.wood,topic);
-    if(!cutaway) {
+    enclosure=true;
+    if(transparency<100) {
       box(x,0.34,z,w,2.95,0.06,PALETTE.glass,topic);
       box(x,0.34,z,0.06,2.95,d,PALETTE.glass,topic);
       box(x+w-0.06,0.34,z,0.06,2.95,d,PALETTE.glass,topic);
       for(let px=x;px<x+w;px+=1.5) box(px,0.34,z-0.05,0.09,3.2,0.12,PALETTE.wood,topic);
       box(x-0.35,3.54,z-0.35,w+0.7,0.22,d+0.7,PALETTE.roof,topic);
     }
+    enclosure=false;
     for(let i=0;i<3;i++) {
       const px=x+1+i*(w-2)/3;
       box(px,0.35,z+d-0.8,1.45,1.8,0.45,PALETTE.wood,topic);
@@ -95,7 +103,9 @@ export function createSpatialGeometry({cutaway = false} = {}) {
   }
   pavilion(-14,-10,9,5,community);
   pavilion(5,-8,9,5,flexible);
+  layer='site';
   box(-11.1,0.04,-13,3.2,0.08,3,PALETTE.wood,community);
+  layer='building';
   for(let i=0;i<4;i++) box(-4.9,0.05,-10+i*1.2,0.15,1.1,0.15,PALETTE.trim,community);
   box(-4.9,1.05,-10,0.15,0.1,4.8,PALETTE.wood,community);
   function tree(x,z,size=1) {
@@ -112,15 +122,24 @@ export function projectSpatialPoint([x,y,z], view={}) {
   const {angle,zoom}=normalizeSpatialView(view), theta=angle*Math.PI/180, tilt=0.55;
   const xr=x*Math.cos(theta)+z*Math.sin(theta), zr=-x*Math.sin(theta)+z*Math.cos(theta);
   const scale=12.3*zoom/100;
-  return {x:400+xr*scale,y:282+(zr*Math.sin(tilt)-y*Math.cos(tilt))*scale,depth:zr*Math.cos(tilt)-y*Math.sin(tilt)};
+  // Screen-up and depth form an orthogonal camera basis; farther ground points move upward.
+  return {x:400+xr*scale,y:260-(zr*Math.sin(tilt)+y*Math.cos(tilt))*scale,depth:zr*Math.cos(tilt)-y*Math.sin(tilt)};
+}
+
+/** Site surfaces must be painted first: their average depth can otherwise cover entire buildings. */
+export function projectSpatialFaces(view={}) {
+  return createSpatialGeometry(view).map(face=>{
+    const projected=face.points.map(point=>projectSpatialPoint(point,view));
+    return {...face,projected,depth:projected.reduce((sum,p)=>sum+p.depth,0)/projected.length};
+  }).filter(face=>{
+    // The boxes use inward winding. A negative projected area is the outward-visible face.
+    const [a,b,c]=face.projected;
+    return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)<-0.001;
+  }).sort((a,b)=>Number(a.layer==='building')-Number(b.layer==='building') || b.depth-a.depth);
 }
 
 function svgScene(view, topic) {
-  const shape=createSpatialGeometry(view).map((face)=>{
-    const points=face.points.map(point=>projectSpatialPoint(point,view));
-    return {...face,projected:points,depth:points.reduce((sum,p)=>sum+p.depth,0)/points.length};
-  }).sort((a,b)=>b.depth-a.depth);
-  const polygons=shape.map(face=>`<polygon points="${face.projected.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')}" fill="${face.color}" stroke="${face.topic===topic.id?'#92703b':'#47564c'}" stroke-opacity="${face.topic===topic.id?'.5':'.13'}" stroke-width=".45"/>`).join('');
+  const polygons=projectSpatialFaces(view).map(face=>`<polygon points="${face.projected.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')}" fill="${face.color}" opacity="${face.opacity}" stroke="${face.topic===topic.id?'#92703b':'#47564c'}" stroke-opacity="${face.topic===topic.id?'.5':'.13'}" stroke-width=".45"/>`).join('');
   const p=projectSpatialPoint(topic.point,view);
   const marker=`<g aria-hidden="true"><line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${p.y-40}" stroke="#8c5b1c" stroke-width="2"/><circle cx="${p.x}" cy="${p.y}" r="7" fill="#dfb463" stroke="#fff" stroke-width="2"/><rect x="${p.x-72}" y="${p.y-67}" width="144" height="28" rx="5" fill="#fffaf0" stroke="#a57937"/><text x="${p.x}" y="${p.y-48}" text-anchor="middle" fill="#573c16" font-size="13" font-weight="700">${escapeXml(topic.label)}</text></g>`;
   return `<g>${polygons}${marker}</g>`;

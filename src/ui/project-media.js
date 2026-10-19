@@ -1,4 +1,43 @@
 import { el, safeUrl } from './dom.js';
+import previewRegistry from '../../public/project-previews.json' with {type:'json'};
+
+export function officialProjectPreview(project) {
+  const preview = previewRegistry.entries.find(item => item.project_id === project?.project_id && item.title === project?.title && project.source_ids?.includes(item.source_id));
+  if (!preview) return null;
+  const url = safeUrl(preview.viewer_url);
+  if (!url || !/^https:\/\/www\.goe\.go\.kr\/resource\/ebook\/h\/ebook_(76|82|85)\/index\.html#page=\d+$/.test(url)) return null;
+  return {...preview, viewer_url:url};
+}
+
+function officialFrame(preview) {
+  return el('iframe',{class:'official-viewer-frame',src:preview.viewer_url,title:`${preview.title} · 경기도교육청 공식 작품집`,loading:'lazy',referrerpolicy:'no-referrer',sandbox:'allow-scripts allow-same-origin'});
+}
+
+/** One original viewer per panel avoids loading a copy of the book for every card. */
+export function createOfficialPreviewPanel(projects, onOpen = () => {}) {
+  const candidates = projects.map(project => ({project,preview:officialProjectPreview(project)})).filter(item => item.preview);
+  if (!candidates.length) return null;
+  const select = el('select',{'aria-label':'이미지로 볼 사례'});
+  candidates.forEach(({project}) => select.append(el('option',{value:project.project_id},project.title)));
+  const stage = el('div',{class:'official-viewer-stage'});
+  const title = el('h3');
+  const note = el('p',{class:'small'});
+  const link = el('a',{target:'_blank',rel:'noopener noreferrer'},'원문 크게 보기 ↗');
+  const detail = el('button',{type:'button',class:'text-button'},'이 사례 자세히 보기 →');
+  const panel = el('section',{class:'official-preview-panel','aria-label':'공식 작품집 이미지 미리보기'},[
+    stage,el('div',{class:'official-preview-info'},[el('p',{class:'eyebrow'},'OFFICIAL YEARBOOK'),el('h2',{},'도판으로 보는 학교'),select,title,note,link,detail])]);
+  function draw() {
+    const item = candidates.find(item => item.project.project_id === select.value) ?? candidates[0];
+    stage.replaceChildren(officialFrame(item.preview));
+    title.textContent = item.project.concept_title || item.project.title;
+    note.textContent = `${item.project.award_year}년 작품집 · ${item.preview.viewer_page}쪽 · 경기도교육청 원문 뷰어`;
+    link.href = item.preview.viewer_url;
+  }
+  select.addEventListener('change',draw);
+  detail.addEventListener('click',()=>onOpen(candidates.find(item=>item.project.project_id===select.value).project));
+  draw();
+  return panel;
+}
 
 const CONCEPT_IMAGES = new Set([
   'public/illustrations/courtyard.svg',
@@ -82,7 +121,8 @@ export function createProjectThumbnail(project, onOpen) {
     }));
     figure.append(el('figcaption', {}, image.is_concept ? '가상 건축 개념도 · 실제 학교 사진 아님' : `이미지: ${image.creator || '제작자 미확인'}`));
   } else {
-    button.append(el('span', { class: 'image-placeholder' }, '공개 사용을 확인한 이미지가 없습니다. 상세에서 출처를 확인하세요.'));
+    figure.classList.add('project-thumbnail-unavailable');
+    button.append(el('span', { class: 'image-placeholder' }, [el('span', {class:'media-book-icon', 'aria-hidden':'true'}, '▤'), el('span', {}, '작품집 이미지 확인')]));
   }
   button.append(el('span', { class: 'thumbnail-open-label', 'aria-hidden': 'true' }, '상세 보기 ↗'));
   button.addEventListener('click', () => onOpen(project));
@@ -96,7 +136,15 @@ export function renderProjectGallery(project, snapshot) {
   const images = allowedProjectImages(project);
   const gallery = el('section', { class: 'project-gallery', 'aria-label': '설계사업 이미지' });
   if (!images.length) {
-    gallery.append(el('div', { class: 'image-placeholder' }, '공개 사용을 확인한 이미지가 없습니다. 원문 링크에서 자료를 확인하세요.'));
+    const preview = officialProjectPreview(project);
+    if (preview) {
+      gallery.append(officialFrame(preview),el('p',{class:'small'},`경기도교육청 공식 작품집 · ${preview.viewer_page}쪽 · 아래 원문 화면에서 페이지를 넘기거나 확대할 수 있습니다.`),sourceAnchor({url:preview.viewer_url},'원문 뷰어를 새 탭에서 열기 ↗'));
+      return gallery;
+    }
+    gallery.classList.add('project-gallery-unavailable');
+    const source = primaryProjectSource(project, snapshot);
+    gallery.append(el('p', {class:'small'}, '이 사례의 사진·도판은 원문에서 확인할 수 있습니다.'));
+    if (source) gallery.append(sourceAnchor(source, '공식 작품집에서 이미지 보기 ↗'));
     return gallery;
   }
   const stage = el('figure', { class: 'project-image gallery-main' });

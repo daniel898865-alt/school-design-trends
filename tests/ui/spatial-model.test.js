@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spatialEvidence} from '../../src/ui/spatial-model.js';
-import {buildSpatialSvg, createSpatialGeometry, normalizeSpatialView, projectSpatialPoint, SPATIAL_MODEL, SPATIAL_TOPICS} from '../../src/ui/spatial-geometry.js';
+import {buildSpatialSvg, createSpatialGeometry, normalizeSpatialView, projectSpatialFaces, projectSpatialPoint, SPATIAL_MODEL, SPATIAL_TOPICS} from '../../src/ui/spatial-geometry.js';
 
 const evidence=(topic,source='s1',note='분류 이유')=>({topic_id:topic,source_id:source,evidence_note:note,review_status:'demo'});
 const project=(id,items)=>({project_id:id,title:id,topic_evidence:items});
@@ -70,6 +70,37 @@ test('cutaway removes pavilion enclosure geometry, preserving the same campus an
   assert.ok(open.some(face=>face.topic==='flexible_learning'));
 });
 
+test('whole exterior is opaque by default and transparency continuously changes only the two pavilion enclosures',()=>{
+  const solid=createSpatialGeometry(),half=createSpatialGeometry({transparency:50}),open=createSpatialGeometry({transparency:100});
+  assert.ok(solid.every(face=>face.opacity===1));
+  assert.equal(half.length,solid.length);
+  assert.deepEqual(half.map(face=>face.points),solid.map(face=>face.points));
+  assert.ok(half.some(face=>face.enclosure && face.opacity===0.5));
+  assert.ok(half.filter(face=>!face.enclosure).every(face=>face.opacity===1));
+  assert.ok(half.filter(face=>face.enclosure).every(face=>['community_sharing','flexible_learning'].includes(face.topic)));
+  assert.deepEqual(open,solid.filter(face=>!face.enclosure));
+});
+
+test('site is painted behind buildings and visible roofs and main walls survive every view',()=>{
+  for(const angle of [-180,-90,0,32,90,180]) {
+    const faces=projectSpatialFaces({angle});
+    const firstBuilding=faces.findIndex(face=>face.layer==='building');
+    assert.ok(firstBuilding>0);
+    assert.ok(faces.slice(firstBuilding).every(face=>face.layer==='building'),'no ground face can cover a building');
+    assert.ok(faces.some(face=>face.color==='#f1eee3' && face.layer==='building'),'roofs remain visible');
+    assert.ok(faces.some(face=>face.color==='#ddd8c9' && !face.topic && face.layer==='building'),'main school exterior remains visible');
+  }
+});
+
+test('camera screen height and depth form orthogonal axes; farther ground moves upward',()=>{
+  const origin=projectSpatialPoint([0,0,0],{angle:0});
+  const up=projectSpatialPoint([0,1,0],{angle:0});
+  const back=projectSpatialPoint([0,0,1],{angle:0});
+  assert.ok(back.y<origin.y && back.depth>origin.depth);
+  const dot=(up.y-origin.y)*(up.depth-origin.depth)+(back.y-origin.y)*(back.depth-origin.depth);
+  assert.ok(Math.abs(dot)<1e-10,'screen and sorting axes cannot describe different cameras');
+});
+
 test('rotation and zoom change projection, while higher points project upward and toward the viewer',()=>{
   const a=projectSpatialPoint([5,0,4],{angle:0,zoom:100});
   const rotated=projectSpatialPoint([5,0,4],{angle:90,zoom:100});
@@ -81,8 +112,12 @@ test('rotation and zoom change projection, while higher points project upward an
 });
 
 test('view inputs remain bounded and malformed values cannot poison SVG coordinates',()=>{
-  assert.deepEqual(normalizeSpatialView({angle:Infinity,zoom:'bad',cutaway:'yes'}),{angle:32,zoom:100,cutaway:false});
-  assert.deepEqual(normalizeSpatialView({angle:500,zoom:2,cutaway:true}),{angle:180,zoom:80,cutaway:true});
+  assert.deepEqual(normalizeSpatialView({angle:Infinity,zoom:'bad',cutaway:'yes'}),{angle:32,zoom:100,transparency:0});
+  assert.deepEqual(normalizeSpatialView({angle:500,zoom:2,cutaway:true}),{angle:180,zoom:80,transparency:100});
+  assert.equal(normalizeSpatialView({transparency:-10}).transparency,0);
+  assert.equal(normalizeSpatialView({transparency:999}).transparency,100);
+  assert.equal(normalizeSpatialView({transparency:'bad'}).transparency,0);
+  assert.equal(normalizeSpatialView({transparency:'45',cutaway:true}).transparency,45);
   const svg=buildSpatialSvg({view:{angle:NaN,zoom:Infinity}});
   assert.doesNotMatch(svg,/NaN|Infinity/);
 });

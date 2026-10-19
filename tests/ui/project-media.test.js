@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allowedProjectImages, primaryProjectSource } from '../../src/ui/project-media.js';
+import { allowedProjectImages, primaryProjectSource, officialProjectPreview } from '../../src/ui/project-media.js';
+
+test('official viewer requires matching project, title and linked source; no inferred image license', () => {
+  const project = {project_id:'goe-2023-014',title:'고산중학교',source_ids:['goe-yearbook-2023']};
+  assert.equal(officialProjectPreview(project)?.viewer_url, 'https://www.goe.go.kr/resource/ebook/h/ebook_76/index.html#page=14');
+  assert.deepEqual(allowedProjectImages(project), []);
+  assert.equal(officialProjectPreview({...project,title:'다른 고산중학교'}),null);
+  assert.equal(officialProjectPreview({...project,source_ids:[]}),null);
+  assert.equal(officialProjectPreview({project_id:'unverified'}),null);
+});
 
 const media = (url, permission_status = 'licensed', extra = {}) => ({
   url, permission_status, creator: '가상 제작자', alt_text: '설계 설명', source_id: 'source-1', ...extra,

@@ -1,10 +1,11 @@
 import { createDataProvider } from './data-provider.js';
 import { el, emptyState } from './dom.js';
-import { createProjectThumbnail, primaryProjectSource } from './project-media.js';
+import { createProjectThumbnail, primaryProjectSource, createOfficialPreviewPanel } from './project-media.js';
 import { renderRegionMap } from './region-map.js';
 import { renderYearTrends } from './year-trends.js';
 import { renderFirms, renderBuildings, renderTopics, openProjectDialog } from './details.js';
 import { serializeCsv, serializeMarkdown, downloadExport } from './export.js';
+import {GYEONGGI_CITIES} from '../domain/gyeonggi.js';
 
 const $ = id => document.getElementById(id);
 let provider;
@@ -46,15 +47,25 @@ function options(nextProvider) {
     $(id).replaceChildren(el('option', { value: '' }, label), ...nextProvider.options[key].map(v => el('option', { value: v.value }, v.label)));
   }
   $('year').replaceChildren(el('option', {value: ''}, '전체 수록연도'), ...(nextProvider.options.years ?? []).map(v => el('option', {value: v.value}, v.label)));
+  $('city').replaceChildren(el('option', {value: ''}, '경기도 전체'), ...nextProvider.options.cities.map(v => el('option', {value:v.value}, v.label)));
+}
+function syncDistrictOptions(city, selected = '') {
+  const districts = GYEONGGI_CITIES.find(c => c.code === city)?.districts ?? [];
+  $('district').replaceChildren(el('option', {value:''}, districts.length ? '전체 구' : '구 구분 없음'),
+    ...districts.map(d => el('option', {value:d.code}, d.name)),
+    ...(districts.length ? [el('option',{value:'unknown'},'구 확인 필요')] : []));
+  $('district').disabled = districts.length === 0;
+  $('district').value = selected;
 }
 function restoreFilters(values) {
+  syncDistrictOptions(values.city ?? '', values.district ?? '');
   for (const [key, value] of Object.entries(values)) {
     const field = form.elements.namedItem(key);
     if (field) field.value = String(value);
   }
 }
 function defaultFilters(nextProvider) {
-  return { query: '', region: '', schoolLevel: '', months: 36, asOf: nextProvider.snapshot.as_of, dateBasis: nextProvider.defaultDateBasis === 'award_year' ? 'award_year' : section === 'years' ? 'completion_date' : 'award_date', topic: '', year: '' };
+  return { query: '', region: '41', city: '', district: '', schoolLevel: '', months: 36, asOf: nextProvider.snapshot.as_of, dateBasis: nextProvider.defaultDateBasis === 'award_year' ? 'award_year' : section === 'years' ? 'completion_date' : 'award_date', topic: '', year: '' };
 }
 function renderWarnings() {
   const entries = view.diagnostics ?? provider.warnings ?? [];
@@ -102,9 +113,9 @@ function basicDetail(project) {
   openProjectDialog($('project-dialog'), project, provider.snapshot);
 }
 function renderOverviewSummary() {
-  const regionLabel = lastFilters.region
-    ? provider.options.regions.find(region => region.value === lastFilters.region)?.label || '지역 미확인'
-    : '전체 시도';
+  const city = GYEONGGI_CITIES.find(c => c.code === lastFilters.city);
+  const district = city?.districts.find(d => d.code === lastFilters.district);
+  const regionLabel = [city?.name || (lastFilters.city === 'unknown' ? '시·군 확인 필요' : '경기도 전체'), district?.name || (lastFilters.district === 'unknown' ? '구 확인 필요' : '')].filter(Boolean).join(' ');
   $('overview-region-title').textContent = `${regionLabel} · 조회 결과`;
   $('overview-project-count').textContent = view.summary.projects.toLocaleString('ko-KR');
   $('overview-region-context').textContent = `${dateLabels[lastFilters.dateBasis]} 기준 · ${periodLabel()} · ${lastFilters.dateBasis === 'award_year' ? '연도' : '날짜'} 미확인 제외 ${view.summary.excludedUnknownYears ?? view.summary.excludedUnknownDates}건`;
@@ -120,8 +131,8 @@ function renderOverviewSummary() {
     const button = el('button', { type: 'button', class: 'text-button', 'aria-haspopup': 'dialog', 'aria-label': `${title} 상세 보기` }, title);
     button.addEventListener('click', () => basicDetail(project));
     list.append(el('li', {}, [el('h3', {}, button),
-      el('p', { class: 'overview-case-meta' }, `${project.school_level_label || '학교급 미확인'} · ${project.region_name || '지역 미확인'} · ${dateLabels[lastFilters.dateBasis]} ${projectDate(project)}`),
-      el('p', { class: 'overview-case-summary' }, project.summary || '요약 미확인 · 상세 화면에서 출처를 확인하세요.'),
+      el('p', { class: 'overview-case-meta' }, `${project.school_level_label || '학교급 미확인'} · ${project.locality?.cityName || '시·군 확인 필요'} · ${dateLabels[lastFilters.dateBasis]} ${projectDate(project)}`),
+      el('p', { class: 'overview-case-summary' }, project.concept_title || project.summary || '상세에서 설계 개요 확인'),
     ]));
   }
   container.append(list);
@@ -138,13 +149,14 @@ function renderProjects() {
     table.append(el('tbody', {}, view.projects.map(p => el('tr', {}, [el('td', {}, projectButton(p, p.title)), el('td', {}, p.region_name || '지역 미확인'), el('td', {}, p.school_level_label || '학교급 미확인'), el('td', {}, projectDate(p)), el('td', {}, p.firm_names.join(', ') || '미확인')]))));
     container.append(table); return;
   }
+  const preview = createOfficialPreviewPanel(view.projects, basicDetail);
+  if (preview && !provider.snapshot.is_demo) container.append(preview);
   for (const p of view.projects) {
-    const chips = [el('span', {}, p.region_name || '지역 미확인'), el('span', {}, p.school_level_label || '학교급 미확인')];
+    const chips = [el('span', {}, p.locality?.cityName || '시·군 확인 필요'), el('span', {}, p.school_level_label || '학교급 미확인')];
     if (provider.snapshot.is_demo) chips.push(el('span', { class: 'demo-chip' }, '가상 사례'));
-    else if (p.data_issues?.length) chips.push(el('span', {class: 'demo-chip'}, '확인 사항 있음'));
     const source = primaryProjectSource(p, provider.snapshot);
     const original = source ? el('a', { class: 'original-site-link', href: source.url, target: '_blank', rel: 'noopener noreferrer', referrerpolicy: 'no-referrer', 'aria-label': `${p.title || '설계사업'} 원문 사이트 (새 탭)`, title: source.title }, '원문 사이트 ↗') : el('span', { class: 'muted' }, '원문 링크 미등록');
-    const card = el('article', { class: 'project-card' }, [createProjectThumbnail(p, basicDetail), el('div', { class: 'card-content' }, [el('div', { class: 'chips' }, chips), el('h3', {}, projectButton(p, p.title)), el('p', { class: 'card-summary' }, p.summary || '요약 미확인 · 상세 화면에서 출처를 확인하세요.'), el('p', { class: 'card-date small' }, `${dateLabels[lastFilters.dateBasis]} ${projectDate(p)}`), el('div', { class: 'card-bottom' }, [projectButton(p, '상세 보기'), original])])]);
+    const card = el('article', { class: 'project-card' }, [createProjectThumbnail(p, basicDetail), el('div', { class: 'card-content' }, [el('div', { class: 'chips' }, chips), el('h3', {}, projectButton(p, p.title)), el('p', { class: 'card-summary' }, p.concept_title || p.summary || '설계 개요 확인하기'), el('p', { class: 'card-date small' }, `${dateLabels[lastFilters.dateBasis]} ${projectDate(p)}`), el('div', { class: 'card-bottom' }, [projectButton(p, '자세히 보기'), original])])]);
     container.append(card);
   }
 }
@@ -183,8 +195,8 @@ function paint() {
     $('error').hidden = true;
     $('loading-help').hidden = true;
     const isDemo = provider.snapshot.is_demo;
-    $('data-mode-title').textContent = isDemo ? '가상 자료로 보는 예시 화면' : '불러온 자료를 조회하는 화면';
-    $('data-mode-description').textContent = isDemo ? '실제 학교·공모·통계가 아닙니다. 기본 예시 이미지는 직접 만든 개념도입니다.' : '수작업·AI 보조 입력 자료 · 사람의 원문 검수 전 · 설계 태그는 검토 전 초안입니다. 수집 범위와 확인 사항을 함께 읽으세요.';
+    $('data-mode-title').textContent = isDemo ? '가상 예시' : '경기도 설계공모 아카이브';
+    $('data-mode-description').textContent = isDemo ? '화면 기능 확인용 자료입니다.' : '2023–2025 작품집 수록 사례 · 원문 검수 전';
     $('scope').textContent = `${isDemo ? '가상 ' : ''}자료 기준 ${provider.snapshot.as_of} · ${dateLabels[lastFilters.dateBasis]} 기준 · ${periodLabel()}`;
     syncDateControls();
     $('coverage-scope').textContent = `자료 범위: ${provider.snapshot.coverage?.scope || '미확인'}`;
@@ -192,9 +204,13 @@ function paint() {
     const firmNote = view.summary.unresolvedFirmReferences === undefined ? '사무소 목록이 연결된 고유 사무소' : `사무소 목록 기준 · 미확인 연결 ${view.summary.unresolvedFirmReferences}건 제외`;
     $('stats').replaceChildren(stat('설계사업', view.summary.projects, '중복 사업을 제외한 고유 사례'), stat('연결된 자료', view.summary.sources, '사업 수와 구분한 출처·작품집 수'), stat('연결된 학교 자료', view.summary.schools, provider.snapshot.schools.length ? '동일 학교의 중복을 제외' : '학교 목록 미등록 · 실제 학교 수가 아님', '곳'), stat('참여 사무소', view.summary.firms, firmNote, '곳'));
     $('results-summary').textContent = `설계사업 ${view.summary.projects}건 · 같은 조회 조건 유지`;
-    const mapView = lastFilters.region ? provider.select({ ...lastFilters, region: '' }) : view;
-    renderRegionMap($('region-map'), { regions: mapView.byRegion, selectedRegion: lastFilters.region, onSelect: code => { $('region').value = code; render(); } });
-    bars($('region-chart'), view.byRegion);
+    const mapView = provider.select({ ...lastFilters, region: '41', city: '', district: '' });
+    const cityView = lastFilters.city ? provider.select({ ...lastFilters, district: '' }) : mapView;
+    renderRegionMap($('region-map'), { regions: mapView.byCity, districts: cityView.byDistrict,
+      selectedRegion: lastFilters.city, selectedDistrict: lastFilters.district,
+      onSelect: code => { $('city').value = code; syncDistrictOptions(code); render(); },
+      onSelectDistrict: code => { $('district').value = code; render(); } });
+    bars($('region-chart'), view.byCity);
     if (lastFilters.dateBasis === 'award_year') {
       bars($('month-chart'), view.byYear ?? []);
       $('month-chart').append(el('p', {class: 'small'}, '공모집에 수록된 당선작 수입니다. 월별 추이·실제 당선연도·준공연도로 해석하지 않습니다.'));
@@ -202,13 +218,13 @@ function paint() {
     const regionNote = view.summary.regionParticipations === undefined ?
       '시도별 수치는 지역 참여 건수이며 지역 미확인은 별도로 표시합니다.' :
       `시도별 참여 합계 ${view.summary.regionParticipations}건 · 전체 고유 사업 ${view.summary.projects}건 · 여러 시도에 걸친 사업 ${view.summary.multiRegionProjects ?? 0}건. 한 사업을 관련 시도마다 셀 수 있어 합계가 다릅니다. 지역 미확인은 별도 항목입니다.`;
-    $('region-note').textContent = regionNote;
+    $('region-note').textContent = `작품집 주소 기준 · 시·군 확인 필요 ${view.localitySummary.unknownCityCount}건. 수집된 사례 수이며 경기도 전체 발주 통계가 아닙니다.`;
     $('aggregation-notes').replaceChildren(...(view.notes ?? []).map(note => el('li', {}, note)));
     $('level-strip').replaceChildren(el('strong', {}, '학교급별 분포'), ...view.byLevel.map(d => el('span', {}, [d.label, el('b', {}, `${d.count}건`)])));
     renderOverviewSummary();
     renderProjects();
-    renderFirms($('firms-view'), view, provider.snapshot, basicDetail);
-    renderBuildings($('buildings-view'), view, provider.snapshot);
+    renderFirms($('firms-view'), view, provider.snapshot, basicDetail, provider.officialEnrichment);
+    renderBuildings($('buildings-view'), view, provider.snapshot, provider.officialEnrichment);
     renderTopics($('topics-view'), view);
     renderYearTrends($('years-view'), view, provider.snapshot, {
       dateBasis: lastFilters.dateBasis, asOf: lastFilters.asOf, months: lastFilters.months,
@@ -254,11 +270,17 @@ async function loadDataset(name = 'goe') {
     const response = await fetch(name === 'demo' ? 'public/demo.snapshot.json' : 'data/goe-annual.snapshot.json');
     if (!response.ok) throw new Error('예시 자료를 불러오지 못했습니다. 배포 주소 또는 로컬 미리보기 서버에서 열었는지 확인해 주세요.');
     const next = createDataProvider(await response.text());
+    if (name === 'goe') {
+      try {
+        const statusResponse = await fetch('public/official-enrichment.json');
+        if (statusResponse.ok) next.officialEnrichment = await statusResponse.json();
+      } catch { /* The core archive remains usable when the optional status cannot load. */ }
+    }
     if (sequence === loadSequence) { installProvider(next); $('dataset').value = name; }
   } catch (error) { if (sequence === loadSequence) failure(error); }
 }
 form.addEventListener('submit', event => { event.preventDefault(); render(); });
-form.addEventListener('change', () => render());
+form.addEventListener('change', event => { if (event.target.id === 'city') syncDistrictOptions($('city').value); render(); });
 $('reset').addEventListener('click', () => { if (!provider) return; form.reset(); restoreFilters(defaultFilters(provider)); $('buildings-view').dataset.ageFilter = 'all'; delete $('years-view').dataset.selectedYear; render(); });
 $('reload-demo').addEventListener('click', () => loadDataset('demo'));
 $('dataset').addEventListener('change', event => loadDataset(event.target.value));
