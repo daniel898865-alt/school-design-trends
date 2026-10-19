@@ -2,9 +2,11 @@
 
 경기도의 학교 설계 사례를 모아, 최근 3년의 변화와 시·군·구별 분포를 근거와 함께 살펴보는 웹 도구입니다.
 
-**[웹 화면 바로 열기 →](https://yunzecho-eng.github.io/school-design-trends/)**
+**[개인 홈페이지 바로 열기 →](https://daniel898865-alt.github.io/school-design-trends/)** · **[처음 사용하시는 분: 사용설명 →](https://daniel898865-alt.github.io/school-design-trends/guide.html)**
 
-처음 열면 **경기도교육청 설계공모 작품집 2023·2024·2025의 당선작 166건**을 볼 수 있습니다. 지역·학교급·수록연도로 사례를 찾고, 사업 규모와 설계 개념, 출처와 검수 메모를 확인합니다. 연도별 키워드를 가상 학교의 3D 공간 개념도와 연결해 살펴볼 수도 있습니다.
+이 저장소는 공동작업 최종 병합 `fcfd4c7`을 바탕으로 고도화한 개인 fork입니다. [GitHub에서 사용설명 읽기](docs/USER_GUIDE.md) · [공동작업 이후 변경 비교](https://github.com/daniel898865-alt/school-design-trends/compare/fcfd4c7...daniel/2026-10-20-pilot-comparison)
+
+‘자료 조회’에서는 **경기도교육청 설계공모 작품집 2023·2024·2025의 당선작 166건**을 볼 수 있습니다. 지역·학교급·수록연도로 사례를 찾고, 사업 규모와 설계 개념, 출처와 검수 메모를 확인합니다. 연도별 키워드를 가상 학교의 3D 공간 개념도와 연결해 살펴볼 수도 있습니다.
 
 자료는 **수작업·AI 보조 입력과 직접 작성한 요약이며, 사람의 원문 검수가 필요합니다.** 경기 작품집에 실린 당선작 표본으로 학교 외 교육시설·유치원·관사 등도 포함합니다. 경기도 전체 사업을 빠짐없이 집계한 통계나 준공 실적이 아닙니다. 기능 확인용 가상 자료도 선택할 수 있습니다.
 
@@ -14,7 +16,7 @@
 
 웹 화면은 ① 연도별 동향(전체 166건 정량 집계와 분석 사례 연결), ② 향후 설계 방향(검토할 방향, 예측 아님), ③ 설계안 PDF 비교 결과 보기로 시작하고, 기존 조회 화면은 "자료 조회"에서 그대로 사용합니다. ③은 **Claude Code의 `school-design-research` 스킬이 PDF를 분석해 만든 `result.json`을 홈페이지에서 불러와 보여 주고 저장하는 방식**이며, 홈페이지가 PDF를 분석하거나 AI를 호출하지 않습니다. 사용 순서·도구·결과 형식·한계는 [docs/DESIGN_RESEARCH.md](docs/DESIGN_RESEARCH.md)를 보세요. 모든 분석은 AI가 읽은 사람 검수 전 자료입니다.
 
-## 공개 배포 상태 · 2026-10-19
+## 공동작업 당시 공개 배포 기록 · 2026-10-19
 
 **[PR #42](https://github.com/yunzecho-eng/school-design-trends/pull/42)의 경기도 지도·사례 화면·3D 개선을 `main`에 통합해 [GitHub Pages](https://yunzecho-eng.github.io/school-design-trends/)로 공개합니다.** 저장소와 웹 화면은 로그인 없이 볼 수 있습니다. 기능 공개와 자료 확보·검수 완료는 구분합니다.
 
