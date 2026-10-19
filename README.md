@@ -12,7 +12,7 @@
 
 ## 현재 개발 상태 · 2026-10-19
 
-**아래 개선은 `yunze/2026-10-19-gyeonggi-visual-data` 작업 브랜치에 구현했으며, 아직 `main` 병합·공개 배포 전입니다.** 공개 화면에 먼저 반영된 내용은 [PR #37](https://github.com/yunzecho-eng/school-design-trends/pull/37)까지입니다.
+**아래 개선은 [PR #42](https://github.com/yunzecho-eng/school-design-trends/pull/42)의 `yunze/2026-10-19-gyeonggi-visual-data` 작업 브랜치에 구현했으며, 아직 `main` 병합·공개 배포 전입니다.** 공개 화면에 먼저 반영된 내용은 [PR #37](https://github.com/yunzecho-eng/school-design-trends/pull/37)까지입니다.
 
 | 이번 브랜치의 변경 | 현재 범위 | 담당 이슈 |
 |---|---|---|
