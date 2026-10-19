@@ -103,12 +103,12 @@ export function filterProjects(snapshot, options = {}) {
   return result;
 }
 
-function matchesRegion(regionCodes, wanted) {
+export function matchesRegion(regionCodes, wanted) {
   if (regionCodes.length === 0) return wanted.includes(UNKNOWN_REGION);
   return regionCodes.some((c) => wanted.includes(c));
 }
 
-function matchesTopic(project, wanted) {
+export function matchesTopic(project, wanted) {
   const ids = project.topic_evidence.map((t) => t.topic_id).filter(Boolean);
   if (ids.length === 0) return wanted.includes(UNCLASSIFIED_TOPIC);
   return ids.some((id) => wanted.includes(id));
@@ -156,7 +156,8 @@ export function summarizeProjects(projects) {
     multiRegionProjects: projects.filter((p) => (p.region_codes ?? []).length > 1).length,
     byRegion,
     bySchoolLevel,
-    byMonth: meta ? summarizeByMonth(projects, meta, articleIds) : [],
+    // 날짜 기간이 없는 조회(공모집 수록연도 등)는 월별 집계를 만들지 않는다.
+    byMonth: meta?.window ? summarizeByMonth(projects, meta, articleIds) : [],
     excludedUnknownDates: meta?.excluded_unknown_dates ?? null,
     excludedOutOfRange: meta?.excluded_out_of_range ?? null,
     notes: summaryNotes(meta, regionParticipations, projects.length),
@@ -188,7 +189,7 @@ function summarizeByMonth(projects, meta, articleIds) {
 function summaryNotes(meta, regionParticipations, uniqueProjects) {
   const notes = [];
   if (meta?.is_demo !== false) notes.push('가상 예시 또는 가상 여부 미확인 자료 — 실제 통계로 사용하지 않음');
-  if (meta) {
+  if (meta?.window) {
     notes.push(`기간 (${meta.window.start}, ${meta.window.end}] · 날짜 기준 ${meta.date_basis}`);
     if (meta.excluded_unknown_dates > 0) notes.push(`${meta.date_basis} 미확인 ${meta.excluded_unknown_dates}건은 기간 집계에서 제외`);
     if (meta.date_basis === 'published_at') notes.push('월별 사업 수는 그 달에 기사가 난 사업 수이며, 여러 달에 기사가 나면 달마다 셈');
