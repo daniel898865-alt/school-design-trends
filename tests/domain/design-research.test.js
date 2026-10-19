@@ -20,19 +20,41 @@ const query = {
 const status = (c, key) => c.criteria.find((x) => x.key === key)?.status;
 const find = (res, id) => res.candidates.find((c) => c.project_id === id);
 
-test('입력 사업 자체와 같은 사업의 중복 자료를 후보에서 제외한다', () => {
-  const dup = p('dup', { title: '가상입력고등학교' });                      // 같은 이름
+test('입력 project_id만 제외하고, 이름·주소·학교급이 겹치는 사업은 후보에 남겨 중복 확인 필요로 알린다', () => {
+  const sameName = p('dup', { title: '가상입력고등학교' });                 // 같은 학교명(첫 단어)
   const sameLoc = p('sameloc', { metrics: { ...input.metrics } });          // 같은 위치·같은 학교급
-  const res = searchCandidates([input, dup, sameLoc, p('a')], query);
-  assert.deepEqual(res.excluded.map((e) => [e.project_id, e.reason]).sort(), [['dup', 'same_project_duplicate'], ['in', 'input_project'], ['sameloc', 'same_project_duplicate']]);
-  assert.deepEqual(res.candidates.map((c) => c.project_id), ['a']);
+  const res = searchCandidates([input, sameName, sameLoc, p('a')], query);
+  assert.deepEqual(res.excluded.map((e) => [e.project_id, e.reason]), [['in', 'input_project']]);   // 제외는 입력 ID뿐
+  assert.deepEqual(res.candidates.map((c) => c.project_id).sort(), ['a', 'dup', 'sameloc']);        // 겹치는 사업은 보존
+  assert.deepEqual(res.duplicate_check_needed.map((d) => d.project_id).sort(), ['dup', 'sameloc']);
+  assert.equal(find(res, 'a').duplicate_check_needed, false);
+  assert.equal(find(res, 'dup').duplicate_check_needed, true);
+  assert.deepEqual(find(res, 'dup').duplicate_check_reasons, ['same_school_name']);
+  assert.deepEqual(find(res, 'sameloc').duplicate_check_reasons, ['same_location_same_level']);
+  assert.ok(res.duplicate_check_needed.every((d) => d.note.includes('확인 필요')));
 });
 
-test('같은 위치라도 학교급·이름이 다르면 제외하지 않고 이상 징후로 알린다', () => {
+test('같은 학교의 교사동 신축과 체육관 증축은 같은 사업으로 확정해 제외하지 않는다', () => {
+  const school = { school_level: 'high', metrics: { location: '가상시 지금동 1', site_area: 15000, gross_floor_area: 9000, floors_above: 4 } };
+  const building = p('in2', { ...school, title: '지금고 교사동', project_type: 'new' });
+  const gym = p('gym', { ...school, title: '지금고 체육관', project_type: 'extension' });
+  const otherSchool = p('other', { title: '다른고', metrics: { location: '가상시 다른동 9', site_area: 15000, gross_floor_area: 9000, floors_above: 4 } });
+  const res = searchCandidates([building, gym, otherSchool], { exclude_ids: ['in2'], preferred: { school_level: 'high' } });
+  assert.deepEqual(res.excluded.map((e) => e.project_id), ['in2']);                       // 입력 ID만 제외
+  assert.ok(res.candidates.some((c) => c.project_id === 'gym'));                          // 체육관 증축은 후보로 보존
+  const d = res.duplicate_check_needed.find((x) => x.project_id === 'gym');
+  assert.deepEqual(d.reasons, ['same_school_name', 'same_location_same_level']);
+  assert.equal(d.same_project_type, false);                                               // 사업유형이 달라 별도 사업일 가능성
+  assert.equal(find(res, 'gym').duplicate_check_needed, true);
+  assert.equal(res.duplicate_check_needed.some((x) => x.project_id === 'other'), false);  // 겹침이 없으면 표시하지 않음
+});
+
+test('같은 위치인데 학교급·이름이 다르면 제외하지 않고 이상 징후로 알린다', () => {
   const odd = p('odd', { title: '다른학교', school_level: 'middle', metrics: { ...input.metrics } });
   const res = searchCandidates([input, odd], query);
   assert.ok(res.candidates.some((c) => c.project_id === 'odd'));
   assert.equal(res.anomalies[0].kind, 'same_location_different_project');
+  assert.equal(res.duplicate_check_needed.length, 0);
 });
 
 test('존재하지 않는 제외 ID는 이상 징후로 알린다', () => {
@@ -164,6 +186,30 @@ test('결과 JSON 검증: 점수·순위 필드와 내부 경로를 거부한다
   assert.ok(validateResult(r3).errors.some((e) => e.message.includes('경로')));
   const r4 = demo(); r4.run.steps[2].note = 'data/private/design-research/x';
   assert.equal(validateResult(r4).ok, false);
+});
+
+test('결과 JSON 검증 회귀: page_map·sources의 null과 배열이 아닌 selected는 예외 없이 검증 오류로 반환한다', () => {
+  const bad = (mutate) => { const r = demo(); mutate(r); let out; assert.doesNotThrow(() => { out = validateResult(r); }); return out; };
+  const pageMapNull = bad((r) => { r.input.page_map[2] = null; });
+  assert.equal(pageMapNull.ok, false); assert.ok(pageMapNull.errors.some((e) => e.path === '$.input.page_map[2]'));
+  assert.equal(bad((r) => { r.input.page_map[0] = { pdf_page: '1', kind: '' }; }).ok, false);
+  const strat = bad((r) => { r.input.strategies[0].sources = [null]; });
+  assert.equal(strat.ok, false); assert.ok(strat.errors.some((e) => e.path === '$.input.strategies[0].sources[0]'));
+  assert.equal(bad((r) => { r.input.strategies[0] = null; }).ok, false);
+  assert.equal(bad((r) => { r.similarities[0].sources = [null]; }).ok, false);
+  assert.equal(bad((r) => { r.evidence[0].sources = [{ readability: 'legible' }]; }).ok, false);
+  for (const value of [5, 'abc', { a: 1 }, null, true, undefined]) {
+    const out = bad((r) => { r.selected = value; });
+    assert.equal(out.ok, false, String(value)); assert.ok(out.errors.some((e) => e.path === '$.selected'));
+  }
+  for (const value of [5, 'abc', null, [null]]) assert.equal(bad((r) => { r.comparison.rows = value; }).ok, false);
+  assert.equal(bad((r) => { r.comparison.rows[0].values = 'x'; }).ok, false);
+  assert.equal(bad((r) => { r.candidates = [null]; }).ok, false);
+  assert.equal(bad((r) => { r.exclusions = [null]; }).ok, false);
+  assert.equal(bad((r) => { r.run.steps = [null]; }).ok, false);
+  assert.equal(bad((r) => { r.merits_burdens = [null]; }).ok, false);
+  for (const junk of [[], 'x', 7, true]) assert.doesNotThrow(() => validateResult(junk));
+  assert.equal(validateResult(demo()).ok, true); // 정상 파일은 계속 통과
 });
 
 test('명시적 불일치는 출처가 있으면 허용한다', () => {

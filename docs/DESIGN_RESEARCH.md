@@ -27,12 +27,12 @@ node tools/design-research.mjs render   <result.json> [--out <report.md>]
 ```
 
 - `search`: 전체 JSON을 출력하지 않고 요약만 출력합니다. 전체 결과는 `--out` 파일에 저장합니다.
-  - 입력 사업(`exclude_ids`)과 같은 사업의 중복 자료(같은 이름, 또는 같은 위치·같은 학교급)를 제외합니다. 같은 위치인데 학교급·이름이 다르면 제외하지 않고 이상 징후로 알립니다.
+  - **입력 project_id(`exclude_ids`)만 제외합니다.** 같은 학교의 교사동 신축과 체육관 증축처럼 이름·주소·학교급이 같아도 별도 사업일 수 있으므로, 겹치는 사업은 후보에 남기고 `duplicate_check_needed`(중복 확인 필요)로 알립니다. 같은 사업인지는 사람이 원문으로 확인합니다. 같은 위치인데 학교급이 다르면 위치 입력 오류 가능성으로 이상 징후에 표시합니다(제외하지 않음).
   - `required`(사용자가 정한 필수조건)에 **명시적으로** 어긋나는 사업만 걸러 냅니다. 미확인 값은 걸러 내지 않습니다.
   - 조건별 상태: `match`(부합) / `mismatch`(명시적 불일치) / `no_information`(정보 없음) / `numeric_difference`(수치 차이). 키워드가 없거나 글이 없는 것은 불일치가 아니라 정보 없음입니다.
   - 설계 태그는 근거로 쓰지 않고 부여 여부만 표시합니다. 심사평 분석 제외 사례의 심사평은 검색에 쓰지 않습니다.
   - 정렬은 일치 항목 수 기준이며 점수·순위가 아닙니다.
-- `validate`: 결과 JSON의 필수 항목과 금지 사항을 검사합니다. 실패하면 종료 코드 1.
+- `validate`: 결과 JSON의 필수 항목과 금지 사항을 검사합니다. 형식이 잘못되어도(null, 배열이 아닌 값 등) 예외로 끝나지 않고 오류 목록을 돌려주며, 실패하면 종료 코드 1입니다.
 - `render`: 검증을 통과한 결과만 Markdown으로 만듭니다(홈페이지의 Markdown 저장과 같은 변환).
 
 `query.json`: `exclude_ids`, `required`, `preferred`(`school_level`, `project_type`, `facility_kind`, `site_area`, `gross_floor_area`, `floors_above`), `keywords`(`id`, `label`, `patterns`), `limit`.
@@ -43,9 +43,9 @@ node tools/design-research.mjs render   <result.json> [--out <report.md>]
 
 - `status`: `review`는 `ai_draft_human_review_pending`만 허용(사람 검수 완료로 표시하지 않음), `demonstration`(boolean), `notices`("검수 전" 문구 필수), `year_basis_notice`("수록" 기준 명시 필수).
 - `run`: `kind`(`demonstration`|`user_run`), `input_kind`(`public_yearbook_excerpt`|`user_pdf`), `steps[]`(`id`: page_map/extraction/candidate_search/evidence/report, `status`, `basis`: **new_reading / reused_analysis / tool_run / not_applicable**, `note`).
-- `input`: `label`, `excluded_project_id`(선택), `page_count`, `page_map[]`(행 수가 `page_count`와 같아야 함 — PDF 쪽 수와 도판 수를 구분), `conditions`, `strategies[]`(`dimension`, `summary`, `evidence_level`: fact/ai_interpretation/proposal, `sources[]`, `uncertain`). 사실에는 쪽 출처가 필요합니다.
+- `input`: `label`, `excluded_project_id`(선택), `page_count`, `page_map[]`(행 수가 `page_count`와 같아야 하고 각 행은 `pdf_page`(정수)·`kind`가 있는 객체이며 null 불가. PDF 쪽 수와 도판 수를 구분), `conditions`, `strategies[]`(`dimension`, `summary`, `evidence_level`: fact/ai_interpretation/proposal, `sources[]`, `uncertain`). `sources`의 각 항목은 문자열 또는 `page`가 있는 객체이며 null은 안 됩니다. 사실에는 쪽 출처가 필요합니다.
 - `exclusions[]`: 입력 사업을 포함한 제외 목록. 제외된 사업은 `candidates`에 있을 수 없습니다.
-- `candidates[]`: `project_id`, `title`, `award_year`(수록연도), `reason`, `info_missing[]`(없어도 배열). `selected[]`는 `candidates`의 부분집합.
+- `candidates[]`: `project_id`, `title`, `award_year`(수록연도), `reason`, `info_missing[]`(없어도 배열), 선택 `notes`·`duplicate_check`(중복 확인 필요 안내). `selected[]`는 `candidates`의 부분집합.
 - `comparison.rows[]`: `item`, `input`, `values{<project_id>: {status, note, source}}`. 선정된 모든 후보의 값이 있어야 하며 `mismatch`에는 반대되는 내용의 `source`가 필요합니다.
 - `merits_burdens[]`: 장점을 쓰면 `burden`(함께 확인할 운영상 부담)도 필수. `proposals[]`: 적용 전 `conditions` 필수.
 - `evidence[]`: `target`(`input` 또는 project_id), `basis`(new_reading|reused_analysis), `summary`(직접 쓴 요약), `sources[]`.

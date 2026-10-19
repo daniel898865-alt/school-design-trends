@@ -110,7 +110,8 @@ export function summarizeYearTrends(projects, years = YEARBOOK_YEARS) {
 
 // ───────────────── ③ 후보 검색 ─────────────────
 export const NUMERIC_TOLERANCE = { ratio: 0.85 }; // 두 값의 작은 쪽/큰 쪽이 이 이상이면 '부합'(층수는 같을 때만)
-const normTitle = (t) => String(t ?? '').replace(/\s/g, '').replace(/등학교$|학교$/, '');
+// 학교 이름: 제목의 첫 단어(예: '지금고 교사동' → '지금고'). 같은 이름이라는 사실만으로 같은 사업이라고 보지 않는다.
+const schoolName = (t) => String(t ?? '').trim().split(/\s+/)[0].replace(/등학교$|학교$/, '');
 const juryExcluded = (p) => (p.data_issues ?? []).some((s) => typeof s === 'string' && s.startsWith('심사평 분석 제외'));
 const uncertainReading = (p) => (p.data_issues ?? []).filter((s) => typeof s === 'string' && s.startsWith('판독 불확실')).length;
 const searchableText = (p) => {
@@ -139,17 +140,25 @@ export function searchCandidates(projects, query = {}) {
   const excludedIds = new Set();
   for (const p of inputs) { excluded.push({ project_id: p.project_id, reason: 'input_project', title: p.title }); excludedIds.add(p.project_id); }
 
+  // 같은 학교의 교사동 신축과 체육관 증축처럼 이름·주소·학교급이 같아도 별도 사업일 수 있다.
+  // 그래서 입력 project_id만 제외하고, 겹치는 사업은 후보에 남긴 채 '중복 확인 필요'로 알린다(확정해서 제외하지 않는다).
+  const duplicateCheck = [];
+  const duplicateById = new Map();
   for (const p of list) {
     if (excludedIds.has(p.project_id)) continue;
     for (const inp of inputs) {
-      const sameTitle = normTitle(p.title) !== '' && normTitle(p.title) === normTitle(inp.title);
+      const reasons = [];
+      if (schoolName(p.title) !== '' && schoolName(p.title) === schoolName(inp.title)) reasons.push('same_school_name');
       const loc = p.metrics?.location;
       const sameLocation = str(loc) && loc === inp.metrics?.location;
-      if (sameTitle || (sameLocation && p.school_level === inp.school_level)) {
-        excluded.push({ project_id: p.project_id, reason: 'same_project_duplicate', title: p.title, of: inp.project_id });
-        excludedIds.add(p.project_id);
+      if (sameLocation && p.school_level === inp.school_level) reasons.push('same_location_same_level');
+      if (reasons.length) {
+        const entry = { project_id: p.project_id, title: p.title, of: inp.project_id, reasons, same_project_type: p.project_type === inp.project_type,
+          note: '입력 사업과 이름·주소·학교급이 겹치지만 별도 사업(예: 같은 학교의 다른 동 신축·증축)일 수 있어 후보에서 제외하지 않음. 같은 사업인지 원문으로 확인 필요' };
+        duplicateCheck.push(entry);
+        duplicateById.set(p.project_id, [...(duplicateById.get(p.project_id) ?? []), entry]);
       } else if (sameLocation) {
-        // 같은 지번이지만 학교급·이름이 달라 같은 사업이라고 볼 근거가 없다 → 제외하지 않고 이상 징후로 알린다.
+        // 같은 위치인데 학교급이 다르면 위치 입력 오류 가능성 → 이상 징후로 알린다(제외하지 않음).
         anomalies.push({ project_id: p.project_id, kind: 'same_location_different_project', title: p.title, of: inp.project_id, note: '입력 사업과 같은 위치가 적혀 있으나 학교급·이름이 다름(위치 입력 오류 가능성, 수정하지 않음)' });
       }
     }
@@ -210,6 +219,8 @@ export function searchCandidates(projects, query = {}) {
       jury_excluded: juryExcluded(p),
       uncertain_reading_notes: uncertainReading(p),
       design_tags_assigned: (p.design_tags ?? []).length > 0, // 태그는 근거로 쓰지 않고 부여 여부만 알린다
+      duplicate_check_needed: duplicateById.has(p.project_id),
+      duplicate_check_reasons: [...new Set((duplicateById.get(p.project_id) ?? []).flatMap((d) => d.reasons))],
     };
   });
   // 정렬은 일치 항목 수 → 명시적 불일치 수(적은 순) → 수록연도 → ID. 순위·점수가 아니다.
@@ -218,11 +229,13 @@ export function searchCandidates(projects, query = {}) {
     snapshot_total: list.length,
     pool_size: pool.length,
     excluded,
+    duplicate_check_needed: duplicateCheck,
     anomalies,
     required_excluded: requiredExcluded,
     total_candidates: candidates.length,
     candidates: candidates.slice(0, limit),
     notes: [
+      '입력 project_id만 제외합니다. 이름·주소·학교급이 겹치는 사업은 별도 사업일 수 있어 후보에 남기고 "중복 확인 필요"로 알립니다.',
       '정렬은 일치 항목 수 기준이며 유사도 순위나 점수가 아닙니다.',
       '정보 없음은 불일치가 아닙니다. 태그가 없는 2024년 사례도 같은 기준(요약·심사평·구조 조건)으로 검색했습니다.',
       '설계 태그는 근거로 쓰지 않고 부여 여부만 표시합니다.',
@@ -249,7 +262,26 @@ function scan(value, path, errors) {
   }
 }
 
+// 출처 배열의 각 항목은 문자열이거나 page를 가진 객체여야 한다(null·빈 값 불가).
+function checkSources(sources, path, errors) {
+  if (sources === undefined) return;
+  if (!Array.isArray(sources)) { errors.push({ path, message: 'sources는 배열이어야 합니다.' }); return; }
+  sources.forEach((s, i) => {
+    const ok = str(s) || (isObj(s) && str(s.page) && (s.readability === undefined || Object.keys(LABELS.readability).includes(s.readability)));
+    if (!ok) errors.push({ path: `${path}[${i}]`, message: '출처는 문자열이거나 page(문자열)를 가진 객체여야 합니다(null 불가).' });
+  });
+}
+
+// 어떤 입력이 와도 예외로 끝나지 않고 오류 목록으로 돌려준다.
 export function validateResult(result) {
+  try {
+    return validateResultInner(result);
+  } catch (error) {
+    return { ok: false, errors: [{ path: '$', message: `검증 중 예기치 않은 형식 오류: ${String(error?.message ?? error).slice(0, 120)}` }], warnings: [] };
+  }
+}
+
+function validateResultInner(result) {
   const errors = [];
   const warnings = [];
   const need = (cond, path, message) => { if (!cond) errors.push({ path, message }); return cond; };
@@ -286,12 +318,21 @@ export function validateResult(result) {
     need(str(input.label), '$.input.label', '입력 설계안 이름이 필요합니다.');
     need(Number.isInteger(input.page_count) && input.page_count > 0, '$.input.page_count', '입력 PDF 쪽 수(정수)가 필요합니다.');
     need(Array.isArray(input.page_map) && input.page_map.length > 0, '$.input.page_map', '쪽별 구성표가 필요합니다.');
+    if (Array.isArray(input.page_map)) {
+      input.page_map.forEach((row, i) => {
+        if (!isObj(row)) { errors.push({ path: `$.input.page_map[${i}]`, message: '쪽 구성 행이 객체가 아닙니다(null 불가).' }); return; }
+        need(Number.isInteger(row.pdf_page) && row.pdf_page > 0, `$.input.page_map[${i}].pdf_page`, 'pdf_page(1 이상의 정수)가 필요합니다.');
+        need(str(row.kind), `$.input.page_map[${i}].kind`, '쪽 내용(kind)이 필요합니다.');
+      });
+    }
     if (Array.isArray(input.page_map) && Number.isInteger(input.page_count) && input.page_map.length !== input.page_count) {
       errors.push({ path: '$.input.page_map', message: `쪽별 구성표 ${input.page_map.length}행이 쪽 수 ${input.page_count}와 다릅니다(그림 수와 쪽 수를 구분하세요).` });
     }
     need(isObj(input.conditions), '$.input.conditions', '입력 학교 조건이 필요합니다.');
     if (Array.isArray(input.strategies)) {
       input.strategies.forEach((s, i) => {
+        if (!isObj(s)) { errors.push({ path: `$.input.strategies[${i}]`, message: '공간 전략 항목이 객체가 아닙니다(null 불가).' }); return; }
+        checkSources(s.sources, `$.input.strategies[${i}].sources`, errors);
         need(DIMENSION_IDS.includes(s?.dimension), `$.input.strategies[${i}].dimension`, `영역은 ${DIMENSION_IDS.join(', ')} 중 하나입니다.`);
         need(LEVELS.includes(s?.evidence_level), `$.input.strategies[${i}].evidence_level`, '근거 수준(fact/ai_interpretation/proposal)이 필요합니다.');
         if (s?.evidence_level === 'fact') need(Array.isArray(s.sources) && s.sources.length > 0, `$.input.strategies[${i}].sources`, '사실에는 입력 PDF 쪽 출처가 필요합니다.');
@@ -317,9 +358,10 @@ export function validateResult(result) {
     need(!candidateIds.has(input.excluded_project_id), '$.candidates', '입력 사업 자체가 후보에 들어 있습니다.');
   }
   for (const id of exclusionIds) need(!candidateIds.has(id), '$.candidates', `제외된 사업 ${id}이(가) 후보에 들어 있습니다.`);
-  if (need(Array.isArray(result.selected) && result.selected.length > 0, '$.selected', '비교할 후보(selected)가 필요합니다.')) {
+  const selected = Array.isArray(result.selected) ? result.selected : [];
+  if (need(Array.isArray(result.selected) && result.selected.length > 0, '$.selected', '비교할 후보(selected)가 필요합니다(배열).')) {
     result.selected.forEach((id, i) => need(candidateIds.has(id), `$.selected[${i}]`, `${id}은(는) 후보 목록에 없습니다.`));
-    if (result.selected.length > 5) warnings.push({ path: '$.selected', message: '근거를 확인하는 후보는 기본 5건 이하를 권장합니다.' });
+    if (selected.length > 5) warnings.push({ path: '$.selected', message: '근거를 확인하는 후보는 기본 5건 이하를 권장합니다.' });
   }
 
   const cmp = result.comparison;
@@ -329,17 +371,19 @@ export function validateResult(result) {
       need(isObj(row?.values), `$.comparison.rows[${i}].values`, '후보별 값이 필요합니다.');
       for (const [id, cell] of Object.entries(row?.values ?? {})) {
         const p = `$.comparison.rows[${i}].values.${id}`;
-        need(Array.isArray(result.selected) && result.selected.includes(id), p, '비교표의 후보가 selected에 없습니다.');
+        need(selected.includes(id), p, '비교표의 후보가 selected에 없습니다.');
         need(STATUSES.includes(cell?.status), `${p}.status`, `상태는 ${STATUSES.join(', ')} 중 하나입니다.`);
         if (cell?.status === 'mismatch') need(str(cell.source), `${p}.source`, '명시적 불일치에는 반대되는 내용의 출처(쪽)가 필요합니다. 근거가 없으면 정보 없음으로 쓰세요.');
       }
-      for (const id of result.selected ?? []) if (!(id in (row?.values ?? {}))) errors.push({ path: `$.comparison.rows[${i}].values`, message: `${id}의 값이 없습니다(정보 없음이면 status를 no_information으로 쓰세요).` });
+      for (const id of selected) if (!(isObj(row?.values) && id in row.values)) errors.push({ path: `$.comparison.rows[${i}].values`, message: `${id}의 값이 없습니다(정보 없음이면 status를 no_information으로 쓰세요).` });
     });
   }
 
   for (const key of ['similarities', 'differences']) {
     if (!need(Array.isArray(result[key]) && result[key].length > 0, `$.${key}`, `${key === 'similarities' ? '유사점' : '차이점'} 목록이 필요합니다.`)) continue;
     result[key].forEach((s, i) => {
+      if (!isObj(s)) { errors.push({ path: `$.${key}[${i}]`, message: '항목이 객체가 아닙니다(null 불가).' }); return; }
+      checkSources(s.sources, `$.${key}[${i}].sources`, errors);
       need(str(s?.text), `$.${key}[${i}].text`, '문장이 필요합니다.');
       need(LEVELS.includes(s?.evidence_level), `$.${key}[${i}].evidence_level`, '근거 수준이 필요합니다.');
       if (s?.evidence_level === 'fact') need(Array.isArray(s.sources) && s.sources.length > 0, `$.${key}[${i}].sources`, '사실에는 출처가 필요합니다.');
@@ -353,6 +397,7 @@ export function validateResult(result) {
   }
   if (need(Array.isArray(result.evidence) && result.evidence.length > 0, '$.evidence', '근거 기록이 필요합니다.')) {
     result.evidence.forEach((e, i) => {
+      if (isObj(e)) checkSources(e.sources, `$.evidence[${i}].sources`, errors);
       need(str(e?.target), `$.evidence[${i}].target`, '근거 대상(input 또는 project_id)이 필요합니다.');
       need(['new_reading', 'reused_analysis'].includes(e?.basis), `$.evidence[${i}].basis`, '새로 읽은 것인지 기존 분석 재사용인지 구분해야 합니다.');
       need(str(e?.summary), `$.evidence[${i}].summary`, '직접 쓴 요약이 필요합니다.');
@@ -386,7 +431,7 @@ export function resultToMarkdown(result) {
   L.push('', '## 3. 선정한 후보와 선정 이유, 확인 한계', '', '| 후보 | 수록연도 | 선정 이유 | 정보 없음 항목 | 비고 |', '|---|---|---|---|---|');
   for (const id of r.selected) {
     const c = r.candidates.find((x) => x.project_id === id);
-    L.push(`| ${cell(c.title)} (${c.project_id}) | ${cell(c.award_year)} | ${cell(c.reason)} | ${cell(c.info_missing.join(', ') || '없음 기재')} | ${cell(c.notes)} |`);
+    L.push(`| ${cell(c.title)} (${c.project_id}) | ${cell(c.award_year)} | ${cell(c.reason)} | ${cell(c.info_missing.join(', ') || '없음 기재')} | ${cell([c.notes, c.duplicate_check].filter(Boolean).join(' / '))} |`);
   }
   const others = r.candidates.filter((c) => !r.selected.includes(c.project_id));
   if (others.length) { L.push('', '선정하지 않은 후보:', ''); for (const c of others) L.push(`- ${c.title} (${c.project_id}): ${c.reason}`); }

@@ -27,10 +27,11 @@ if (command === 'search') {
   console.log(`자료 ${result.snapshot_total}건 · 구조 조건 통과 ${result.pool_size}건 · 후보 ${result.total_candidates}건`);
   console.log(`제외: ${result.excluded.map((e) => `${e.project_id}(${e.reason})`).join(', ') || '없음'}`);
   if (result.required_excluded.count) console.log(`필수 조건으로 걸러낸 사업: ${result.required_excluded.count}건 ${JSON.stringify(result.required_excluded.by_key)}`);
+  for (const d of result.duplicate_check_needed) console.log(`중복 확인 필요(후보에 남김): ${d.project_id} ${d.title} ← 입력 ${d.of} (${d.reasons.join(', ')})`);
   for (const a of result.anomalies) console.log(`이상 징후: ${a.project_id} ${a.kind} — ${a.note}`);
   for (const c of result.candidates.slice(0, show)) {
     const cr = c.criteria.map((x) => `${x.label ?? x.key}:${LABELS.status[x.status]}`).join(' ');
-    console.log(`- ${c.project_id} ${c.title} (${c.award_year}) 일치${c.counts.match}/불일치${c.counts.mismatch}/수치차이${c.counts.numeric_difference}/정보없음${c.counts.no_information} | ${cr}${c.jury_excluded ? ' | 심사평 제외' : ''}${c.design_tags_assigned ? '' : ' | 태그 미부여'}`);
+    console.log(`- ${c.project_id} ${c.title} (${c.award_year}) 일치${c.counts.match}/불일치${c.counts.mismatch}/수치차이${c.counts.numeric_difference}/정보없음${c.counts.no_information} | ${cr}${c.jury_excluded ? ' | 심사평 제외' : ''}${c.duplicate_check_needed ? ' | 중복 확인 필요' : ''}${c.design_tags_assigned ? '' : ' | 태그 미부여'}`);
   }
   console.log(out ? `전체 결과 저장: ${out}` : '(전체 결과를 저장하려면 --out을 쓰세요)');
   for (const n of result.notes) console.log(`※ ${n}`);

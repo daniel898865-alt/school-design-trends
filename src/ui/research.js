@@ -173,7 +173,7 @@ function renderResult(root, result) {
     ]),
     sectionBlock('3', '후보 선정 이유와 확인 한계', [
       el('p', { class: 'small' }, '후보는 기존 166건에서 도구로 먼저 검색했습니다. 입력 사업 자체는 제외했고, 정렬은 순위나 점수가 아닙니다.'),
-      table(['후보', '수록연도', '선정 이유', '정보 없음 항목', '비고'], result.candidates.map((c) => [`${c.title}${result.selected.includes(c.project_id) ? ' (비교 대상)' : ' (선정하지 않음)'}`, `${c.award_year ?? '–'}년판`, c.reason, c.info_missing.join(', ') || '–', c.notes ?? '–'])),
+      table(['후보', '수록연도', '선정 이유', '정보 없음 항목', '비고'], result.candidates.map((c) => [`${c.title}${result.selected.includes(c.project_id) ? ' (비교 대상)' : ' (선정하지 않음)'}`, `${c.award_year ?? '–'}년판`, c.reason, c.info_missing.join(', ') || '–', [c.notes, c.duplicate_check].filter(Boolean).join(' / ') || '–'])),
       el('p', { class: 'small' }, `제외한 사업: ${result.exclusions.map((e) => `${e.project_id}(${e.reason})`).join(' / ')}`),
     ]),
     sectionBlock('4', '공통 비교표', [
@@ -216,8 +216,15 @@ function showResult(data, origin) {
     status.className = 'error-box'; status.hidden = false;
     return false;
   }
+  try {
+    renderResult(out, data);
+  } catch (error) {
+    currentResult = null; out.replaceChildren();
+    status.className = 'error-box'; status.hidden = false;
+    status.replaceChildren(el('strong', {}, `${origin}: 형식이 맞지 않아 표시하지 못했습니다.`), el('p', {}, String(error?.message ?? error).slice(0, 200)));
+    return false;
+  }
   currentResult = data; status.hidden = true; status.className = ''; status.replaceChildren();
-  renderResult(out, data);
   out.scrollIntoView({ block: 'start' });
   return true;
 }
@@ -233,10 +240,15 @@ function setupCompare() {
     if (!file) return;
     const fail = (message) => { currentResult = null; $('compare-result').replaceChildren(); status.className = 'error-box'; status.hidden = false; status.replaceChildren(el('strong', {}, message)); event.target.value = ''; };
     if (file.size > MAX_RESULT_BYTES) return fail('result.json이 너무 큽니다(최대 2MB). Claude가 만든 result.json이 맞는지 확인하세요.');
-    let data;
-    try { data = JSON.parse(await file.text()); } catch { return fail('JSON을 읽을 수 없습니다. Claude가 만든 result.json 파일을 선택하세요(PDF는 여기에 올리지 않습니다).'); }
-    showResult(data, '불러온 파일');
-    event.target.value = '';
+    try {
+      let data;
+      try { data = JSON.parse(await file.text()); } catch { return fail('JSON을 읽을 수 없습니다. Claude가 만든 result.json 파일을 선택하세요(PDF는 여기에 올리지 않습니다).'); }
+      showResult(data, '불러온 파일');
+    } catch (error) {
+      fail(`파일을 처리하지 못했습니다: ${String(error?.message ?? error).slice(0, 120)}`);
+    } finally {
+      event.target.value = ''; // 같은 파일을 고쳐서 다시 선택할 수 있게 한다
+    }
   });
 }
 
