@@ -39,7 +39,7 @@ export function renderSpatialModel(container, {
     ?? SPATIAL_TOPICS.find(topic=>topic.id===previous.spatialTopic)?.id
     ?? SPATIAL_TOPICS.find(topic=>spatialEvidence(projects,snapshot,topic.id).matches.length)?.id
     ?? SPATIAL_TOPICS[0].id;
-  const state={topic:savedTopic,...normalizeSpatialView({angle:previous.spatialAngle??32,zoom:previous.spatialZoom??100,cutaway:previous.spatialCutaway==='true'})};
+  const state={topic:savedTopic,...normalizeSpatialView({angle:previous.spatialAngle??32,zoom:previous.spatialZoom??100,transparency:previous.spatialTransparency??0})};
   const idPrefix=`spatial-instance-${++nextInstance}`;
   let initialized=false,destroyed=false,drawModel,drawText,topics,download;
   const root=el('details',{class:'spatial-panel'});
@@ -48,7 +48,7 @@ export function renderSpatialModel(container, {
   root.append(summary,content);container.replaceChildren(root);
 
   function save() {
-    Object.assign(container.dataset,{spatialTopic:state.topic,spatialAngle:String(state.angle),spatialZoom:String(state.zoom),spatialCutaway:String(state.cutaway),spatialOpen:String(root.open)});
+    Object.assign(container.dataset,{spatialTopic:state.topic,spatialAngle:String(state.angle),spatialZoom:String(state.zoom),spatialTransparency:String(state.transparency),spatialOpen:String(root.open)});
   }
   function updateTopic(id) {
     if(destroyed || !SPATIAL_TOPICS.some(topic=>topic.id===id)) return;
@@ -59,7 +59,7 @@ export function renderSpatialModel(container, {
     if(initialized || destroyed) return;
     initialized=true;
     content.append(el('p',{class:'spatial-scope'},scopeLabel),
-      el('p',{class:'notice'},'가상 학교 공간 개념 모델입니다. 연결된 사례의 실제 건물을 재현하지 않습니다. 모든 키워드에서 같은 학교와 시점을 유지합니다.'));
+      el('p',{class:'spatial-disclaimer'},'가상 학교 개념도 · 실제 사례의 건물 형상과 다릅니다.'));
     topics=el('div',{class:'spatial-topic-controls','aria-label':'공간으로 살펴볼 키워드'});
     for(const topic of SPATIAL_TOPICS) {
       const button=el('button',{type:'button','data-topic':topic.id},topic.label);
@@ -73,29 +73,40 @@ export function renderSpatialModel(container, {
     const rotationValue=el('output',{},`${state.angle}°`);
     const zoom=el('input',{type:'range',min:80,max:130,step:5,value:state.zoom,'aria-label':'공간 모델 확대 비율'});
     const zoomValue=el('output',{},`${state.zoom}%`);
-    const cutaway=el('input',{type:'checkbox','aria-label':'공유동과 학습동 지붕·앞벽 숨기기'});cutaway.checked=state.cutaway;
+    const transparency=el('input',{type:'range',min:0,max:100,step:5,value:state.transparency,'aria-label':'공유동과 학습동 내부 투과율'});
+    const transparencyValue=el('output',{},`${state.transparency}%`);
+    const exterior=el('button',{type:'button',class:'spatial-action'},'전체 외관');
+    const interior=el('button',{type:'button',class:'spatial-action'},'내부 보기');
     const reset=el('button',{type:'button',class:'spatial-action'},'시점 초기화');
     controls.append(el('label',{},['회전',rotation,rotationValue]),el('label',{},['확대',zoom,zoomValue]),
-      el('label',{class:'spatial-check'},[cutaway,'지붕·앞벽 숨기기']),reset);
+      el('label',{class:'spatial-transparency'},['내부 투과',transparency,transparencyValue]),
+      el('div',{class:'spatial-view-presets'},[exterior,interior,reset]));
     const narrative=el('div',{class:'spatial-narrative'}),evidenceList=el('div',{class:'spatial-evidence'});
     const status=el('p',{class:'sr-only',role:'status','aria-live':'polite'});
     download=el('button',{type:'button',class:'spatial-action'},'보고서용 개념도 저장 (SVG)');
     const downloadStatus=el('p',{class:'small',role:'status'});
     const alternative=el('details',{class:'spatial-alternative'},[
       el('summary',{},'그림 대신 공간 설명 읽기'),
-      el('p',{},'두 층의 ㄷ자 교사동 안에 중정과 학습 데크가 있습니다. 앞쪽 한쪽은 별도 출입구를 가진 공유 도서관, 다른 쪽은 이동식 구획을 둔 학습 공용동입니다. 지붕·앞벽을 숨기면 가구와 구획을 볼 수 있습니다.'),
+      el('p',{},'두 층의 ㄷ자 교사동 안에 중정과 학습 데크가 있습니다. 앞쪽 한쪽은 별도 출입구를 가진 공유 도서관, 다른 쪽은 이동식 구획을 둔 학습 공용동입니다. 내부 투과를 높이면 두 앞쪽 동의 지붕과 앞벽이 옅어져 가구와 구획을 볼 수 있습니다. 뒤쪽 교사동의 외형은 그대로 유지합니다.'),
       el('ul',{},SPATIAL_TOPICS.map(topic=>el('li',{},`${topic.label}: ${topic.space}`))),
     ]);
-    visual.append(stage,fallback,controls,el('p',{class:'small'},'슬라이더는 방향키로 조절할 수 있습니다. 자동 회전은 하지 않습니다. 노란 점과 공간 이름이 선택 위치를 표시합니다.'),alternative,download,downloadStatus);
+    visual.append(stage,fallback,controls,el('p',{class:'small'},'내부 투과는 앞쪽 도서관·학습동에 적용됩니다. 0%는 전체 외관, 100%는 내부 구조입니다. 방향키로도 조절할 수 있습니다.'),alternative,download,downloadStatus);
     layout.append(visual,narrative);content.append(topics,status,layout,evidenceList,
       el('details',{class:'spatial-credits'},[el('summary',{},'모델 출처 · 이용 조건 · 가정'),
         el('p',{},`${SPATIAL_MODEL.creator} · ${SPATIAL_MODEL.date} · ${SPATIAL_MODEL.model_id}`),
         el('p',{},SPATIAL_MODEL.source),el('p',{},SPATIAL_MODEL.rights),el('p',{},SPATIAL_MODEL.assumptions),
         el('p',{},'현재는 형상을 생성하는 규칙을 직접 작성한 단계입니다. 실제 자료 자동 수집·AI 학습·도면 변환은 연결하지 않았습니다. 모델은 사업 집계와 다운로드의 건수를 바꾸지 않습니다.') ]));
-    function changed() {save();rotationValue.textContent=`${state.angle}°`;zoomValue.textContent=`${state.zoom}%`;drawModel();}
+    function changed() {
+      save();rotationValue.textContent=`${state.angle}°`;zoomValue.textContent=`${state.zoom}%`;transparencyValue.textContent=`${state.transparency}%`;
+      exterior.setAttribute('aria-pressed',String(state.transparency===0));interior.setAttribute('aria-pressed',String(state.transparency===100));
+      transparency.setAttribute('aria-valuetext',`${state.transparency}%${state.transparency===0?' · 전체 외관':state.transparency===100?' · 내부 구조':''}`);
+      drawModel();
+    }
     rotation.addEventListener('input',()=>{state.angle=Number(rotation.value);changed();});
     zoom.addEventListener('input',()=>{state.zoom=Number(zoom.value);changed();});
-    cutaway.addEventListener('change',()=>{state.cutaway=cutaway.checked;changed();});
+    transparency.addEventListener('input',()=>{state.transparency=Number(transparency.value);changed();});
+    exterior.addEventListener('click',()=>{state.transparency=0;state.angle=32;state.zoom=100;transparency.value='0';rotation.value='32';zoom.value='100';changed();});
+    interior.addEventListener('click',()=>{state.transparency=100;transparency.value='100';changed();});
     reset.addEventListener('click',()=>{state.angle=32;state.zoom=100;rotation.value='32';zoom.value='100';changed();});
     drawModel=()=>{
       try {
@@ -108,8 +119,8 @@ export function renderSpatialModel(container, {
       const topic=SPATIAL_TOPICS.find(item=>item.id===state.topic),evidence=spatialEvidence(projects,snapshot,state.topic);
       for(const button of topics.children) button.setAttribute('aria-pressed',String(button.dataset.topic===state.topic));
       narrative.replaceChildren(el('p',{class:'eyebrow'},'공간 해석'),el('h4',{},topic.space),el('p',{},topic.interpretation),
-        el('p',{class:'small'},topic.assumption),el('p',{class:'spatial-model-kind'},'가상 개념 모델 · 미래 시나리오/실제 건물 모델 아님'),
-        el('p',{class:'small'},'선택한 키워드의 가능한 공간 표현입니다. 키워드 빈도·학습 효과·미래 수요를 형상에서 추론하지 않습니다.'));
+        el('details',{class:'spatial-assumptions'},[el('summary',{},'해석의 범위'),el('p',{class:'small'},topic.assumption),
+          el('p',{class:'small'},'가상 개념 모델입니다. 키워드 빈도·학습 효과·미래 수요를 형상에서 추론하지 않습니다.')]));
       status.textContent=`${topic.label} 공간 강조. 현재 조건의 연결 사업 ${evidence.matches.length}건.`;
       evidenceList.replaceChildren(el('h4',{},'현재 조건의 키워드 근거 사례'),
         el('p',{class:'small'},`조회 사업 ${evidence.denominator}건 중 ${topic.label} 기록 ${evidence.matches.length}건. 키워드 분류 근거이며 위 가상 학교 형상의 근거가 아닙니다.`));
@@ -150,7 +161,7 @@ export function renderSpatialModel(container, {
         downloadStatus.textContent='현재 시점의 개념도에 모델 성격·출처·이용 조건·가정을 포함해 저장했습니다.';
       } catch {downloadStatus.textContent='이미지를 저장할 수 없습니다. 화면의 공간 설명과 출처를 확인하세요.';}
     });
-    drawText();drawModel();save();
+    drawText();changed();
   }
   root.addEventListener('toggle',()=>{save();if(root.open)initialize();});
   const api={setTopic(id){updateTopic(id);},destroy(){destroyed=true;}};

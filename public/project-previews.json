@@ -1,0 +1,89 @@
+{
+  "verified_at": "2026-10-19",
+  "method": "공식 작품집 뷰어에서 페이지 번호·표제·대표 도판을 브라우저로 대조한 에이전트 확인. 전체 원문에 대한 사람의 검수 완료를 의미하지 않음.",
+  "display_mode": "official_viewer",
+  "rights_note": "경기도교육청 원문 뷰어 연결. 개별 도판의 이미지 복사·재배포 허가를 부여하거나 확인한 목록이 아님.",
+  "entries": [
+    {
+      "project_id": "goe-2023-014",
+      "source_id": "goe-yearbook-2023",
+      "title": "고산중학교",
+      "viewer_page": 14,
+      "viewer_url": "https://www.goe.go.kr/resource/ebook/h/ebook_76/index.html#page=14",
+      "observed_heading": "고산중학교 신축 설계공모",
+      "verification_note": "14–15쪽 화면에서 표제·해마 설계자 표기·조감도 대조. 광주시 고산동 사업의 작품집 항목이며 다른 지역 동명 학교 사진으로 대체하지 않음."
+    },
+    {
+      "project_id": "goe-2023-022",
+      "source_id": "goe-yearbook-2023",
+      "title": "남양1중 교사",
+      "viewer_page": 22,
+      "viewer_url": "https://www.goe.go.kr/resource/ebook/h/ebook_76/index.html#page=22",
+      "observed_heading": "남양1중 교사 신축 설계공모",
+      "verification_note": "22–23쪽 화면에서 표제·학건축 설계자 표기·조감도 대조."
+    },
+    {
+      "project_id": "goe-2023-030",
+      "source_id": "goe-yearbook-2023",
+      "title": "남양2초등학교",
+      "viewer_page": 30,
+      "viewer_url": "https://www.goe.go.kr/resource/ebook/h/ebook_76/index.html#page=30",
+      "observed_heading": "남양2초등학교 신축 설계공모",
+      "verification_note": "30–31쪽 화면에서 표제·이림 설계자 표기·조감도 대조."
+    },
+    {
+      "project_id": "goe-2024-012",
+      "source_id": "goe-yearbook-2024",
+      "title": "중리초",
+      "viewer_page": 12,
+      "viewer_url": "https://www.goe.go.kr/resource/ebook/h/ebook_82/index.html#page=12",
+      "observed_heading": "중리초등학교 신축 설계공모",
+      "verification_note": "12–13쪽 화면에서 표제와 대표 조감도를 대조."
+    },
+    {
+      "project_id": "goe-2024-020",
+      "source_id": "goe-yearbook-2024",
+      "title": "경안초",
+      "viewer_page": 20,
+      "viewer_url": "https://www.goe.go.kr/resource/ebook/h/ebook_82/index.html#page=20",
+      "observed_heading": "경안초등학교 신축 설계공모",
+      "verification_note": "20–21쪽 화면에서 표제와 대표 조감도를 대조."
+    },
+    {
+      "project_id": "goe-2024-028",
+      "source_id": "goe-yearbook-2024",
+      "title": "기흥1중",
+      "viewer_page": 28,
+      "viewer_url": "https://www.goe.go.kr/resource/ebook/h/ebook_82/index.html#page=28",
+      "observed_heading": "기흥1중학교 신축 설계공모",
+      "verification_note": "28–29쪽 화면에서 표제와 대표 조감도를 대조."
+    },
+    {
+      "project_id": "goe-2025-012",
+      "source_id": "goe-yearbook-2025",
+      "title": "용인반도체고",
+      "viewer_page": 10,
+      "viewer_url": "https://www.goe.go.kr/resource/ebook/h/ebook_85/index.html#page=10",
+      "observed_heading": "용인반도체고등학교 신축 설계공모",
+      "verification_note": "10–11쪽 화면에서 표제와 대표 조감도를 대조. Snapshot의 yearbook_page=12는 같은 사업의 배치·입면 도판으로 확인했으며 원자료 값은 보존."
+    },
+    {
+      "project_id": "goe-2025-020",
+      "source_id": "goe-yearbook-2025",
+      "title": "주암초·중통합학교",
+      "viewer_page": 18,
+      "viewer_url": "https://www.goe.go.kr/resource/ebook/h/ebook_85/index.html#page=18",
+      "observed_heading": "주암초·중통합학교 신축 설계공모",
+      "verification_note": "18–19쪽 화면에서 표제와 대표 조감도를 대조. Snapshot의 yearbook_page=20은 같은 사업의 배치·입면 도판으로 확인했으며 원자료 값은 보존."
+    },
+    {
+      "project_id": "goe-2025-028",
+      "source_id": "goe-yearbook-2025",
+      "title": "수원교육지원청 청사",
+      "viewer_page": 26,
+      "viewer_url": "https://www.goe.go.kr/resource/ebook/h/ebook_85/index.html#page=26",
+      "observed_heading": "경기도수원교육지원청 청사 신축 설계공모",
+      "verification_note": "26–27쪽 화면에서 표제와 대표 조감도를 대조. 학교가 아닌 교육지원청 청사. Snapshot의 yearbook_page=28은 변경하지 않음."
+    }
+  ]
+}

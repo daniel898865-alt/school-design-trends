@@ -1,62 +1,40 @@
-import { REGIONS, UNKNOWN_REGION_LABEL } from '../data/normalize.js';
-import { el } from './dom.js';
-import { KOREA_REGIONS, projectPoint } from './region-geometry.js';
+import {GYEONGGI_CITIES, GYEONGGI_BOUNDARY_AS_OF} from '../domain/gyeonggi.js';
+import {el} from './dom.js';
+import {GYEONGGI_REGIONS, GYEONGGI_DISTRICTS, PROJECTION} from './region-geometry.js';
 
-const SHORT_LABELS = new Map([
-  ['11', '서울'], ['26', '부산'], ['27', '대구'], ['28', '인천'], ['29', '광주'],
-  ['30', '대전'], ['31', '울산'], ['36', '세종'], ['41', '경기'], ['51', '강원'],
-  ['43', '충북'], ['44', '충남'], ['52', '전북'], ['46', '전남'], ['47', '경북'],
-  ['48', '경남'], ['50', '제주'],
-]);
-const VALID_CODES = new Set([...REGIONS.map(region => region.code), 'unknown']);
 const popupCleanups = new WeakMap();
 
-// Label anchors only. The hit targets are the source's administrative polygons,
-// not these reference points. Small areas also have native buttons below the map.
-const MARKERS = new Map([
-  ['11', { point: [126.98, 37.57] }],
-  ['26', { point: [129.07, 35.18] }],
-  ['27', { point: [128.60, 35.87] }],
-  ['28', { point: [126.50, 37.75] }],
-  ['29', { point: [126.85, 35.16] }],
-  ['30', { point: [127.38, 36.35] }],
-  ['31', { point: [129.31, 35.54] }],
-  ['36', { point: [127.27, 36.60] }],
-  ['41', { point: [127.48, 37.44] }],
-  ['51', { point: [128.30, 37.70] }],
-  ['43', { point: [127.70, 36.70] }],
-  ['44', { point: [126.80, 36.52] }],
-  ['52', { point: [127.10, 35.75] }],
-  ['46', { point: [126.90, 34.80] }],
-  ['47', { point: [128.75, 36.30] }],
-  ['48', { point: [128.22, 35.28] }],
-  ['50', { point: [126.54, 33.38] }],
-]);
-
-/**
- * Presentation mapping only: use the domain's count without summing, coercing,
- * inferring absent rows as zero, or silently choosing between duplicate rows.
- */
-export function regionMapEntries(regions) {
+/** Presentation only: missing or duplicate count rows are never converted to zero. */
+export function regionMapEntries(regions, cityCode = '') {
+  const city = GYEONGGI_CITIES.find(row => row.code === cityCode);
+  const definitions = cityCode ? (city?.districts ?? []) : GYEONGGI_CITIES;
   const rows = Array.isArray(regions) ? regions : [];
-  const grouped = new Map();
-  for (const row of rows) {
-    if (!row || typeof row !== 'object' || !VALID_CODES.has(row.code)) continue;
-    grouped.set(row.code, [...(grouped.get(row.code) ?? []), row]);
-  }
-  const definitions = [...REGIONS.map(({ code, name }) => ({ code, label: name })),
-    { code: 'unknown', label: UNKNOWN_REGION_LABEL }];
-  return definitions.map(({ code, label }) => {
-    const matches = grouped.get(code) ?? [];
+  return [...definitions, {code: 'unknown', name: cityCode ? '구 미확인' : '시·군 미확인'}].map(({code, name}) => {
+    const matches = rows.filter(row => row?.code === code);
     const value = matches[0]?.count;
-    const status = matches.length === 0 ? 'missing' : matches.length > 1 ? 'duplicate'
+    const status = !matches.length ? 'missing' : matches.length > 1 ? 'duplicate'
       : Number.isSafeInteger(value) && value >= 0 ? 'available' : 'invalid';
-    return {
-      code, label, shortLabel: SHORT_LABELS.get(code) ?? label,
-      count: status === 'available' ? value : null,
-      hasData: status === 'available', status,
-    };
+    return {code, label: name, shortLabel: name, count: status === 'available' ? value : null,
+      hasData: status === 'available', status};
   });
+}
+
+export function regionPopupPosition({x, y, width, height, popupWidth, popupHeight}) {
+  const gap = 14, inset = 8;
+  const left = x + gap + popupWidth <= width - inset ? x + gap : x - gap - popupWidth;
+  const top = y + gap + popupHeight <= height - inset ? y + gap : y - gap - popupHeight;
+  return {left: Math.max(inset, Math.min(left, width - popupWidth - inset)),
+    top: Math.max(inset, Math.min(top, height - popupHeight - inset))};
+}
+
+/** Fit a selected city's real geometry without stretching either axis. */
+export function regionMapViewport(cityCode = '') {
+  const city = GYEONGGI_REGIONS.find(row => row.code === cityCode);
+  if (!city) return {x: 0, y: 0, width: PROJECTION.width, height: PROJECTION.height};
+  const bounds = city.bounds, aspect = PROJECTION.width / PROJECTION.height;
+  const height = Math.max(bounds.height, bounds.width / aspect) * 1.16;
+  const width = height * aspect;
+  return {x: bounds.x + bounds.width / 2 - width / 2, y: bounds.y + bounds.height / 2 - height / 2, width, height};
 }
 
 function svgNode(tag, attributes = {}) {
@@ -64,218 +42,152 @@ function svgNode(tag, attributes = {}) {
   for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, value);
   return node;
 }
-
-/** Keep a popup within its map even near coasts and on narrow screens. */
-export function regionPopupPosition({ x, y, width, height, popupWidth, popupHeight }) {
-  const gap = 14;
-  const inset = 8;
-  const left = x + gap + popupWidth <= width - inset ? x + gap : x - gap - popupWidth;
-  const top = y + gap + popupHeight <= height - inset ? y + gap : y - gap - popupHeight;
-  return {
-    left: Math.max(inset, Math.min(left, width - popupWidth - inset)),
-    top: Math.max(inset, Math.min(top, height - popupHeight - inset)),
-  };
-}
-
-function countText(entry) {
-  return entry.hasData ? `수집 사례 ${entry.count.toLocaleString('ko-KR')}건` : '집계 미제공';
-}
+const countText = entry => entry?.hasData ? `수집 사례 ${entry.count.toLocaleString('ko-KR')}건` : '집계 미제공';
 
 /**
- * rows: view.byRegion ({code,label,count}); callback receives '', 'unknown',
- * or a canonical two-digit region code. It may synchronously rebuild this view.
+ * regions: all city counts before city filtering; districts: selected-city counts
+ * before district filtering. Callbacks update the same shared query/export state.
  */
-export function renderRegionMap(container, { regions, selectedRegion = '', onSelect }) {
+export function renderRegionMap(container, {regions, districts = [], selectedRegion = '', selectedDistrict = '', onSelect, onSelectDistrict}) {
   popupCleanups.get(container)?.();
-  const entries = regionMapEntries(regions);
-  const selected = VALID_CODES.has(selectedRegion) ? selectedRegion : '';
-  // Keep a live region across root redraws so selection changes are announced.
+  const city = GYEONGGI_CITIES.find(row => row.code === selectedRegion);
+  const districtMode = Boolean(city?.districts.length);
+  const entries = regionMapEntries(districtMode ? districts : regions, districtMode ? city.code : '');
+  const cityEntries = regionMapEntries(regions);
+  const selected = districtMode ? selectedDistrict : selectedRegion;
+  const geometries = districtMode ? GYEONGGI_DISTRICTS.filter(row => row.parentCode === city.code) : GYEONGGI_REGIONS;
+  const geometryByCode = new Map(geometries.map(row => [row.code, row]));
+  const viewport = regionMapViewport(districtMode ? city.code : '');
   const selection = container.querySelector('.region-map-selection') ??
-    el('p', { class: 'region-map-selection', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' });
+    el('p', {class: 'region-map-selection', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true'});
   const listOpen = container.querySelector('.region-map-list')?.open ?? false;
   container.replaceChildren();
   container.classList.add('region-map-panel');
+  container.dataset.level = districtMode ? 'district' : 'city';
 
   function choose(code, fromPolygon = false) {
-    onSelect(code);
-    // Root's render() replaces the clicked node. Find the new equivalent without
-    // scrolling the page, preserving the keyboard user's place in the map.
+    if (districtMode) onSelectDistrict?.(code);
+    else onSelect(code);
+    const attribute = fromPolygon ? 'regionShape' : 'region';
     const selector = fromPolygon ? '[data-region-shape]' : 'button[data-region]';
-    const current = [...container.querySelectorAll(selector)].find(node =>
-      (fromPolygon ? node.dataset.regionShape : node.dataset.region) === code);
-    current?.focus({ preventScroll: true });
+    const replacement = [...container.querySelectorAll(selector)].find(node => node.dataset[attribute] === code);
+    // Selecting a city with general districts changes the map level. The city
+    // overview button takes focus instead of leaving focus in a removed element.
+    (replacement ?? container.querySelector('[data-city-overview]') ?? container.querySelector('[data-map-reset]'))?.focus({preventScroll: true});
   }
-
-  const heading = el('div', { class: 'region-map-heading' }, [
-    el('div', {}, [el('p', { class: 'eyebrow' }, 'EXPLORE BY REGION'), el('h2', {}, '지도에서 지역을 선택하세요')]),
-    el('span', { class: 'region-map-caption' }, '경계 기준 2026.04.01 · 17개 지역 비교'),
+  const heading = el('div', {class: 'region-map-heading'}, [
+    el('div', {}, [el('p', {class: 'eyebrow'}, 'GYEONGGI'), el('h2', {}, districtMode ? `${city.name} · 구 선택` : '경기도 시·군별 사례')]),
+    el('span', {class: 'region-map-caption'}, districtMode ? `${city.districts.length}개 일반구` : '31개 시·군'),
   ]);
-  const toolbar = el('div', { class: 'region-map-toolbar' });
-  const reset = el('button', {
-    type: 'button', 'data-region': '', 'aria-pressed': String(selected === ''),
-    'aria-label': '전체 시도 보기, 지역 선택 해제',
-  }, '전체 시도');
-  reset.addEventListener('click', () => choose(''));
-  const unknown = entries.find(entry => entry.code === 'unknown');
-  const unknownButton = el('button', {
-    type: 'button', 'data-region': 'unknown', 'aria-pressed': String(selected === 'unknown'),
-    'aria-label': `${unknown.label}, ${countText(unknown)}`,
-  }, `${unknown.label} · ${countText(unknown)}`);
+  const toolbar = el('div', {class: 'region-map-toolbar'});
+  const reset = el('button', {type: 'button', 'data-map-reset': '', 'aria-pressed': String(!selectedRegion),
+    'aria-label': '경기도 전체 보기, 시군과 구 선택 해제'}, districtMode ? '← 경기도 전체' : '경기도 전체');
+  reset.addEventListener('click', () => {onSelect(''); container.querySelector('[data-map-reset]')?.focus({preventScroll: true});});
+  toolbar.append(reset);
+  if (districtMode) {
+    const overview = el('button', {type: 'button', 'data-city-overview': '', 'data-region': '', 'aria-pressed': String(!selectedDistrict)}, `${city.name} 전체`);
+    overview.addEventListener('click', () => choose(''));
+    toolbar.append(overview);
+  }
+  const unknown = entries.find(row => row.code === 'unknown');
+  const unknownButton = el('button', {type: 'button', 'data-region': 'unknown', 'aria-pressed': String(selected === 'unknown'),
+    'aria-label': `${unknown.label}, ${countText(unknown)}`}, `${unknown.label} · ${unknown.hasData ? `${unknown.count}건` : '미제공'}`);
   unknownButton.addEventListener('click', () => choose('unknown'));
-  toolbar.append(reset, unknownButton);
+  toolbar.append(unknownButton);
 
-  const svg = svgNode('svg', { viewBox: '0 0 560 650', preserveAspectRatio: 'xMidYMid meet',
-    class: 'region-map-outline', role: 'group', 'aria-label': '2026년 4월 1일 기준 시도별 지도. Tab으로 이동하고 Enter 또는 Space로 선택합니다.' });
-  const canvas = el('div', { class: 'region-map-canvas' }, svg);
-  const popup = el('div', { class: 'region-map-popup', role: 'tooltip', id: `${container.id || 'region-map'}-tooltip`, hidden: true });
+  const svg = svgNode('svg', {viewBox: `${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`,
+    preserveAspectRatio: 'xMidYMid meet', class: 'region-map-outline', role: 'group',
+    'aria-label': `${districtMode ? city.name + ' 일반구' : '경기도 시군'} 행정경계 지도. Tab 이동, Enter 또는 Space 선택.`});
+  const canvas = el('div', {class: 'region-map-canvas'}, svg);
+  const popup = el('div', {class: 'region-map-popup', role: 'tooltip', id: `${container.id || 'region-map'}-tooltip`, hidden: true});
   canvas.append(popup);
   const shapes = new Map();
-  let hoveredCode = null;
-  let focusedCode = null;
-  let closeTimer;
-  let dismissed = false;
-  let focusPreview = false;
-
+  let hoveredCode = null, focusedCode = null, closeTimer, dismissed = false, focusPreview = false;
   function hidePopup() {
-    clearTimeout(closeTimer);
-    popup.hidden = true;
-    document.removeEventListener('keydown', handleEscape);
-    for (const shape of shapes.values()) {
-      shape.classList.remove('is-previewed');
-      shape.removeAttribute('aria-describedby');
-    }
+    clearTimeout(closeTimer); popup.hidden = true; document.removeEventListener('keydown', handleEscape);
+    for (const shape of shapes.values()) {shape.classList.remove('is-previewed'); shape.removeAttribute('aria-describedby');}
   }
-  function handleEscape(event) {
-    if (event.key === 'Escape') { dismissed = true; hidePopup(); }
-  }
+  function handleEscape(event) { if (event.key === 'Escape') {dismissed = true; hidePopup();} }
   popupCleanups.set(container, hidePopup);
   function showPopup(entry, event) {
     clearTimeout(closeTimer);
     if (dismissed || !canvas.isConnected) return;
-    for (const [code, shape] of shapes) {
-      shape.classList.toggle('is-previewed', code === entry.code);
-      shape.removeAttribute('aria-describedby');
-    }
+    for (const [code, shape] of shapes) {shape.classList.toggle('is-previewed', code === entry.code); shape.removeAttribute('aria-describedby');}
     shapes.get(entry.code)?.setAttribute('aria-describedby', popup.id);
-    popup.replaceChildren(
-      el('span', { class: 'region-map-popup-kicker' }, '현재 조회 조건'),
-      el('strong', { class: 'region-map-popup-name' }, entry.label),
-      el('span', { class: 'region-map-popup-count' }, countText(entry)),
-      el('span', { class: 'region-map-popup-hint' }, entry.hasData && entry.count === 0
-        ? '현재 조건에 맞는 수집 사례가 없습니다.' : '클릭 또는 Enter로 이 지역을 선택하세요.'),
-    );
-    popup.hidden = false;
-    // Hover can open the popup while keyboard focus is outside the map.
-    document.addEventListener('keydown', handleEscape);
+    const subdistricts = !districtMode && GYEONGGI_CITIES.find(row => row.code === entry.code)?.districts.length;
+    popup.replaceChildren(el('strong', {class: 'region-map-popup-name'}, entry.label),
+      el('span', {class: 'region-map-popup-count'}, countText(entry)),
+      el('span', {class: 'region-map-popup-hint'}, subdistricts ? '선택하면 구별로 더 살펴볼 수 있습니다.'
+        : entry.hasData && entry.count === 0 ? '현재 조건에 맞는 수집 사례가 없습니다.' : '클릭 또는 Enter로 선택'));
+    popup.hidden = false; document.addEventListener('keydown', handleEscape);
     const rect = canvas.getBoundingClientRect();
-    const point = projectPoint(...MARKERS.get(entry.code).point);
-    const position = regionPopupPosition({
-      x: event ? event.clientX - rect.left : point.x / 560 * rect.width,
-      y: event ? event.clientY - rect.top : point.y / 650 * rect.height,
-      width: rect.width, height: rect.height,
-      popupWidth: popup.offsetWidth, popupHeight: popup.offsetHeight,
-    });
-    popup.style.left = `${position.left}px`;
-    popup.style.top = `${position.top}px`;
+    const point = geometryByCode.get(entry.code)?.labelPoint ?? {x: viewport.x + viewport.width / 2, y: viewport.y + viewport.height / 2};
+    const position = regionPopupPosition({x: event ? event.clientX - rect.left : (point.x - viewport.x) / viewport.width * rect.width,
+      y: event ? event.clientY - rect.top : (point.y - viewport.y) / viewport.height * rect.height,
+      width: rect.width, height: rect.height, popupWidth: popup.offsetWidth, popupHeight: popup.offsetHeight});
+    popup.style.left = `${position.left}px`; popup.style.top = `${position.top}px`;
   }
   function leaveRegion() {
-    hoveredCode = null;
-    clearTimeout(closeTimer);
-    closeTimer = setTimeout(() => {
-      if (focusedCode) showPopup(entries.find(entry => entry.code === focusedCode));
-      else hidePopup();
-    }, 150);
+    hoveredCode = null; clearTimeout(closeTimer);
+    closeTimer = setTimeout(() => focusedCode ? showPopup(entries.find(row => row.code === focusedCode)) : hidePopup(), 150);
   }
   function previewPointer(entry, event) {
-    if (event.pointerType === 'touch') return;
-    // Re-rendering beneath a stationary mouse can emit pointerenter. Preserve
-    // keyboard/selection information until the user actually moves the pointer.
-    if (focusPreview && event.type !== 'pointermove') return;
-    if (event.type === 'pointermove' && !focusPreview) return;
-    focusPreview = false;
-    dismissed = false;
-    hoveredCode = entry.code;
-    showPopup(entry, event);
+    if (event.pointerType === 'touch' || (focusPreview && event.type !== 'pointermove') || (event.type === 'pointermove' && !focusPreview)) return;
+    focusPreview = false; dismissed = false; hoveredCode = entry.code; showPopup(entry, event);
   }
-  for (const entry of entries.filter(item => item.code !== 'unknown')) {
-    const geometry = KOREA_REGIONS.find(region => region.code === entry.code);
-    const shape = svgNode('g', { class: 'region-map-area', 'data-region-shape': entry.code,
-      tabindex: '0', role: 'button', 'aria-pressed': String(selected === entry.code),
-      'aria-label': `${entry.label}, ${countText(entry)}` });
-    for (const d of geometry.paths) shape.append(svgNode('path', { d, 'fill-rule': 'evenodd' }));
+  const visibleEntries = entries.filter(row => geometryByCode.has(row.code));
+  for (const entry of visibleEntries) {
+    const shape = svgNode('g', {class: 'region-map-area', 'data-region-shape': entry.code,
+      tabindex: '0', role: 'button', 'aria-pressed': String(selected === entry.code), 'aria-label': `${entry.label}, ${countText(entry)}`});
+    for (const d of geometryByCode.get(entry.code).paths) shape.append(svgNode('path', {d, 'fill-rule': 'evenodd'}));
     shape.addEventListener('pointerenter', event => previewPointer(entry, event));
     shape.addEventListener('pointermove', event => previewPointer(entry, event));
     shape.addEventListener('pointerleave', leaveRegion);
-    shape.addEventListener('focus', () => { focusPreview = true; focusedCode = entry.code; dismissed = false; showPopup(entry); });
-    shape.addEventListener('blur', () => { focusedCode = null; if (!hoveredCode) hidePopup(); });
+    shape.addEventListener('focus', () => {focusPreview = true; focusedCode = entry.code; dismissed = false; showPopup(entry);});
+    shape.addEventListener('blur', () => {focusedCode = null; if (!hoveredCode) hidePopup();});
     shape.addEventListener('click', () => choose(entry.code, true));
-    shape.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        choose(entry.code, true);
-      }
-    });
-    shapes.set(entry.code, shape);
-    svg.append(shape);
+    shape.addEventListener('keydown', event => {if (event.key === 'Enter' || event.key === ' ') {event.preventDefault(); choose(entry.code, true);}});
+    shapes.set(entry.code, shape); svg.append(shape);
   }
-  const labels = svgNode('g', { class: 'region-map-labels', 'aria-hidden': 'true' });
-  for (const entry of entries.filter(item => item.code !== 'unknown')) {
-    const point = projectPoint(...MARKERS.get(entry.code).point);
-    const label = svgNode('text', { x: point.x, y: point.y, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
-      class: selected === entry.code ? 'is-selected' : '' });
+  const labels = svgNode('g', {class: 'region-map-labels', 'aria-hidden': 'true'});
+  for (const entry of visibleEntries) {
+    const point = geometryByCode.get(entry.code).labelPoint;
+    const label = svgNode('text', {x: point.x, y: point.y, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+      class: selected === entry.code ? 'is-selected' : '',
+      'font-size': viewport.width / 560 * (districtMode ? 17 : 12), 'stroke-width': viewport.width / 560 * 3});
     label.textContent = `${entry.shortLabel}${selected === entry.code ? ' ✓' : ''}`;
-    // Small-city labels may extend beyond the polygon. Clicking the name must
-    // still select that named region, rather than the neighbouring region below.
     label.addEventListener('pointerenter', event => previewPointer(entry, event));
     label.addEventListener('pointermove', event => previewPointer(entry, event));
     label.addEventListener('pointerleave', leaveRegion);
-    label.addEventListener('click', () => choose(entry.code, true));
-    labels.append(label);
+    label.addEventListener('click', () => choose(entry.code, true)); labels.append(label);
   }
   svg.append(labels);
   popup.addEventListener('pointerenter', () => clearTimeout(closeTimer));
   popup.addEventListener('pointerleave', leaveRegion);
-  canvas.addEventListener('pointerdown', event => {
-    if (event.target === svg || event.target === canvas) { dismissed = true; hidePopup(); }
-  });
+  canvas.addEventListener('pointerdown', event => {if (event.target === svg || event.target === canvas) {dismissed = true; hidePopup();}});
 
-  const list = el('details', { class: 'region-map-list', open: listOpen },
-    el('summary', {}, '지역 이름으로 선택 · 작은 구역은 아래 버튼을 이용하세요'));
-  const markers = el('div', { class: 'region-map-markers', role: 'group', 'aria-label': '17개 시도 선택' });
-  for (const entry of entries.filter(item => item.code !== 'unknown')) {
-    const active = selected === entry.code;
-    const button = el('button', {
-      type: 'button', class: 'region-map-marker', 'data-region': entry.code,
-      'data-count-status': entry.status, 'aria-pressed': String(active),
-      'aria-label': `${entry.label}, ${countText(entry)}`,
-    }, [
-      el('span', { class: 'region-map-name' }, entry.shortLabel),
-      el('span', { class: 'region-map-count' }, entry.hasData ? `${entry.count.toLocaleString('ko-KR')}건` : '미제공'),
-      el('span', { class: 'region-map-selected-mark', 'aria-hidden': 'true' }, active ? '✓' : ''),
-    ]);
+  const list = el('details', {class: 'region-map-list', open: listOpen}, el('summary', {}, districtMode ? '구 이름으로 선택' : '시·군 이름으로 선택'));
+  const markers = el('div', {class: 'region-map-markers', role: 'group', 'aria-label': districtMode ? `${city.name} 구 선택` : '31개 시군 선택'});
+  for (const entry of visibleEntries) {
+    const button = el('button', {type: 'button', class: 'region-map-marker', 'data-region': entry.code,
+      'data-count-status': entry.status, 'aria-pressed': String(selected === entry.code), 'aria-label': `${entry.label}, ${countText(entry)}`},
+    [el('span', {class: 'region-map-name'}, entry.shortLabel), el('span', {class: 'region-map-count'}, entry.hasData ? `${entry.count}건` : '미제공')]);
     button.addEventListener('click', () => choose(entry.code));
-    button.addEventListener('pointerenter', () => { dismissed = false; hoveredCode = entry.code; showPopup(entry); });
-    button.addEventListener('pointerleave', leaveRegion);
-    button.addEventListener('focus', () => { dismissed = false; focusedCode = entry.code; showPopup(entry); });
-    button.addEventListener('blur', () => { focusedCode = null; if (!hoveredCode) hidePopup(); });
-    markers.append(button);
+    button.addEventListener('focus', () => {dismissed = false; focusedCode = entry.code; showPopup(entry);});
+    button.addEventListener('blur', () => {focusedCode = null; if (!hoveredCode) hidePopup();}); markers.append(button);
   }
   list.append(markers);
-  const explanation = el('div', { class: 'region-map-explanation' }, [
-    el('p', {}, '숫자는 현재 조회 조건의 수집 사례입니다. 지역을 누르면 시도 선택 상자와 사례·표·내보내기에 같은 조건이 적용됩니다.'),
-    el('p', {}, '0건은 현재 조회 결과가 없다는 뜻이며, 해당 지역의 전체 설계사업이 없다는 뜻은 아닙니다. ‘미제공’은 유효한 집계가 전달되지 않은 상태입니다.'),
-    el('p', {}, '여러 시도에 걸친 사업은 각 지역에 표시될 수 있어 시도별 숫자의 합과 전체 고유 사업 수가 다를 수 있습니다.'),
-    el('p', { class: 'region-map-key' }, [el('span', { class: 'region-map-selected-swatch', 'aria-hidden': 'true' }), '초록색과 ✓는 선택한 지역을 뜻합니다. 색의 진하기는 건수와 관계없습니다.']),
-    el('p', { class: 'region-map-geography-note' }, '경계에 마우스를 올리거나 Tab으로 이동하면 지역 정보가 표시됩니다. 클릭·Enter·Space로 선택하고 Esc로 팝업을 닫습니다. 작은 구역은 ‘지역 이름으로 선택’을 펼쳐 누를 수 있습니다.'),
-    el('p', { class: 'region-map-source' }, [ '경계 기준 2026.04.01 · 기존 17개 지역 집계와 비교하기 위한 지도입니다. 2026년 7월 이후 행정구역 개편은 반영하지 않았습니다. ',
-      el('a', { href: 'https://github.com/yunzecho-eng/school-design-trends/blob/main/docs/MAP_SOURCE.md', target: '_blank', rel: 'noopener noreferrer' }, '자료 출처·가공 방법') ]),
-    el('p', { class: 'region-map-source' }, [ '원자료: 통계청 SGIS(공공누리 제1유형) · 가공: ',
-      el('a', { href: 'https://github.com/vuski/admdongkor', target: '_blank', rel: 'noopener noreferrer' }, 'vuski/admdongkor'), ' · ',
-      el('a', { href: 'https://creativecommons.org/licenses/by/4.0/', target: '_blank', rel: 'noopener noreferrer' }, 'CC BY 4.0'), ' · 이 페이지에서 시도 합치기·공유 경계 정리·단순화 적용' ]),
+  const explanation = el('details', {class: 'region-map-explanation'}, [el('summary', {}, '지도 기준·출처'),
+    el('p', {}, `경계 기준 ${GYEONGGI_BOUNDARY_AS_OF} · 원주소에 명시된 시·군과 구만 연결합니다. 구가 없는 옛주소는 ‘구 미확인’에 남깁니다.`),
+    el('p', {}, '숫자는 현재 조건의 수집 사례 수이며 지역 전체 설계사업 통계가 아닙니다. 구 선택 전 건수로 비교하며 선택 조건은 사례·표·내보내기에 함께 적용합니다.'),
+    el('p', {}, 'Tab으로 구역을 이동하고 Enter·Space로 선택합니다. Esc는 팝업을 닫습니다. 초록색은 선택 지역이며 건수의 크기를 뜻하지 않습니다.'),
+    el('p', {class: 'region-map-source'}, ['통계청 SGIS(공공누리 제1유형) · ',
+      el('a', {href: 'https://github.com/vuski/admdongkor', target: '_blank', rel: 'noopener noreferrer'}, 'vuski/admdongkor'), ' (CC BY 4.0). 시군·구 합치기·공유 경계 정리·단순화. ',
+      el('a', {href: 'https://github.com/yunzecho-eng/school-design-trends/blob/main/docs/MAP_SOURCE.md', target: '_blank', rel: 'noopener noreferrer'}, '출처·변환 기록')]),
   ]);
-  container.append(heading, toolbar, selection,
-    el('p', { class: 'region-map-instruction' }, '구역 위에 마우스를 올려 살펴보고, 클릭해 지역을 선택하세요.'),
-    canvas, list, explanation);
-  const selectedEntry = entries.find(entry => entry.code === selected);
-  selection.textContent = selectedEntry ? `선택한 지역: ${selectedEntry.label} · ${countText(selectedEntry)}` : '선택한 지역: 전체 시도';
+  container.append(heading, toolbar, selection, canvas, list, explanation);
+  const selectedEntry = entries.find(row => row.code === selected);
+  const selectedCity = cityEntries.find(row => row.code === selectedRegion);
+  selection.textContent = selectedEntry ? `${districtMode ? city.name + ' · ' : ''}${selectedEntry.label} · ${countText(selectedEntry)}`
+    : districtMode ? `${city.name} 전체 · ${countText(selectedCity)}` : '지역을 선택하면 오른쪽 결과가 함께 바뀝니다.';
 }

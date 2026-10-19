@@ -10,6 +10,7 @@ import {summarizeFirms} from '../domain/firms.js';
 import {summarizeBuildings} from '../domain/buildings.js';
 import {summarizeTopics, TOPICS} from '../domain/topics.js';
 import {exportSelectedProjectRows} from '../data/export.js';
+import {GYEONGGI_CITIES, resolveGyeonggiLocation, filterGyeonggiProjects, summarizeGyeonggiProjects} from '../domain/gyeonggi.js';
 
 // Legacy UI fixtures used these five names before the team topic dictionary existed.
 // Record-level _raw from parseSnapshot is retained, including the original evidence.
@@ -122,7 +123,9 @@ export function createDataProvider(input) {
   const firms = new Map(snapshot.firms.map((item) => [item.firm_id, item]));
   const sources = new Map(snapshot.sources.map((item) => [item.source_id, item]));
   const buildings = new Map(snapshot.buildings.map((item) => [item.building_id, item]));
+  const localityProjects = snapshot.projects.map(project => ({...project, region_codes:projectRegions(project, schools)}));
   const options = freezeTree({
+    cities: [...GYEONGGI_CITIES.map(({code, name}) => ({value: code, label: name})), {value: 'unknown', label: '시·군 확인 필요'}],
     regions: [...REGIONS.map(({code, name}) => ({value: code, label: name})), {value: 'unknown', label: UNKNOWN_REGION_LABEL}],
     schoolLevels: levelRules.levels.map(({value, label}) => ({value, label})),
     topics: [...TOPICS.map(({topic_id, label}) => ({value: topic_id, label})), {value: 'unclassified', label: '미분류'}],
@@ -136,6 +139,7 @@ export function createDataProvider(input) {
     const regionCodes = project.region_codes ?? projectRegions(project, schools);
     return {
       ...project,
+      locality: resolveGyeonggiLocation({...project,region_codes:regionCodes}),
       region_codes: regionCodes,
       region_name: regionCodes.length ? regionCodes.map((code) => regionName(code) ?? code).join(' · ') : UNKNOWN_REGION_LABEL,
       school_level_label: LEVEL_LABELS.get(project.school_level) ?? '미확인',
@@ -156,7 +160,7 @@ export function createDataProvider(input) {
   function normalizeFilters(inputFilters = {}) {
     if (!object(inputFilters)) throw new Error('조회 조건은 객체여야 합니다.');
     const filters = {query: '', region: '', schoolLevel: '', months: 36,
-      dateBasis: options.defaultDateBasis, asOf: snapshot.as_of, topic: '', year: '', ...inputFilters};
+      dateBasis: options.defaultDateBasis, asOf: snapshot.as_of, topic: '', year: '', city: '', district: '', ...inputFilters};
     if (typeof filters.query !== 'string' || filters.query.length > 200) throw new Error('검색어는 200자 이내여야 합니다.');
     if (!isValidDate(filters.asOf)) throw new Error('올바른 조회 기준일이 필요합니다.');
     if (!Number.isInteger(filters.months) || filters.months < 1 || filters.months > 120) throw new Error('기간은 1~120개월이어야 합니다.');
@@ -165,6 +169,9 @@ export function createDataProvider(input) {
     for (const [key, values] of [['region', options.regions], ['schoolLevel', options.schoolLevels], ['topic', options.topics]]) {
       if (filters[key] !== '' && !values.some(({value}) => value === filters[key])) throw new Error(`지원하지 않는 조회 조건: ${key}`);
     }
+    if (filters.city !== '' && !options.cities.some(v => v.value === filters.city)) throw new Error('지원하지 않는 경기도 시·군입니다.');
+    const districts = GYEONGGI_CITIES.find(c => c.code === filters.city)?.districts ?? [];
+    if (filters.district !== '' && (!districts.length || (filters.district !== 'unknown' && !districts.some(d => d.code === filters.district)))) throw new Error('선택한 시의 구를 확인해 주세요.');
     return filters;
   }
 
@@ -173,7 +180,8 @@ export function createDataProvider(input) {
     const query = filters.query.trim().toLocaleLowerCase('ko');
     // Both display and shared export receive precisely this search subset.
     // Unclassified uses A2's decision, including unknown-only topic evidence.
-    const searchSnapshot = {...snapshot, projects: snapshot.projects.filter((project) =>
+    const candidates = (filters.city || filters.district) ? filterGyeonggiProjects(localityProjects, {city: filters.city, district: filters.district}) : localityProjects;
+    const searchSnapshot = {...snapshot, projects: candidates.filter((project) =>
       (!query || searchable.get(project.project_id).includes(query))
       && (filters.topic !== 'unclassified' || unclassified.has(project.project_id)))};
     const domainFilters = {
@@ -231,6 +239,7 @@ export function createDataProvider(input) {
     const buildingSummary = summarizeBuildings(buildingSnapshot, {asOf: ctx.filters.asOf});
     const exported = exportSelectedProjectRows(snapshot, ctx.projects);
     const yearbookSummary = ctx.filters.dateBasis === 'award_year' ? summarizeByYearbookYear(ctx.projects) : null;
+    const localitySummary = summarizeGyeonggiProjects(ctx.projects, {city: ctx.filters.city});
     return {
       projects: ctx.projects.map(enrich),
       summary: {
@@ -250,6 +259,9 @@ export function createDataProvider(input) {
         draftTopicProjects: exported.metadata.draft_topic_projects,
       },
       byRegion: projectSummary.byRegion.map((r) => ({label: r.region_name, count: r.projects, code: r.region_code, articles: r.articles})),
+      byCity: localitySummary.cities,
+      byDistrict: localitySummary.districts,
+      localitySummary,
       byMonth: projectSummary.byMonth.map((r) => ({label: r.month, count: r.projects,
         articles: r.articles, partial: r.partial, from: r.from, to: r.to})),
       byYear: yearbookSummary?.byYear.map((r) => ({label: String(r.year), year: String(r.year), count: r.projects, articles: r.articles})) ?? [],
