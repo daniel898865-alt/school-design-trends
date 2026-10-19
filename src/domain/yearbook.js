@@ -18,8 +18,8 @@ export function yearbookYear(project) {
 //   각 사업에는 region_codes, yearbook_year, window_source_ids(존재가 확인된 출처)를 덧붙인다.
 export function filterProjectsByYearbookYear(snapshot, options = {}) {
   const { years = null, regions = null, schoolLevels = null, topics = null } = options;
-  if (years !== null && !(Array.isArray(years) && years.every((y) => Number.isInteger(y)))) {
-    throw new Error(`years는 정수 연도 배열이어야 함: ${JSON.stringify(years)}`);
+  if (years !== null && !(Array.isArray(years) && years.every((y) => Number.isInteger(y) && y >= 1000 && y <= 9999))) {
+    throw new Error(`years는 1000~9999 정수 연도 배열이어야 함: ${JSON.stringify(years)}`);
   }
   const schoolsById = new Map(snapshot.schools.map((s) => [s.school_id, s]));
   const sourcesById = new Map(snapshot.sources.map((s) => [s.source_id, s]));

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createDataProvider} from '../../src/ui/data-provider.js';
 import {summarizeYearTrends} from '../../src/domain/year-trends.js';
+import {serializeCsv} from '../../src/ui/export.js';
 
 const fixture = JSON.parse(readFileSync(new URL('../../public/demo.snapshot.json', import.meta.url), 'utf8'));
 const provider = createDataProvider(fixture);
@@ -27,6 +28,74 @@ test('exactly six explicit fictional completion dates are supplied and six remai
     if (project.completion_date) assert.ok(project.award_date < project.completion_date);
   }
   assert.ok(fixture.coverage.limitations.some((note) => note.includes('준공일 6건') && note.includes('가상')));
+});
+
+const realInput = JSON.parse(readFileSync(new URL('../../data/goe-annual.snapshot.json', import.meta.url), 'utf8'));
+
+test('real yearbook selection and export retain all166 or the same69 in2024 without fabricated dates', () => {
+  const actual = createDataProvider(realInput);
+  const all = actual.select();
+  assert.equal(actual.defaultDateBasis, 'award_year');
+  assert.equal(all.summary.projects, 166);
+  assert.deepEqual(all.byYear.map((row) => [row.year, row.count]), [['2023', 42], ['2024', 69], ['2025', 55]]);
+  assert.deepEqual(all.byMonth, []);
+  assert.equal(all.metadata.months, null);
+  assert.equal(all.metadata.window, null);
+  assert.equal(all.metadata.is_demo, false);
+  assert.equal(all.summary.dataIssueProjects, realInput.projects.filter((p) => p.data_issues.length).length);
+  const filters = {year: '2024'};
+  const view = actual.select(filters), exported = actual.exportRows(filters);
+  assert.equal(view.summary.projects, 69);
+  assert.equal(exported.rows.length, 69);
+  assert.deepEqual(exported.rows.map((p) => p.project_id), view.projects.map((p) => p.project_id));
+  assert.ok(exported.rows.every((row) => row.award_year === 2024 && row.award_date === null && row.basis_date === null && row.is_demo === 'false'));
+  assert.equal(exported.metadata.selected_year, '2024');
+  assert.equal(exported.metadata.row_count, 69);
+  assert.ok(exported.metadata.coverage_limitations.some((note) => note.includes('초안')));
+  const csv = serializeCsv(exported);
+  for (const project of view.projects) assert.ok(csv.includes(project.project_id));
+  assert.ok(!csv.includes(realInput.projects.find((p) => p.award_year === 2023).project_id));
+  const datedView = actual.select({dateBasis: 'award_date'});
+  assert.equal(datedView.summary.projects, 0);
+  assert.equal(datedView.summary.excludedUnknownDates, 166);
+  assert.equal(datedView.summary.excludedUnknownYears, undefined);
+});
+
+test('real filters and exports agree on year, query, region, school level and missing classification', () => {
+  const actual = createDataProvider(realInput);
+  for (const filters of [{year: '2024', query: '초'}, {year: '2023', topic: 'outdoor_learning'},
+    {year: '2025', schoolLevel: 'high'}, {year: '2024', topic: 'unclassified'}, {region: '11'}, {query: '없는항목ZZZ'}]) {
+    const view = actual.select(filters), exported = actual.exportRows(filters);
+    assert.deepEqual(exported.rows.map((p) => p.project_id), view.projects.map((p) => p.project_id), JSON.stringify(filters));
+    assert.equal(exported.metadata.row_count, view.summary.projects);
+  }
+  assert.equal(actual.select({year: '2024', topic: 'unclassified'}).summary.projects, 69);
+  assert.equal(actual.snapshot.projects.find((p) => p.project_id === 'goe-2024-482').school_level, 'unknown');
+  assert.throws(() => actual.select({year: '2099'}));
+});
+
+test('yearbook trends mark2024 topic information unavailable and never use it as0% incidence', () => {
+  const actual = createDataProvider(realInput);
+  const view = actual.select();
+  const trends = summarizeYearTrends(view.projects, actual.snapshot, {dateBasis: 'award_year'});
+  assert.equal(trends.project_count, 166);
+  assert.equal(trends.window, null);
+  assert.equal(trends.months, null);
+  assert.ok(trends.years.every((row) => row.from === null && row.to === null && row.precision === 'yearbook'));
+  const middle = trends.years.find((row) => row.year === '2024');
+  assert.equal(middle.project_count, 69);
+  assert.equal(middle.unclassified, 69);
+  assert.equal(middle.topic_data_status, 'unavailable');
+  assert.ok(middle.topics.every((topic) => topic.share === null));
+  assert.deepEqual(middle.comparison.topic_changes, []);
+  const last = trends.years.find((row) => row.year === '2025');
+  assert.equal(last.comparison.topic_status, 'missing_topic_data');
+  assert.deepEqual(last.comparison.topic_changes, []);
+  assert.ok(last.draft_topic_projects > 0);
+  assert.ok(last.topics.some((topic) => topic.review_status_counts.draft_ai > 0));
+  const empty = summarizeYearTrends([], actual.snapshot, {dateBasis: 'award_year', year: '2024'});
+  assert.deepEqual(empty.years.map((row) => [row.year, row.project_count]), [['2024', 0]]);
+  assert.equal(empty.years[0].topic_data_status, 'unavailable');
 });
 
 test('completion view, yearly facts and shared export agree on six cases and six missing dates', () => {

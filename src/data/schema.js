@@ -1,6 +1,12 @@
-// docs/DATA_CONTRACT.md v0.1의 필드 목록. 규격이 바뀌면 이 파일과 문서를 함께 고친다.
+// docs/DATA_CONTRACT.md v0.2. v0.1은 선택 확장 필드 없이 계속 읽을 수 있다.
 
-export const SCHEMA_VERSION = '0.1';
+export const SCHEMA_VERSION = '0.2';
+export const SUPPORTED_SCHEMA_VERSIONS = ['0.1', '0.2'];
+export const PROJECT_EXTENSION_FIELDS = {
+  award_year: 'year', yearbook_page: 'positive_int', facility_kind: 'text',
+  concept_title: 'text', design_tags: 'list', special_flags: 'list',
+  designers: 'designers', jury_notes: 'jury_notes', metrics: 'metrics', data_issues: 'list',
+};
 
 export const ENUMS = {
   source_type: ['magazine', 'competition', 'news', 'official_school', 'official_building', 'official_company'],
@@ -32,6 +38,7 @@ export const KINDS = {
       title: 'text', school_ids: 'list', region_code: 'region', school_level: 'level', project_type: 'text',
       competition_date: 'date', award_date: 'date', completion_date: 'date', firm_ids: 'list',
       source_ids: 'list', summary: 'text', topic_evidence: 'objects', images: 'objects',
+      ...PROJECT_EXTENSION_FIELDS,
     },
     refs: { school_ids: 'schools', firm_ids: 'firms', source_ids: 'sources' },
   },

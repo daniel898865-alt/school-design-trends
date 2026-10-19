@@ -1,5 +1,6 @@
 // 내보내기 데이터. 화면과 같은 filterProjects 조건을 사용하고 가상 자료 표시·출처·기준일을 함께 담는다.
 import { filterProjects } from '../domain/projects.js';
+import { filterProjectsByYearbookYear, YEARBOOK_BASIS } from '../domain/yearbook.js';
 import { summarizeBuildings } from '../domain/buildings.js';
 import { TOPICS } from '../domain/topics.js';
 import { regionName, UNKNOWN_REGION_LABEL } from './normalize.js';
@@ -22,7 +23,14 @@ function baseMetadata(snapshot, extra) {
 // exportRows(snapshot, filters) -> {rows[], columns[], metadata}
 // filters는 filterProjects 옵션과 같다. 화면에 전달한 값을 그대로 넘긴다.
 export function exportRows(snapshot, filters = {}) {
-  const projects = filterProjects(snapshot, filters);
+  const projects = ['award_year', YEARBOOK_BASIS].includes(filters.dateBasis)
+    ? filterProjectsByYearbookYear(snapshot, filters) : filterProjects(snapshot, filters);
+  return exportSelectedProjectRows(snapshot, projects);
+}
+
+// The screen can pass its already selected projects, including search/unclassified
+// selection, without re-running a different date filter on the same data.
+export function exportSelectedProjectRows(snapshot, projects) {
   const schools = new Map(snapshot.schools.map((s) => [s.school_id, s]));
   const firms = new Map(snapshot.firms.map((f) => [f.firm_id, f]));
   const sources = new Map(snapshot.sources.map((s) => [s.source_id, s]));
@@ -36,15 +44,20 @@ export function exportRows(snapshot, filters = {}) {
     { key: 'school_level', label: '학교급' },
     { key: 'region_names', label: '시도' },
     { key: 'basis_date', label: `기준 날짜(${projects.meta.date_basis})` },
+    { key: 'award_year', label: '작품집 수록연도(실제 당선연도 아님)' },
+    { key: 'yearbook_page', label: '작품집 기록 쪽수(원문 대조 필요)' },
     { key: 'competition_date', label: '공모일' },
     { key: 'award_date', label: '당선일' },
     { key: 'completion_date', label: '사업 준공일' },
     { key: 'firm_names', label: '당선 사무소' },
     { key: 'topic_ids', label: '설계 주제' },
-    { key: 'article_count', label: '기사 수' },
+    { key: 'article_count', label: '연결된 자료 수' },
     { key: 'source_titles', label: '출처' },
     { key: 'source_urls', label: '출처 링크' },
     { key: 'summary', label: '요약' },
+    { key: 'topic_review_status', label: '주제 근거 검토 상태' },
+    { key: 'data_issue_count', label: '확인·검수 메모 수' },
+    { key: 'data_issues', label: '확인·검수 메모' },
   ];
 
   const rows = projects.map((p) => {
@@ -56,7 +69,9 @@ export function exportRows(snapshot, filters = {}) {
       school_names: p.school_ids.map((id) => schools.get(id)?.name ?? `${id}(학교 정보 없음)`).join(LIST_SEP),
       school_level: p.school_level,
       region_names: p.region_codes.length ? p.region_codes.map((c) => regionName(c) ?? c).join(LIST_SEP) : UNKNOWN_REGION_LABEL,
-      basis_date: p.basis_date,
+      basis_date: p.basis_date ?? null,
+      award_year: p.award_year ?? null,
+      yearbook_page: p.yearbook_page ?? null,
       competition_date: p.competition_date,
       award_date: p.award_date,
       completion_date: p.completion_date,
@@ -70,6 +85,9 @@ export function exportRows(snapshot, filters = {}) {
       }).join(LIST_SEP),
       source_urls: srcIds.map((id) => sources.get(id)?.url).filter(Boolean).join(LIST_SEP),
       summary: p.summary,
+      topic_review_status: [...new Set(p.topic_evidence.map((e) => e.review_status ?? 'unknown'))].join(LIST_SEP),
+      data_issue_count: p.data_issues?.length ?? 0,
+      data_issues: (p.data_issues ?? []).join(LIST_SEP),
     };
   });
 
@@ -81,11 +99,17 @@ export function exportRows(snapshot, filters = {}) {
       kind: 'projects',
       query_as_of: m.query_as_of,
       date_basis: m.date_basis,
-      window: `(${m.window.start}, ${m.window.end}]`,
+      window: m.window ? `(${m.window.start}, ${m.window.end}]` : null,
+      selected_years: m.years ?? null,
       filters: m.filters,
       row_count: rows.length,
-      excluded_unknown_dates: m.excluded_unknown_dates,
+      excluded_unknown_dates: m.excluded_unknown_dates ?? 0,
+      excluded_unknown_years: m.excluded_unknown_years ?? 0,
       excluded_out_of_range: m.excluded_out_of_range,
+      data_issue_projects: projects.filter((p) => p.data_issues?.length).length,
+      data_issue_count: projects.reduce((total, p) => total + (p.data_issues?.length ?? 0), 0),
+      draft_topic_projects: projects.filter((p) => p.topic_evidence.some((e) => /^draft(?:_|$)/.test(e.review_status ?? ''))).length,
+      unclassified_projects: projects.filter((p) => !p.topic_evidence.some((e) => KNOWN_TOPICS.has(e.topic_id))).length,
     }),
   };
 }

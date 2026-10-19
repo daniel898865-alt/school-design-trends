@@ -56,6 +56,8 @@ test('특정 연도와 다른 필터를 함께 쓴다', () => {
   const empty = summarizeByYearbookYear(filterProjectsByYearbookYear(snapshot, { years: [2022] }));
   assert.deepEqual(empty.byYear, [{ year: 2022, projects: 0, articles: 0, byType: {}, bySchoolLevel: {} }]); // 빈 연도도 0으로 표시
   assert.throws(() => filterProjectsByYearbookYear(snapshot, { years: '2023' }));
+  for (const invalid of [-1, 0, 999, 10000, 2023.5, '2023'])
+    assert.throws(() => filterProjectsByYearbookYear(snapshot, { years: [invalid] }), /1000~9999/);
 });
 
 test('수록연도는 날짜로 바꾸지 않고 기존 날짜 조회는 그대로', () => {

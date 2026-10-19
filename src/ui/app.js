@@ -15,10 +15,19 @@ let lastFilters;
 let loadSequence = 0;
 let yearBasisInitialized = false;
 const form = $('filters');
-const dateLabels = { award_date: '당선일', competition_date: '공모일', published_at: '기사 게시일', completion_date: '사업 준공일' };
+const dateLabels = { award_date: '당선일', competition_date: '공모일', published_at: '기사 게시일', completion_date: '사업 준공일', award_year: '공모집 수록연도' };
 const sections = ['overview', 'projects', 'firms', 'buildings', 'topics', 'years'];
 
-function filters() { return { ...Object.fromEntries(new FormData(form)), months: Number($('months').value) }; }
+function filters() { return { ...Object.fromEntries(new FormData(form)), months: Number($('months').value), year: $('dateBasis').value === 'award_year' ? $('year').value : '' }; }
+function periodLabel() { return lastFilters.dateBasis === 'award_year' ? `${lastFilters.year || '전체 수록연도'} · 실제 당선일·준공일 아님` : `${lastFilters.asOf}까지 최근 ${lastFilters.months}개월`; }
+function projectDate(project) { return lastFilters.dateBasis === 'award_year' ? String(project.yearbook_year ?? project.award_year ?? '미확인') : project.basis_date || '미확인'; }
+function syncDateControls() {
+  const yearMode = $('dateBasis').value === 'award_year';
+  $('year-field').hidden = !yearMode;
+  $('year').disabled = !yearMode;
+  $('months').disabled = yearMode;
+  $('months').closest('label').hidden = yearMode;
+}
 function message(text) { $('notice').textContent = text; }
 function failure(error) {
   const box = $('error');
@@ -36,6 +45,7 @@ function options(nextProvider) {
   for (const [id, key, label] of [['region', 'regions', '전체 시도'], ['schoolLevel', 'schoolLevels', '전체 학교급'], ['topic', 'topics', '전체 주제']]) {
     $(id).replaceChildren(el('option', { value: '' }, label), ...nextProvider.options[key].map(v => el('option', { value: v.value }, v.label)));
   }
+  $('year').replaceChildren(el('option', {value: ''}, '전체 수록연도'), ...(nextProvider.options.years ?? []).map(v => el('option', {value: v.value}, v.label)));
 }
 function restoreFilters(values) {
   for (const [key, value] of Object.entries(values)) {
@@ -44,7 +54,7 @@ function restoreFilters(values) {
   }
 }
 function defaultFilters(nextProvider) {
-  return { query: '', region: '', schoolLevel: '', months: 36, asOf: nextProvider.snapshot.as_of, dateBasis: section === 'years' ? 'completion_date' : 'award_date', topic: '' };
+  return { query: '', region: '', schoolLevel: '', months: 36, asOf: nextProvider.snapshot.as_of, dateBasis: nextProvider.defaultDateBasis === 'award_year' ? 'award_year' : section === 'years' ? 'completion_date' : 'award_date', topic: '', year: '' };
 }
 function renderWarnings() {
   const entries = view.diagnostics ?? provider.warnings ?? [];
@@ -97,7 +107,7 @@ function renderOverviewSummary() {
     : '전체 시도';
   $('overview-region-title').textContent = `${regionLabel} · 조회 결과`;
   $('overview-project-count').textContent = view.summary.projects.toLocaleString('ko-KR');
-  $('overview-region-context').textContent = `${dateLabels[lastFilters.dateBasis]} 기준 · ${lastFilters.asOf}까지 최근 ${lastFilters.months}개월 · 날짜 미확인 제외 ${view.summary.excludedUnknownDates}건`;
+  $('overview-region-context').textContent = `${dateLabels[lastFilters.dateBasis]} 기준 · ${periodLabel()} · ${lastFilters.dateBasis === 'award_year' ? '연도' : '날짜'} 미확인 제외 ${view.summary.excludedUnknownYears ?? view.summary.excludedUnknownDates}건`;
   const container = $('overview-projects');
   container.replaceChildren();
   if (view.empty) {
@@ -110,7 +120,7 @@ function renderOverviewSummary() {
     const button = el('button', { type: 'button', class: 'text-button', 'aria-haspopup': 'dialog', 'aria-label': `${title} 상세 보기` }, title);
     button.addEventListener('click', () => basicDetail(project));
     list.append(el('li', {}, [el('h3', {}, button),
-      el('p', { class: 'overview-case-meta' }, `${project.school_level_label || '학교급 미확인'} · ${project.region_name || '지역 미확인'} · ${dateLabels[lastFilters.dateBasis]} ${project.basis_date || '미확인'}`),
+      el('p', { class: 'overview-case-meta' }, `${project.school_level_label || '학교급 미확인'} · ${project.region_name || '지역 미확인'} · ${dateLabels[lastFilters.dateBasis]} ${projectDate(project)}`),
       el('p', { class: 'overview-case-summary' }, project.summary || '요약 미확인 · 상세 화면에서 출처를 확인하세요.'),
     ]));
   }
@@ -125,15 +135,16 @@ function renderProjects() {
   if (mode === 'table') {
     const dateLabel = dateLabels[lastFilters.dateBasis];
     const table = el('table', {}, [el('caption', { class: 'sr-only' }, '현재 필터에 해당하는 설계 사례'), el('thead', {}, el('tr', {}, ['설계사업', '시도', '학교급', dateLabel, '사무소'].map(t => el('th', { scope: 'col' }, t))))]);
-    table.append(el('tbody', {}, view.projects.map(p => el('tr', {}, [el('td', {}, projectButton(p, p.title)), el('td', {}, p.region_name || '지역 미확인'), el('td', {}, p.school_level_label || '학교급 미확인'), el('td', {}, p.basis_date || '미확인'), el('td', {}, p.firm_names.join(', ') || '미확인')]))));
+    table.append(el('tbody', {}, view.projects.map(p => el('tr', {}, [el('td', {}, projectButton(p, p.title)), el('td', {}, p.region_name || '지역 미확인'), el('td', {}, p.school_level_label || '학교급 미확인'), el('td', {}, projectDate(p)), el('td', {}, p.firm_names.join(', ') || '미확인')]))));
     container.append(table); return;
   }
   for (const p of view.projects) {
     const chips = [el('span', {}, p.region_name || '지역 미확인'), el('span', {}, p.school_level_label || '학교급 미확인')];
     if (provider.snapshot.is_demo) chips.push(el('span', { class: 'demo-chip' }, '가상 사례'));
+    else if (p.data_issues?.length) chips.push(el('span', {class: 'demo-chip'}, '확인 사항 있음'));
     const source = primaryProjectSource(p, provider.snapshot);
     const original = source ? el('a', { class: 'original-site-link', href: source.url, target: '_blank', rel: 'noopener noreferrer', referrerpolicy: 'no-referrer', 'aria-label': `${p.title || '설계사업'} 원문 사이트 (새 탭)`, title: source.title }, '원문 사이트 ↗') : el('span', { class: 'muted' }, '원문 링크 미등록');
-    const card = el('article', { class: 'project-card' }, [createProjectThumbnail(p, basicDetail), el('div', { class: 'card-content' }, [el('div', { class: 'chips' }, chips), el('h3', {}, projectButton(p, p.title)), el('p', { class: 'card-summary' }, p.summary || '요약 미확인 · 상세 화면에서 출처를 확인하세요.'), el('p', { class: 'card-date small' }, `${dateLabels[lastFilters.dateBasis]} ${p.basis_date || '미확인'}`), el('div', { class: 'card-bottom' }, [projectButton(p, '상세 보기'), original])])]);
+    const card = el('article', { class: 'project-card' }, [createProjectThumbnail(p, basicDetail), el('div', { class: 'card-content' }, [el('div', { class: 'chips' }, chips), el('h3', {}, projectButton(p, p.title)), el('p', { class: 'card-summary' }, p.summary || '요약 미확인 · 상세 화면에서 출처를 확인하세요.'), el('p', { class: 'card-date small' }, `${dateLabels[lastFilters.dateBasis]} ${projectDate(p)}`), el('div', { class: 'card-bottom' }, [projectButton(p, '상세 보기'), original])])]);
     container.append(card);
   }
 }
@@ -162,7 +173,7 @@ function navigateSection(next) {
   // preserve the user's explicitly chosen global date basis.
   if (next === 'years' && provider && !yearBasisInitialized) {
     const previous = $('dateBasis').value;
-    $('dateBasis').value = 'completion_date';
+    $('dateBasis').value = provider.defaultDateBasis === 'award_year' ? 'award_year' : 'completion_date';
     if (!render()) { $('dateBasis').value = previous; return; }
     yearBasisInitialized = true;
   }
@@ -173,15 +184,21 @@ function paint() {
     $('loading-help').hidden = true;
     const isDemo = provider.snapshot.is_demo;
     $('data-mode-title').textContent = isDemo ? '가상 자료로 보는 예시 화면' : '불러온 자료를 조회하는 화면';
-    $('data-mode-description').textContent = isDemo ? '실제 학교·공모·통계가 아닙니다. 기본 예시 이미지는 직접 만든 개념도입니다.' : '입력 검증과 출처의 사실 확인은 별개입니다. 자료 범위·누락·근거를 함께 확인하세요.';
-    $('scope').textContent = `${isDemo ? '가상 ' : ''}자료 기준 ${provider.snapshot.as_of} · 조회 기준 ${lastFilters.asOf} · 최근 ${lastFilters.months}개월 · ${dateLabels[lastFilters.dateBasis]} 기준`;
+    $('data-mode-description').textContent = isDemo ? '실제 학교·공모·통계가 아닙니다. 기본 예시 이미지는 직접 만든 개념도입니다.' : '수작업·AI 보조 입력 자료 · 사람의 원문 검수 전 · 설계 태그는 검토 전 초안입니다. 수집 범위와 확인 사항을 함께 읽으세요.';
+    $('scope').textContent = `${isDemo ? '가상 ' : ''}자료 기준 ${provider.snapshot.as_of} · ${dateLabels[lastFilters.dateBasis]} 기준 · ${periodLabel()}`;
+    syncDateControls();
     $('coverage-scope').textContent = `자료 범위: ${provider.snapshot.coverage?.scope || '미확인'}`;
+    $('quality-scope').textContent = isDemo ? '가상 입력으로 기능을 확인합니다.' : `현재 조회 중 확인 메모가 있는 사업 ${view.summary.dataIssueProjects ?? 0}건 · 메모 ${view.summary.dataIssueCount ?? 0}개(수치 오류 외 출처·검수 메모 포함). 학교·건물 미등록과 사무소·주제 미연결은 실제 0건을 뜻하지 않습니다.`;
     const firmNote = view.summary.unresolvedFirmReferences === undefined ? '사무소 목록이 연결된 고유 사무소' : `사무소 목록 기준 · 미확인 연결 ${view.summary.unresolvedFirmReferences}건 제외`;
-    $('stats').replaceChildren(stat('설계사업', view.summary.projects, '중복 사업을 제외한 고유 사례'), stat('연결된 자료', view.summary.sources, '사업 수와 구분한 출처 수'), stat('관련 학교', view.summary.schools, '동일 학교의 중복을 제외', '곳'), stat('참여 사무소', view.summary.firms, firmNote, '곳'));
+    $('stats').replaceChildren(stat('설계사업', view.summary.projects, '중복 사업을 제외한 고유 사례'), stat('연결된 자료', view.summary.sources, '사업 수와 구분한 출처·작품집 수'), stat('연결된 학교 자료', view.summary.schools, provider.snapshot.schools.length ? '동일 학교의 중복을 제외' : '학교 목록 미등록 · 실제 학교 수가 아님', '곳'), stat('참여 사무소', view.summary.firms, firmNote, '곳'));
     $('results-summary').textContent = `설계사업 ${view.summary.projects}건 · 같은 조회 조건 유지`;
     const mapView = lastFilters.region ? provider.select({ ...lastFilters, region: '' }) : view;
     renderRegionMap($('region-map'), { regions: mapView.byRegion, selectedRegion: lastFilters.region, onSelect: code => { $('region').value = code; render(); } });
-    bars($('region-chart'), view.byRegion); monthsChart($('month-chart'), view.byMonth);
+    bars($('region-chart'), view.byRegion);
+    if (lastFilters.dateBasis === 'award_year') {
+      bars($('month-chart'), view.byYear ?? []);
+      $('month-chart').append(el('p', {class: 'small'}, '공모집에 수록된 당선작 수입니다. 월별 추이·실제 당선연도·준공연도로 해석하지 않습니다.'));
+    } else monthsChart($('month-chart'), view.byMonth);
     const regionNote = view.summary.regionParticipations === undefined ?
       '시도별 수치는 지역 참여 건수이며 지역 미확인은 별도로 표시합니다.' :
       `시도별 참여 합계 ${view.summary.regionParticipations}건 · 전체 고유 사업 ${view.summary.projects}건 · 여러 시도에 걸친 사업 ${view.summary.multiRegionProjects ?? 0}건. 한 사업을 관련 시도마다 셀 수 있어 합계가 다릅니다. 지역 미확인은 별도 항목입니다.`;
@@ -202,7 +219,7 @@ function paint() {
     $('export-csv').disabled = $('export-md').disabled = view.empty;
     renderWarnings();
     switchSection(section);
-    message(`${isDemo ? '가상 ' : ''}설계사업 ${view.summary.projects}건을 표시합니다. 날짜 미확인으로 제외된 사례 ${view.summary.excludedUnknownDates}건.`);
+    message(`${isDemo ? '가상 ' : ''}설계사업 ${view.summary.projects}건을 표시합니다. ${lastFilters.dateBasis === 'award_year' ? '수록연도' : '날짜'} 미확인으로 제외된 사례 ${view.summary.excludedUnknownYears ?? view.summary.excludedUnknownDates}건.`);
 }
 function render() {
   if (!provider || !form.reportValidity()) return false;
@@ -230,20 +247,21 @@ function installProvider(next) {
   yearBasisInitialized = section === 'years';
   paint();
 }
-async function loadDemo() {
+async function loadDataset(name = 'goe') {
   const sequence = ++loadSequence;
-  message('예시 자료를 불러오는 중입니다…');
+  message('자료를 불러오는 중입니다…');
   try {
-    const response = await fetch('public/demo.snapshot.json');
+    const response = await fetch(name === 'demo' ? 'public/demo.snapshot.json' : 'data/goe-annual.snapshot.json');
     if (!response.ok) throw new Error('예시 자료를 불러오지 못했습니다. 배포 주소 또는 로컬 미리보기 서버에서 열었는지 확인해 주세요.');
     const next = createDataProvider(await response.text());
-    if (sequence === loadSequence) installProvider(next);
+    if (sequence === loadSequence) { installProvider(next); $('dataset').value = name; }
   } catch (error) { if (sequence === loadSequence) failure(error); }
 }
 form.addEventListener('submit', event => { event.preventDefault(); render(); });
 form.addEventListener('change', () => render());
 $('reset').addEventListener('click', () => { if (!provider) return; form.reset(); restoreFilters(defaultFilters(provider)); $('buildings-view').dataset.ageFilter = 'all'; delete $('years-view').dataset.selectedYear; render(); });
-$('reload-demo').addEventListener('click', loadDemo);
+$('reload-demo').addEventListener('click', () => loadDataset('demo'));
+$('dataset').addEventListener('change', event => loadDataset(event.target.value));
 $('overview-results-link').addEventListener('click', event => {
   event.preventDefault();
   const results = $('overview-region-results');
@@ -268,9 +286,9 @@ $('import-file').addEventListener('change', async event => {
   const file = event.target.files[0]; if (!file) return;
   const sequence = ++loadSequence;
   try {
-    if (file.size > 1_000_000) throw new Error('파일은 1 MB 이하여야 합니다.');
+    if (file.size > 5_000_000) throw new Error('파일은 5 MB 이하여야 합니다.');
     const next = createDataProvider(await file.text());
-    if (sequence === loadSequence) installProvider(next);
+    if (sequence === loadSequence) { installProvider(next); $('dataset').value = 'imported'; }
   } catch (error) { if (sequence === loadSequence) failure(error); }
   event.target.value = '';
 });
@@ -284,4 +302,4 @@ for (const type of ['csv', 'md']) $('export-' + type).addEventListener('click', 
     message(`${provider.snapshot.is_demo ? '가상 ' : ''}설계사업 ${data.rows.length}건의 ${type.toUpperCase()} 다운로드를 시작했습니다. 자료 기준일·조회 조건·출처를 포함합니다.`);
   } catch (error) { failure(error); }
 });
-loadDemo();
+loadDataset();

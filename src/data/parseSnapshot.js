@@ -1,6 +1,6 @@
 // Snapshot 입력 검증·정규화·중복 제거.
 // 미확인 값은 null(목록은 [])로 두고 0이나 임의 값으로 채우지 않는다. 원본 레코드는 _raw에 보존한다.
-import { ENUMS, KINDS, KIND_NAMES, SCHEMA_VERSION } from './schema.js';
+import { ENUMS, KINDS, KIND_NAMES, SCHEMA_VERSION, SUPPORTED_SCHEMA_VERSIONS, PROJECT_EXTENSION_FIELDS } from './schema.js';
 import { cleanText, normalizeRegion, normalizeSchoolLevel, normalizeTitle } from './normalize.js';
 import { isValidDate, toDateOnly } from '../domain/dates.js';
 
@@ -44,7 +44,7 @@ function buildSnapshot(data, report) {
   }
 
   if (!('schema_version' in data)) report('warning', 'missing_field', 'schema_version', 'schema_version 누락');
-  else if (data.schema_version !== SCHEMA_VERSION) {
+  else if (!SUPPORTED_SCHEMA_VERSIONS.includes(data.schema_version)) {
     report('warning', 'schema_version', 'schema_version', `지원 버전 ${SCHEMA_VERSION}과 다른 버전 "${data.schema_version}"`);
   }
 
@@ -112,7 +112,7 @@ function readTable(kind, rows, report) {
 }
 
 function defaultFor(type) {
-  if (type === 'list' || type === 'objects') return [];
+  if (['list', 'objects', 'designers', 'jury_notes'].includes(type)) return [];
   if (type === 'level') return 'unknown';
   if (type.startsWith('enum:')) return ENUMS[type.slice(5)].includes('unknown') ? 'unknown' : null;
   return null;
@@ -139,7 +139,7 @@ export function normalizeRecord(kind, row, path, report) {
       continue; // region_code와 함께 처리
     }
     if (!(field in row)) {
-      warn('missing_field', field, `${field} 누락`);
+      if (!(kind === 'projects' && Object.hasOwn(PROJECT_EXTENSION_FIELDS, field))) warn('missing_field', field, `${field} 누락`);
       out[field] = defaultFor(type);
       if (type !== 'region') continue;
     }
@@ -182,6 +182,48 @@ function convert(type, raw, field, row, kind, out, warn, fail) {
       if (typeof v === 'string' && /^\d+$/.test(v)) return Number(v);
       fail('invalid_type', field, `${field}는 정수여야 함: ${JSON.stringify(raw)}`);
       return null;
+    case 'year':
+    case 'positive_int': {
+      if (v === null) return null;
+      const number = typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : v;
+      if (Number.isSafeInteger(number) && number >= (type === 'year' ? 1000 : 1) && (type !== 'year' || number <= 9999)) return number;
+      fail('invalid_type', field, `${field}는 ${type === 'year' ? '1000~9999 연도' : '양의 정수'} 또는 null이어야 함`);
+      return null;
+    }
+    case 'metrics': {
+      if (v === null) return null;
+      if (!isObject(v)) { fail('invalid_type', field, 'metrics는 객체 또는 null이어야 함'); return null; }
+      const strings = ['client', 'location', 'program', 'structure', 'exterior', 'scope_note'];
+      const numbers = ['site_area', 'building_area', 'gross_floor_area', 'building_coverage', 'floor_area_ratio', 'floors_above', 'floors_below'];
+      const result = {};
+      for (const [key, value] of Object.entries(v)) {
+        if (strings.includes(key)) {
+          if (value !== null && typeof value !== 'string') fail('invalid_type', `${field}.${key}`, '문자열 또는 null이어야 함');
+          result[key] = typeof value === 'string' ? cleanText(value) : null;
+        } else if (numbers.includes(key)) {
+          const valid = value === null || (typeof value === 'number' && Number.isFinite(value) && value >= 0 && (!key.startsWith('floors_') || Number.isInteger(value)));
+          if (!valid) fail('invalid_type', `${field}.${key}`, '0 이상의 유한한 수(층수는 정수) 또는 null이어야 함');
+          result[key] = valid ? value : null;
+        } else warn('unknown_field', `${field}.${key}`, `규격에 없는 metrics 필드 "${key}" — 원본에 보존`);
+      }
+      return result;
+    }
+    case 'designers':
+    case 'jury_notes': {
+      if (v === null) return [];
+      if (!Array.isArray(v) || !v.every(isObject)) { fail('invalid_type', field, `${field}는 객체 배열이어야 함`); return []; }
+      const keys = type === 'designers' ? ['person', 'firm'] : ['affiliation_type', 'note'];
+      return v.map((item, index) => {
+        const result = {};
+        for (const key of keys) {
+          const value = item[key] ?? null;
+          if (value !== null && typeof value !== 'string') fail('invalid_type', `${field}[${index}].${key}`, '문자열 또는 null이어야 함');
+          result[key] = typeof value === 'string' ? cleanText(value) : null;
+        }
+        for (const key of Object.keys(item)) if (!keys.includes(key)) warn('unknown_field', `${field}[${index}].${key}`, '규격에 없는 필드 — 원본에 보존');
+        return result;
+      });
+    }
     case 'list': {
       if (v === null) return [];
       if (!Array.isArray(v)) {
@@ -272,11 +314,11 @@ function mergeProjects(a, b, path, report) {
     const x = a[field];
     const y = b[field];
     if (type === 'list') merged[field] = [...new Set([...x, ...y])];
-    else if (type === 'objects') {
+    else if (['objects', 'designers', 'jury_notes'].includes(type)) {
       const seen = new Set(x.map((o) => JSON.stringify(o)));
       merged[field] = [...x, ...y.filter((o) => !seen.has(JSON.stringify(o)))];
     } else if (x === null || (type === 'level' && x === 'unknown')) merged[field] = y;
-    else if (y !== null && !(type === 'level' && y === 'unknown') && x !== y) {
+    else if (y !== null && !(type === 'level' && y === 'unknown') && JSON.stringify(x) !== JSON.stringify(y)) {
       report('error', 'duplicate_conflict', `${path}.${field}`, `project_id "${id}"의 ${field} 값이 서로 다름(${JSON.stringify(x)} / ${JSON.stringify(y)}) — 첫 값 사용`, id);
     }
   }

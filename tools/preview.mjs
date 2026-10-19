@@ -11,7 +11,7 @@ const server = http.createServer(async (req, res) => {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     const relative = pathname === '/' ? 'index.html' : pathname.slice(1);
     const target = path.resolve(root, relative);
-    const allowed = relative === 'index.html' || /^(src\/(ui|styles|data|domain)\/|public\/|data\/examples\/)/.test(relative) || /^rules\/(regions|school_levels|topics)\.json$/.test(relative);
+    const allowed = relative === 'index.html' || relative === 'data/goe-annual.snapshot.json' || /^(src\/(ui|styles|data|domain)\/|public\/|data\/examples\/)/.test(relative) || /^rules\/(regions|school_levels|topics)\.json$/.test(relative);
     if (!['GET', 'HEAD'].includes(req.method) || !allowed || !target.startsWith(root + path.sep) || relative.split(/[\\/]/).some(p => p.startsWith('.'))) {
       res.writeHead(404); res.end('Not found'); return;
     }
