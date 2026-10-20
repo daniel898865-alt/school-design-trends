@@ -17,6 +17,11 @@ test('미리보기 서버: index.html·guide.html은 열리고 비공개 폴더�
     assert.equal(await status('guide.html'), 200);
     assert.equal(await status('src/styles/user-guide.css'), 200);
     assert.equal(await status('public/design-research/demo-result.json'), 200);
+    const video = await fetch(`http://127.0.0.1:${port}/public/videos/user-guide.mp4`, { headers: { Range: 'bytes=0-99' } });
+    assert.equal(video.status, 206);                                              // 구간 요청(영상 탐색) 지원
+    assert.equal(video.headers.get('content-type'), 'video/mp4');
+    assert.match(video.headers.get('content-range'), /^bytes 0-99\/\d+$/);
+    assert.equal((await video.arrayBuffer()).byteLength, 100);
     assert.equal(await status('data/private/goe-annual.snapshot.json'), 404);   // 비공개 폴더는 제공하지 않음
     assert.equal(await status('docs/USER_GUIDE.md'), 404);                       // 허용 목록 밖
     assert.equal(await status('../package.json'), 404);

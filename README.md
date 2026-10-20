@@ -4,7 +4,7 @@
 
 **[개인 홈페이지 바로 열기 →](https://daniel898865-alt.github.io/school-design-trends/)** · **[처음 사용하시는 분: 사용설명 →](https://daniel898865-alt.github.io/school-design-trends/guide.html)**
 
-이 저장소는 공동작업 최종 병합 `fcfd4c7`을 바탕으로 고도화한 개인 fork입니다. [GitHub에서 사용설명 읽기](docs/USER_GUIDE.md) · [공동작업 이후 변경 비교](https://github.com/daniel898865-alt/school-design-trends/compare/fcfd4c7...daniel/2026-10-20-pilot-comparison)
+이 저장소는 공동작업 최종 병합 `fcfd4c7`을 바탕으로 고도화한 개인 fork입니다. [GitHub에서 사용설명 읽기](docs/USER_GUIDE.md) · [사용설명 영상 보기](public/videos/user-guide.mp4) · [공동작업 이후 변경 비교](https://github.com/daniel898865-alt/school-design-trends/compare/fcfd4c7...daniel/2026-10-20-pilot-comparison)
 
 ‘자료 조회’에서는 **경기도교육청 설계공모 작품집 2023·2024·2025의 당선작 166건**을 볼 수 있습니다. 지역·학교급·수록연도로 사례를 찾고, 사업 규모와 설계 개념, 출처와 검수 메모를 확인합니다. 연도별 키워드를 가상 학교의 3D 공간 개념도와 연결해 살펴볼 수도 있습니다.
 
