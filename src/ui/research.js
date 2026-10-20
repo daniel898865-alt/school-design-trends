@@ -37,7 +37,10 @@ function sectionBlock(step, title, children, intro) {
 function evidenceMark(level) { return el('span', { class: `rs-level rs-level-${level}` }, { fact: '사실', ai_interpretation: 'AI 해석', proposal: '제안' }[level] ?? level); }
 
 // ───── 화면 전환 ─────
-function setFeature(name, { updateHash = true } = {}) {
+const BASE_TITLE = document.title;
+const FEATURE_TITLES = { trends: '연도별 동향', directions: '향후 설계 방향', compare: '설계안 PDF 비교', explore: '자료 조회' };
+// history: 'push'(사용자가 메뉴를 눌렀을 때, 뒤로 가기로 돌아올 수 있음) | 'replace' | 'none'(주소가 이미 바뀐 경우)
+function setFeature(name, { history: mode = 'push', focus = false } = {}) {
   const feature = FEATURES.includes(name) ? name : 'trends';
   document.querySelectorAll('[data-feature-panel]').forEach((p) => { p.hidden = p.dataset.featurePanel !== feature; });
   document.querySelectorAll('#main > :not([data-feature-shell])').forEach((node) => node.classList.toggle('feature-hidden', feature !== 'explore'));
@@ -45,7 +48,12 @@ function setFeature(name, { updateHash = true } = {}) {
   document.querySelectorAll('#navigation [data-feature]').forEach((b) => {
     if (b.dataset.feature === feature) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
-  if (updateHash && location.hash !== `#${feature}`) history.replaceState(null, '', `#${feature}`);
+  if (location.hash !== `#${feature}`) {
+    if (mode === 'push') window.history.pushState(null, '', `#${feature}`);
+    else if (mode === 'replace') window.history.replaceState(null, '', `#${feature}`);
+  }
+  document.title = feature === 'explore' ? BASE_TITLE : `${FEATURE_TITLES[feature]} · ${BASE_TITLE}`;
+  if (focus) { const heading = document.querySelector(`[data-feature-panel="${feature}"] h2`); if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); } }
   return feature;
 }
 
@@ -255,10 +263,11 @@ function setupCompare() {
 // ───── 시작 ─────
 export async function initResearch() {
   const trendsRoot = $('trends-content'); const directionsRoot = $('directions-content');
-  document.querySelectorAll('#navigation [data-feature]').forEach((b) => b.addEventListener('click', () => { setFeature(b.dataset.feature); window.scrollTo({ top: 0 }); }));
-  document.addEventListener('click', (event) => { const go = event.target.closest('[data-go]'); if (go) { setFeature(go.dataset.go); window.scrollTo({ top: 0 }); } });
+  document.querySelectorAll('#navigation [data-feature]').forEach((b) => b.addEventListener('click', () => { setFeature(b.dataset.feature, { focus: true }); window.scrollTo({ top: 0 }); }));
+  document.addEventListener('click', (event) => { const go = event.target.closest('[data-go]'); if (go) { setFeature(go.dataset.go, { focus: true }); window.scrollTo({ top: 0 }); } });
+  window.addEventListener('hashchange', () => { setFeature(location.hash.slice(1), { history: 'none' }); });
   setupCompare();
-  setFeature(location.hash.slice(1) || 'trends', { updateHash: false });
+  setFeature(location.hash.slice(1) || 'trends', { history: 'replace' });
   const failure = (root, error) => root.replaceChildren(el('div', { class: 'error-box', role: 'alert' }, [el('strong', {}, '자료를 표시하지 못했습니다.'), el('p', {}, String(error.message ?? error))]));
   try {
     const [snapshot, directions] = await Promise.all([loadJson('data/goe-annual.snapshot.json', '당선작 자료'), loadJson('public/design-research/directions.json', '설계 방향 자료')]);
