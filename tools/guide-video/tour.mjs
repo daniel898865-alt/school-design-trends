@@ -52,7 +52,8 @@ let vt = 0;
 const snap = async (dur) => { const r = await send('Page.captureScreenshot', { format: 'jpeg', quality: 80 }); const name = String(frames.length).padStart(5, '0') + '.jpg'; writeFileSync(path.join(OUT, name), Buffer.from(r.data, 'base64')); frames.push({ file: name, ts: vt }); vt += dur; };
 
 const go = async (url, wait = 3000) => { await send('Page.navigate', { url }); await sleep(wait); };
-const cap = (t) => ev(`__tour.caption(${JSON.stringify(t)})`);
+const caps = [];
+const cap = (t) => { caps.push({ t: +vt.toFixed(2), frame: frames.length, text: t }); return ev(`__tour.caption(${JSON.stringify(t)})`); };
 const easeK = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 const move = async (x, y, ms = 1400) => { const a = await ev('window.__pos'); const n = Math.max(3, Math.round(ms / 100)); const stepSec = ms / n / 1000; for (let i = 1; i <= n; i++) { const k = easeK(i / n); await ev('__tour.setPos(' + (a.x + (x - a.x) * k) + ',' + (a.y + (y - a.y) * k) + ')'); await snap(stepSec); } };
 const scroll = async (y, ms = 1800) => { y = Math.max(0, Math.round(y)); const a = await ev('window.scrollY'); const n = Math.max(3, Math.round(ms / 100)); const stepSec = ms / n / 1000; for (let i = 1; i <= n; i++) { await ev('window.scrollTo(0,' + (a + (y - a) * easeK(i / n)) + ')'); await snap(stepSec); } };
@@ -123,6 +124,6 @@ for (const [sid, text, secs] of sections) {
 await cap('사용설명은 GitHub 문서(docs/USER_GUIDE.md)와 웹 페이지(guide.html) 두 곳에서 볼 수 있습니다'); await scroll(0, 1500); await toEl('.back', 0, 1500); await hold(7);
 await ev('1'); await hold(1.5);
 await snap(1.5);
-writeFileSync(path.join(OUT, 'frames.json'), JSON.stringify(frames));
+writeFileSync(path.join(OUT, 'frames.json'), JSON.stringify(frames)); writeFileSync(path.join(OUT, 'caps.json'), JSON.stringify(caps, null, 1));
 console.log('frames', frames.length, 'sec', vt.toFixed(1));
 ws.close(); proc.kill();

@@ -8,4 +8,9 @@
 3. 프레임을 MP4로 합칩니다. `node tools/guide-video/encode.mjs <프레임 폴더> <결과.mp4>`
    - 같은 Edge의 MediaRecorder로 합치며 실제 길이만큼 시간이 걸립니다(약 5분).
 
-Windows와 Edge 경로(`C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe`)를 가정합니다. 다른 환경에서는 두 파일 위쪽의 경로를 바꾸세요. 음성은 없습니다.
+Windows와 Edge 경로(`C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe`)를 가정합니다. 다른 환경에서는 두 파일 위쪽의 경로를 바꾸세요. 음성은 사용자가 직접 낭독해 녹음한 파일(`내_녹음\NN.m4a`)을 `mux-guide.mjs`로 결합했습니다. 녹음 원본은 저장소에 올리지 않았습니다.
+
+## 음성 넣기 (선택)
+
+4. `node tools/guide-video/make-script.mjs <프레임 폴더>`로 장면 시각(`caps.json`)에 맞춘 낭독 대본 블록(`낭독_블록.json`·`낭독_대본.md`·`낭독_대본.html`)을 만듭니다. 이 파일들은 스크립트를 실행한 폴더에 저장됩니다.
+5. 블록별로 읽어 `내_녹음\01.m4a`~`14.m4a`로 저장하고, `node tools/guide-video/mux-guide.mjs <프레임 폴더> <결과.mp4>`로 결합합니다. 녹음이 장면보다 길면 그 블록의 마지막 화면을 늘려 맞춥니다.
